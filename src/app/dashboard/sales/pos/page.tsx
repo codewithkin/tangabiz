@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 
 interface Product {
     id: string;
