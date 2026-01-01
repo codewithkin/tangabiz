@@ -397,20 +397,12 @@ export default function NewSalePage() {
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="paymentMethod">Payment Method</Label>
-                                    <Select
-                                        value={paymentMethod}
-                                        onValueChange={setPaymentMethod}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="cash">Cash</SelectItem>
-                                            <SelectItem value="card">Card</SelectItem>
-                                            <SelectItem value="mobile">Mobile Payment</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <Label>Payment Method</Label>
+                                    <div className="p-3 border rounded-lg bg-muted/50">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <span className="font-medium">Cash Only</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="space-y-2 sm:col-span-2">
                                     <Label htmlFor="notes">Notes</Label>

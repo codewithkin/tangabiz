@@ -301,8 +301,8 @@ export default function POSPage() {
                                         onClick={() => addToCart(product)}
                                         disabled={product.stock <= 0}
                                         className={`p-3 rounded-lg border text-left transition-all ${product.stock <= 0
-                                                ? "opacity-50 cursor-not-allowed bg-gray-50"
-                                                : "hover:border-green-500 hover:shadow-md cursor-pointer"
+                                            ? "opacity-50 cursor-not-allowed bg-gray-50"
+                                            : "hover:border-green-500 hover:shadow-md cursor-pointer"
                                             }`}
                                     >
                                         {product.image ? (
@@ -446,34 +446,14 @@ export default function POSPage() {
                             </div>
 
                             {/* Payment Method */}
-                            <div className="flex gap-2">
-                                <Button
-                                    type="button"
-                                    variant={paymentMethod === "cash" ? "default" : "outline"}
-                                    className={`flex-1 ${paymentMethod === "cash" ? "bg-green-600 hover:bg-green-700" : ""}`}
-                                    onClick={() => setPaymentMethod("cash")}
-                                >
-                                    <Banknote className="mr-2 h-4 w-4" />
-                                    Cash
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={paymentMethod === "card" ? "default" : "outline"}
-                                    className={`flex-1 ${paymentMethod === "card" ? "bg-green-600 hover:bg-green-700" : ""}`}
-                                    onClick={() => setPaymentMethod("card")}
-                                >
-                                    <CreditCard className="mr-2 h-4 w-4" />
-                                    Card
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={paymentMethod === "mobile" ? "default" : "outline"}
-                                    className={`flex-1 ${paymentMethod === "mobile" ? "bg-green-600 hover:bg-green-700" : ""}`}
-                                    onClick={() => setPaymentMethod("mobile")}
-                                >
-                                    <Smartphone className="mr-2 h-4 w-4" />
-                                    M-Pesa
-                                </Button>
+                            <div className="space-y-2">
+                                <Label>Payment Method</Label>
+                                <div className="p-3 border rounded-lg bg-muted/50">
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <Banknote className="h-4 w-4 text-green-600" />
+                                        <span className="font-medium">Cash Only</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
