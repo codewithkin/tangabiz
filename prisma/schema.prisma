@@ -84,6 +84,12 @@ model Organization {
   members     Member[]
   invitations Invitation[]
 
+  // Business data
+  products    Product[]
+  customers   Customer[]
+  sales       Sale[]
+  categories  Category[]
+
   @@unique([slug])
   @@map("organization")
 }
@@ -96,6 +102,9 @@ model Member {
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   role           String
   createdAt      DateTime
+
+  // Sales made by this member
+  sales Sale[]
 
   @@map("member")
 }
@@ -113,4 +122,102 @@ model Invitation {
   user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
   @@map("invitation")
+}
+
+// ==================== BUSINESS TABLES ====================
+
+model Category {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  products Product[]
+
+  @@unique([organizationId, name])
+  @@map("category")
+}
+
+model Product {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  sku            String?
+  barcode        String?
+  price          Decimal      @db.Decimal(10, 2)
+  cost           Decimal?     @db.Decimal(10, 2)
+  stock          Int          @default(0)
+  lowStockAlert  Int          @default(5)
+  isActive       Boolean      @default(true)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  categoryId     String?
+  category       Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  saleItems SaleItem[]
+
+  @@unique([organizationId, sku])
+  @@map("product")
+}
+
+model Customer {
+  id             String       @id @default(cuid())
+  name           String
+  email          String?
+  phone          String?
+  address        String?
+  notes          String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  sales Sale[]
+
+  @@unique([organizationId, email])
+  @@map("customer")
+}
+
+model Sale {
+  id             String       @id @default(cuid())
+  receiptNumber  String
+  subtotal       Decimal      @db.Decimal(10, 2)
+  tax            Decimal      @default(0) @db.Decimal(10, 2)
+  discount       Decimal      @default(0) @db.Decimal(10, 2)
+  total          Decimal      @db.Decimal(10, 2)
+  paymentMethod  String       @default("cash") // cash, card, mobile
+  status         String       @default("completed") // completed, refunded, voided
+  notes          String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     String?
+  customer       Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  memberId       String?
+  member         Member?      @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  items SaleItem[]
+
+  @@unique([organizationId, receiptNumber])
+  @@map("sale")
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  discount  Decimal @default(0) @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
+
+  @@map("sale_item")
 }
