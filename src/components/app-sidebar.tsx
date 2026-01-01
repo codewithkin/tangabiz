@@ -208,7 +208,7 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             <a href="/dashboard" className="flex items-center gap-2">
-                                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-green-600 text-white font-bold text-sm">
+                                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-700 text-white font-bold text-sm">
                                     T
                                 </div>
                                 <div className="flex flex-col gap-0.5 leading-none">
@@ -281,7 +281,7 @@ export function AppSidebar() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <SidebarMenuButton size="lg" className="hover:bg-gray-300/50">
-                                    <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-green-600 text-white">
+                                    <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-gradient-to-br from-green-600 to-green-700 text-white">
                                         <User2 className="h-4 w-4" />
                                     </div>
                                     <div className="flex flex-col gap-0.5 leading-none">
