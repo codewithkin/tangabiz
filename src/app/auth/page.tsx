@@ -48,14 +48,14 @@ export default function AuthPage() {
                     <div className="bg-white rounded-2xl shadow-lg p-8 space-y-8">
                         {/* Header */}
                         <div className="text-center space-y-2">
-                            <h1 className="text-3xl font-bold text-green-600">Tangabiz</h1>
+                            <h1 className="text-3xl font-bold">
+                                <span className="text-yellow-400">Tanga</span>
+                                <span className="text-green-600">biz</span>
+                            </h1>
                             <p className="text-sm text-gray-600">Smart POS for Smart Business</p>
                         </div>
 
-                        {/* Login Heading */}
-                        <div className="text-center">
-                            <h2 className="text-2xl font-bold text-gray-900">Login</h2>
-                        </div>
+                        {/* (removed Login heading for magic-link auth) */}
 
                         {/* Form */}
                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -103,21 +103,6 @@ export default function AuthPage() {
                             </button>
                         </form>
 
-                        {/* Forgot Password / Sign Up Links */}
-                        <div className="flex items-center justify-between pt-2">
-                            <a
-                                href="#"
-                                className="text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
-                            >
-                                Forgot your password?
-                            </a>
-                            <a
-                                href="#"
-                                className="text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
-                            >
-                                Sign Up
-                            </a>
-                        </div>
 
                         {/* Terms Message */}
                         <div className="pt-4 border-t border-gray-200">
