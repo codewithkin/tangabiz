@@ -7,6 +7,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Download, FileText, FileSpreadsheet } from "lucide-react";
 import { SaleData } from "./sales-table";
 import { CustomerData } from "./customers-table";
@@ -162,39 +168,52 @@ export function ChartExportButton({ salesData, customersData, size = "sm" }: Cha
     };
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" size={size}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-                {salesData.length > 0 && (
-                    <>
-                        <DropdownMenuItem onClick={() => exportToCSV("sales")}>
-                            <FileSpreadsheet className="h-4 w-4 mr-2" />
-                            Sales as CSV
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => exportToPDF("sales")}>
-                            <FileText className="h-4 w-4 mr-2" />
-                            Sales as PDF
-                        </DropdownMenuItem>
-                    </>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size={size}
+                                disabled={salesData.length === 0 && customersData.length === 0}
+                            >
+                                <Download className="h-4 w-4 mr-2" />
+                                Export
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                            {salesData.length > 0 && (
+                                <>
+                                    <DropdownMenuItem onClick={() => exportToCSV("sales")}>
+                                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                                        Sales as CSV
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => exportToPDF("sales")}>
+                                        <FileText className="h-4 w-4 mr-2" />
+                                        Sales as PDF
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+                            {customersData.length > 0 && (
+                                <>
+                                    <DropdownMenuItem onClick={() => exportToCSV("customers")}>
+                                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                                        Customers as CSV
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => exportToPDF("customers")}>
+                                        <FileText className="h-4 w-4 mr-2" />
+                                        Customers as PDF
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </TooltipTrigger>
+                {salesData.length === 0 && customersData.length === 0 && (
+                    <TooltipContent>No data to export</TooltipContent>
                 )}
-                {customersData.length > 0 && (
-                    <>
-                        <DropdownMenuItem onClick={() => exportToCSV("customers")}>
-                            <FileSpreadsheet className="h-4 w-4 mr-2" />
-                            Customers as CSV
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => exportToPDF("customers")}>
-                            <FileText className="h-4 w-4 mr-2" />
-                            Customers as PDF
-                        </DropdownMenuItem>
-                    </>
-                )}
-            </DropdownMenuContent>
-        </DropdownMenu>
+            </Tooltip>
+        </TooltipProvider>
     );
 }

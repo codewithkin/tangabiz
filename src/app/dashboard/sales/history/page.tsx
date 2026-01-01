@@ -34,6 +34,12 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
     ArrowLeft,
     Search,
     Loader2,
@@ -146,6 +152,99 @@ export default function SalesHistoryPage() {
         });
     };
 
+    const exportToCSV = () => {
+        if (filteredSales.length === 0) return;
+
+        let csvContent = "Receipt,Customer,Email,Staff,Items,Subtotal,Tax,Discount,Total,Payment Method,Status,Date\n";
+        csvContent += filteredSales
+            .map((sale) =>
+                [
+                    sale.receiptNumber,
+                    `"${sale.customer}"`,
+                    sale.customerEmail || "-",
+                    `"${sale.staff}"`,
+                    sale.items.length,
+                    sale.subtotal.toFixed(2),
+                    sale.tax.toFixed(2),
+                    sale.discount.toFixed(2),
+                    sale.total.toFixed(2),
+                    sale.paymentMethod,
+                    sale.status,
+                    formatDate(sale.createdAt),
+                ].join(",")
+            )
+            .join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute("href", url);
+        link.setAttribute("download", `sales-history-${new Date().getTime()}.csv`);
+        link.style.visibility = "hidden";
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const exportToPDF = async () => {
+        if (filteredSales.length === 0) return;
+
+        const { jsPDF } = await import("jspdf");
+        const AutoTable = require("jspdf-autotable");
+
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text("Sales History Report", 14, 15);
+
+        const tableData = filteredSales.map((sale) => [
+            sale.receiptNumber,
+            sale.customer,
+            sale.staff,
+            sale.items.length,
+            formatCurrency(sale.subtotal),
+            formatCurrency(sale.tax),
+            formatCurrency(sale.discount),
+            formatCurrency(sale.total),
+            sale.paymentMethod,
+            sale.status,
+            formatDate(sale.createdAt),
+        ]);
+
+        AutoTable(doc, {
+            head: [
+                [
+                    "Receipt",
+                    "Customer",
+                    "Staff",
+                    "Items",
+                    "Subtotal",
+                    "Tax",
+                    "Discount",
+                    "Total",
+                    "Payment",
+                    "Status",
+                    "Date",
+                ],
+            ],
+            body: tableData,
+            startY: 25,
+            margin: 10,
+            didDrawPage: (data: any) => {
+                const pageSize = doc.internal.pageSize;
+                const pageHeight = pageSize.getHeight();
+                const pageWidth = pageSize.getWidth();
+                doc.setFontSize(9);
+                doc.text(`Page ${data.pageNumber}`, pageWidth / 2, pageHeight - 10, {
+                    align: "center",
+                });
+            },
+        });
+
+        doc.save(`sales-history-${new Date().getTime()}.pdf`);
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -161,10 +260,23 @@ export default function SalesHistoryPage() {
                         View and analyze your past sales
                     </p>
                 </div>
-                <Button variant="outline">
-                    <Download className="mr-2 h-4 w-4" />
-                    Export
-                </Button>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                onClick={exportToCSV}
+                                disabled={filteredSales.length === 0}
+                            >
+                                <Download className="mr-2 h-4 w-4" />
+                                Export CSV
+                            </Button>
+                        </TooltipTrigger>
+                        {filteredSales.length === 0 && (
+                            <TooltipContent>No sales to export</TooltipContent>
+                        )}
+                    </Tooltip>
+                </TooltipProvider>
             </div>
 
             {/* Summary Cards */}
