@@ -96,7 +96,7 @@ export function SalesTable({ data, showExportButton, exportButton }: SalesTableP
                             Your latest transactions
                         </CardDescription>
                     </div>
-                    {data.length > 0 && showExportButton && exportButton}
+                    {showExportButton && exportButton}
                 </div>
             </CardHeader>
             <CardContent>

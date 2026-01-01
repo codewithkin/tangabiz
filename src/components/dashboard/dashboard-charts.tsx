@@ -144,14 +144,12 @@ export function DashboardCharts() {
             {/* Tables */}
             <SalesTable
                 data={data.salesTable}
-                showExportButton={data.salesTable.length > 0}
+                showExportButton={true}
                 exportButton={
-                    data.salesTable.length > 0 ? (
-                        <ChartExportButton
-                            salesData={data.salesTable}
-                            customersData={data.customersTable}
-                        />
-                    ) : null
+                    <ChartExportButton
+                        salesData={data.salesTable}
+                        customersData={data.customersTable}
+                    />
                 }
             />
 
