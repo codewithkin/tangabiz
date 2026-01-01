@@ -76,3 +76,81 @@ export async function sendMagicLinkEmail({
 
   await transporter.sendMail(mailOptions);
 }
+
+interface SendInviteEmailParams {
+  email: string;
+  inviteLink: string;
+  inviterName: string;
+  inviterEmail: string;
+  shopName: string;
+  role: string;
+}
+
+export async function sendInviteEmail({
+  email,
+  inviteLink,
+  inviterName,
+  inviterEmail,
+  shopName,
+  role,
+}: SendInviteEmailParams): Promise<void> {
+  const mailOptions = {
+    from: process.env.SMTP_FROM || "Tangabiz <noreply@tangabiz.com>",
+    to: email,
+    subject: `You've been invited to join ${shopName} on Tangabiz`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Join ${shopName} on Tangabiz</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Poppins', Arial, sans-serif; background-color: #f4f4f4;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+            <tr>
+              <td style="padding: 40px 30px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #eab308 100%);">
+                <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700;">Tangabiz</h1>
+                <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Your Business, Simplified</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 40px 30px;">
+                <h2 style="margin: 0 0 20px; color: #1f2937; font-size: 24px; font-weight: 600;">You're invited to join ${shopName}!</h2>
+                <p style="margin: 0 0 20px; color: #6b7280; font-size: 16px; line-height: 1.6;">
+                  <strong>${inviterName || inviterEmail}</strong> has invited you to join <strong>${shopName}</strong> as a <strong>${role}</strong>.
+                </p>
+                <p style="margin: 0 0 30px; color: #6b7280; font-size: 16px; line-height: 1.6;">
+                  Click the button below to accept this invitation and start using Tangabiz POS.
+                </p>
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                  <tr>
+                    <td style="border-radius: 8px; background-color: #16a34a;">
+                      <a href="${inviteLink}" target="_blank" style="display: inline-block; padding: 16px 32px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600;">
+                        Accept Invitation
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin: 30px 0 0; color: #9ca3af; font-size: 14px; line-height: 1.6;">
+                  If you didn't expect this invitation, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 30px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+                  © ${new Date().getFullYear()} Tangabiz. All rights reserved.<br>
+                  Smart POS for Smart Business
+                </p>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `,
+    text: `You're invited to join ${shopName}!\n\n${inviterName || inviterEmail} has invited you to join ${shopName} as a ${role}.\n\nClick the link below to accept this invitation:\n${inviteLink}\n\nIf you didn't expect this invitation, you can safely ignore this email.`,
+  };
+
+  await transporter.sendMail(mailOptions);
+}
