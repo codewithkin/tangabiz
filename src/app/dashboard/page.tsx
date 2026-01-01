@@ -1,10 +1,139 @@
-import { getSessionAndRedirect } from "@/lib/session";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, Users, Package, TrendingUp } from "lucide-react";
 
+async function getDashboardStats(userId: string, organizationId: string) {
+    const member = await prisma.member.findFirst({
+        where: { userId, organizationId },
+    });
+
+    if (!member) return null;
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+    const isStaff = member.role === "member";
+    const salesWhere = {
+        organizationId,
+        ...(isStaff ? { memberId: member.id } : {}),
+    };
+
+    // Total sales this month
+    const salesThisMonth = await prisma.sale.aggregate({
+        where: {
+            ...salesWhere,
+            createdAt: { gte: startOfMonth },
+            status: "completed",
+        },
+        _sum: { total: true },
+        _count: true,
+    });
+
+    // Total sales last month
+    const salesLastMonth = await prisma.sale.aggregate({
+        where: {
+            ...salesWhere,
+            createdAt: { gte: startOfLastMonth, lt: startOfMonth },
+            status: "completed",
+        },
+        _sum: { total: true },
+    });
+
+    const currentSales = Number(salesThisMonth._sum.total || 0);
+    const lastMonthSales = Number(salesLastMonth._sum.total || 0);
+    const salesChange = lastMonthSales > 0
+        ? ((currentSales - lastMonthSales) / lastMonthSales) * 100
+        : 0;
+
+    // Customers
+    let customerStats = { total: 0, newThisWeek: 0 };
+    if (!isStaff) {
+        const [totalCustomers, newCustomersThisWeek] = await Promise.all([
+            prisma.customer.count({ where: { organizationId } }),
+            prisma.customer.count({
+                where: { organizationId, createdAt: { gte: startOfWeek } },
+            }),
+        ]);
+        customerStats = { total: totalCustomers, newThisWeek: newCustomersThisWeek };
+    }
+
+    // Products
+    const totalProducts = await prisma.product.count({
+        where: { organizationId, isActive: true },
+    });
+
+    const lowStockCount = await prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) as count FROM product 
+        WHERE "organizationId" = ${organizationId} 
+        AND "isActive" = true 
+        AND stock <= "lowStockAlert"
+    `;
+
+    // Recent activity
+    const recentSales = await prisma.sale.findMany({
+        where: salesWhere,
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        include: {
+            customer: { select: { name: true } },
+            member: { include: { user: { select: { name: true, email: true } } } },
+        },
+    });
+
+    return {
+        role: member.role,
+        sales: { total: currentSales, count: salesThisMonth._count, change: salesChange },
+        customers: customerStats,
+        products: { total: totalProducts, lowStock: Number(lowStockCount[0]?.count || 0) },
+        revenue: { total: currentSales, change: salesChange },
+        recentActivity: recentSales.map((sale) => ({
+            id: sale.id,
+            receiptNumber: sale.receiptNumber,
+            total: Number(sale.total),
+            customerName: sale.customer?.name || "Walk-in",
+            staffName: sale.member?.user?.name || sale.member?.user?.email || "Unknown",
+            createdAt: sale.createdAt,
+        })),
+    };
+}
+
 export default async function DashboardPage() {
-    // Protect this page - only authenticated users can access
-    await getSessionAndRedirect(true);
+    const session = await auth.api.getSession({ headers: await headers() });
+
+    if (!session) {
+        redirect("/auth");
+    }
+
+    const organizationId = session.session.activeOrganizationId;
+
+    // If no active organization, redirect to onboarding
+    if (!organizationId) {
+        redirect("/onboarding");
+    }
+
+    const stats = await getDashboardStats(session.user.id, organizationId);
+
+    if (!stats) {
+        redirect("/onboarding");
+    }
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+        }).format(amount);
+    };
+
+    const formatChange = (change: number) => {
+        const sign = change >= 0 ? "+" : "";
+        return `${sign}${change.toFixed(1)}%`;
+    };
 
     return (
         <div className="space-y-8">
@@ -27,29 +156,31 @@ export default async function DashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">$12,345</div>
+                        <div className="text-2xl font-bold">{formatCurrency(stats.sales.total)}</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            +20.1% from last month
+                            {formatChange(stats.sales.change)} from last month
                         </p>
                     </CardContent>
                 </Card>
 
-                <Card className="border-0 shadow-lg">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Customers
-                        </CardTitle>
-                        <div className="h-8 w-8 rounded-lg bg-yellow-100 flex items-center justify-center">
-                            <Users className="h-4 w-4 text-yellow-600" />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">234</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            +12 new this week
-                        </p>
-                    </CardContent>
-                </Card>
+                {stats.role !== "member" && (
+                    <Card className="border-0 shadow-lg">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                                Customers
+                            </CardTitle>
+                            <div className="h-8 w-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                                <Users className="h-4 w-4 text-yellow-600" />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{stats.customers.total}</div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                +{stats.customers.newThisWeek} new this week
+                            </p>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <Card className="border-0 shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -61,29 +192,31 @@ export default async function DashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">89</div>
+                        <div className="text-2xl font-bold">{stats.products.total}</div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            5 low stock items
+                            {stats.products.lowStock} low stock items
                         </p>
                     </CardContent>
                 </Card>
 
-                <Card className="border-0 shadow-lg">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Revenue
-                        </CardTitle>
-                        <div className="h-8 w-8 rounded-lg bg-yellow-100 flex items-center justify-center">
-                            <TrendingUp className="h-4 w-4 text-yellow-600" />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">$8,234</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            +15.3% from last month
-                        </p>
-                    </CardContent>
-                </Card>
+                {(stats.role === "owner" || stats.role === "admin") && (
+                    <Card className="border-0 shadow-lg">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                                Revenue
+                            </CardTitle>
+                            <div className="h-8 w-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                                <TrendingUp className="h-4 w-4 text-yellow-600" />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{formatCurrency(stats.revenue.total)}</div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {formatChange(stats.revenue.change)} from last month
+                            </p>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
 
             {/* Recent Activity */}
@@ -95,11 +228,32 @@ export default async function DashboardPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center justify-center py-8">
-                        <p className="text-sm text-muted-foreground">
-                            No recent activity. Start making sales to see your activity here.
-                        </p>
-                    </div>
+                    {stats.recentActivity.length > 0 ? (
+                        <div className="space-y-4">
+                            {stats.recentActivity.map((sale) => (
+                                <div key={sale.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                                    <div>
+                                        <p className="font-medium">#{sale.receiptNumber}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {sale.customerName} • {sale.staffName}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-medium">{formatCurrency(sale.total)}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {new Date(sale.createdAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center py-8">
+                            <p className="text-sm text-muted-foreground">
+                                No recent activity. Start making sales to see your activity here.
+                            </p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
