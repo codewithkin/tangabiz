@@ -132,13 +132,6 @@ export default function AuthPage() {
                                 </a>
                             </p>
                         </div>
-
-                        {/* Info */}
-                        <div className="p-3 rounded-lg bg-yellow-50 border border-yellow-200/50">
-                            <p className="text-xs text-yellow-800 text-center">
-                                🔐 No password needed. We'll send you a magic link via email.
-                            </p>
-                        </div>
                     </div>
                 ) : (
                     /* Success State */
