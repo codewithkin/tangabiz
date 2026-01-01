@@ -32,6 +32,11 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar";
 import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -233,41 +238,43 @@ export function AppSidebar() {
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {navigation.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    {item.items ? (
-                                        // Item with submenu
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
+                                item.items ? (
+                                    // Item with submenu - use Collapsible
+                                    <Collapsible key={item.title} defaultOpen className="group/collapsible">
+                                        <SidebarMenuItem>
+                                            <CollapsibleTrigger asChild>
                                                 <SidebarMenuButton className="hover:bg-gray-300/50">
                                                     <item.icon className="h-4 w-4" />
                                                     <span>{item.title}</span>
-                                                    <ChevronDown className="ml-auto h-4 w-4" />
+                                                    <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                                                 </SidebarMenuButton>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                side="right"
-                                                align="start"
-                                                className="w-48"
-                                            >
-                                                {item.items.map((subItem) => (
-                                                    <DropdownMenuItem key={subItem.title} asChild>
-                                                        <a href={subItem.url} className="cursor-pointer">
-                                                            {subItem.title}
-                                                        </a>
-                                                    </DropdownMenuItem>
-                                                ))}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    ) : (
-                                        // Regular item
+                                            </CollapsibleTrigger>
+                                            <CollapsibleContent>
+                                                <SidebarMenuSub>
+                                                    {item.items.map((subItem) => (
+                                                        <SidebarMenuSubItem key={subItem.title}>
+                                                            <SidebarMenuSubButton asChild>
+                                                                <a href={subItem.url}>
+                                                                    <span>{subItem.title}</span>
+                                                                </a>
+                                                            </SidebarMenuSubButton>
+                                                        </SidebarMenuSubItem>
+                                                    ))}
+                                                </SidebarMenuSub>
+                                            </CollapsibleContent>
+                                        </SidebarMenuItem>
+                                    </Collapsible>
+                                ) : (
+                                    // Regular item
+                                    <SidebarMenuItem key={item.title}>
                                         <SidebarMenuButton asChild className="hover:bg-gray-300/50">
                                             <a href={item.url}>
                                                 <item.icon className="h-4 w-4" />
                                                 <span>{item.title}</span>
                                             </a>
                                         </SidebarMenuButton>
-                                    )}
-                                </SidebarMenuItem>
+                                    </SidebarMenuItem>
+                                )
                             ))}
                         </SidebarMenu>
                     </SidebarGroupContent>
