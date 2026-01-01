@@ -375,13 +375,12 @@ export default function StockPage() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <span
-                                                className={`font-bold ${
-                                                    product.stock === 0
+                                                className={`font-bold ${product.stock === 0
                                                         ? "text-red-600"
                                                         : product.stock <= product.lowStockAlert
-                                                        ? "text-yellow-600"
-                                                        : ""
-                                                }`}
+                                                            ? "text-yellow-600"
+                                                            : ""
+                                                    }`}
                                             >
                                                 {product.stock}
                                             </span>
@@ -472,9 +471,8 @@ export default function StockPage() {
                         </div>
 
                         {adjustQuantity > 0 && adjustProduct && (
-                            <div className={`flex items-center justify-between p-4 rounded-lg ${
-                                adjustType === "add" ? "bg-green-50" : "bg-red-50"
-                            }`}>
+                            <div className={`flex items-center justify-between p-4 rounded-lg ${adjustType === "add" ? "bg-green-50" : "bg-red-50"
+                                }`}>
                                 <span className={`text-sm ${adjustType === "add" ? "text-green-700" : "text-red-700"}`}>
                                     New Stock Level
                                 </span>
