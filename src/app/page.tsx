@@ -1,17 +1,8 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { getSessionAndRedirect } from "@/lib/session";
 
 export default async function Home() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  // If user has a session, redirect to dashboard
-  if (session) {
-    redirect("/dashboard");
-  }
-
-  // If no session, redirect to auth
-  redirect("/auth");
+  // Redirect based on auth state
+  // No session: redirect to /auth
+  // Has session: redirect to /dashboard
+  await getSessionAndRedirect(true);
 }

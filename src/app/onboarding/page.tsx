@@ -2,9 +2,12 @@
 
 import { Building2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSessionRedirect } from "@/lib/use-session-redirect";
 
 export default function OnboardingPage() {
     const router = useRouter();
+    // Protect this page - only authenticated users can access
+    useSessionRedirect(true);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-8">

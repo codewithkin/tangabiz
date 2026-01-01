@@ -3,9 +3,12 @@
 import { useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSessionRedirect } from "@/lib/use-session-redirect";
 
 export default function BusinessOnboardingPage() {
     const router = useRouter();
+    // Protect this page - only authenticated users can access
+    useSessionRedirect(true);
     const [shopName, setShopName] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 

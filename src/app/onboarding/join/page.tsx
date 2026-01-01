@@ -3,9 +3,12 @@
 import { useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSessionRedirect } from "@/lib/use-session-redirect";
 
 export default function JoinOnboardingPage() {
     const router = useRouter();
+    // Protect this page - only authenticated users can access
+    useSessionRedirect(true);
     const [inviteCode, setInviteCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");

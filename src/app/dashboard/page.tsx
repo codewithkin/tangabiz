@@ -1,4 +1,9 @@
-export default function DashboardPage() {
+import { getSessionAndRedirect } from "@/lib/session";
+
+export default async function DashboardPage() {
+    // Protect this page - only authenticated users can access
+    await getSessionAndRedirect(true);
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-background">
             <div className="text-center space-y-4">
