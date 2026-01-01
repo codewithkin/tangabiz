@@ -40,8 +40,8 @@ export const PLANS: Record<PlanType, Plan> = {
         id: "starter",
         name: "Starter",
         description: "Perfect for small shops just getting started",
-        price: 9,
-        yearlyPrice: 90, // 2 months free
+        price: 19.99,
+        yearlyPrice: 203.90, // Save 15%
         polarProductId: process.env.NEXT_PUBLIC_POLAR_STARTER_PRODUCT_ID || "",
         limits: {
             maxProducts: 50,
@@ -69,8 +69,8 @@ export const PLANS: Record<PlanType, Plan> = {
         id: "growth",
         name: "Growth",
         description: "For growing businesses that need more power",
-        price: 29,
-        yearlyPrice: 290, // 2 months free
+        price: 49.99,
+        yearlyPrice: 509.90, // Save 15%
         polarProductId: process.env.NEXT_PUBLIC_POLAR_GROWTH_PRODUCT_ID || "",
         popular: true,
         limits: {
@@ -99,8 +99,8 @@ export const PLANS: Record<PlanType, Plan> = {
         id: "enterprise",
         name: "Enterprise",
         description: "For large businesses with advanced needs",
-        price: 99,
-        yearlyPrice: 990, // 2 months free
+        price: 89.99,
+        yearlyPrice: 917.90, // Save 15%
         polarProductId: process.env.NEXT_PUBLIC_POLAR_ENTERPRISE_PRODUCT_ID || "",
         limits: {
             maxProducts: -1, // Unlimited
