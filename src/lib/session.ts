@@ -8,9 +8,7 @@ import { headers } from "next/headers";
  * @param requireAuth - if true, redirect to /auth if no session; if false, redirect to /dashboard if session exists
  * @returns The session data if requireAuth is false, otherwise returns void
  */
-export async function getSessionAndRedirect(
-  requireAuth: boolean = true
-) {
+export async function getSessionAndRedirect(requireAuth: boolean = true) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
