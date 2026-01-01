@@ -114,14 +114,14 @@ export default function AuthPage() {
                         </CardContent>
 
                         <CardFooter className="flex-col gap-4 pt-0">
-                            <div className="w-full border-t pt-4">
+                            <div className="w-full border-t border-t-gray-300 pt-4">
                                 <p className="text-xs text-muted-foreground text-center leading-relaxed">
                                     By signing up, you agree to our{" "}
-                                    <a href="/terms" className="text-green-600 hover:underline font-medium">
+                                    <a href="/terms-of-service" className="text-green-600 hover:underline font-medium">
                                         Terms of Service
                                     </a>{" "}
                                     and{" "}
-                                    <a href="/privacy" className="text-green-600 hover:underline font-medium">
+                                    <a href="/privacy-policy" className="text-green-600 hover:underline font-medium">
                                         Privacy Policy
                                     </a>
                                 </p>
