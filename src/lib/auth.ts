@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { magicLink } from "better-auth/plugins";
+import { magicLink, organization } from "better-auth/plugins";
 import { prisma } from "./prisma";
 import { sendMagicLinkEmail } from "./email";
 
@@ -16,6 +16,7 @@ export const auth = betterAuth({
       expiresIn: 300, // 5 minutes
       disableSignUp: false,
     }),
+    organization(),
   ],
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
