@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, UserPlus, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, UserPlus, Check, Sparkles, Zap, Crown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSessionRedirect } from "@/lib/use-session-redirect";
 import { authClient } from "@/lib/auth-client";
@@ -15,8 +15,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { getAllPlans, formatLimit, FEATURE_NAMES, TRIAL_DURATION_DAYS, type Plan } from "@/lib/plans";
 
-const TOTAL_STEPS = 2;
+const TOTAL_STEPS = 3;
 
 interface Invite {
     email: string;
@@ -51,6 +53,22 @@ export default function BusinessOnboardingPage() {
     const [invites, setInvites] = useState<Invite[]>([{ email: "", role: "member" }]);
     const [inviteErrors, setInviteErrors] = useState<string[]>([]);
     const [inviteSuccess, setInviteSuccess] = useState<boolean[]>([]);
+
+    // Step 3 state (plan selection)
+    const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+    const plans = getAllPlans();
+
+    const PLAN_ICONS = {
+        starter: Sparkles,
+        growth: Zap,
+        enterprise: Crown,
+    };
+
+    const PLAN_COLORS = {
+        starter: "border-blue-200 hover:border-blue-400 hover:bg-blue-50/50",
+        growth: "border-green-200 hover:border-green-400 hover:bg-green-50/50",
+        enterprise: "border-purple-200 hover:border-purple-400 hover:bg-purple-50/50",
+    };
 
     const handleCreateShop = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -152,7 +170,7 @@ export default function BusinessOnboardingPage() {
     const sendAllInvites = async () => {
         const validInvites = invites.filter(inv => inv.email && inv.email.includes("@"));
         if (validInvites.length === 0) {
-            finishOnboarding();
+            setCurrentStep(3);
             return;
         }
 
@@ -163,14 +181,47 @@ export default function BusinessOnboardingPage() {
             }
         }
         setIsLoading(false);
+        setCurrentStep(3);
+    };
+
+    const handleSelectPlan = async (planId: string) => {
+        setSelectedPlan(planId);
+        setIsLoading(true);
+        setError("");
+
+        try {
+            // Try to start checkout with Polar
+            await authClient.checkout({
+                slug: planId,
+            });
+        } catch (err) {
+            // If Polar checkout fails, update plan directly for trial
+            try {
+                const res = await fetch("/api/billing/plan", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ plan: planId }),
+                });
+
+                if (res.ok) {
+                    router.push("/dashboard");
+                } else {
+                    setError("Failed to select plan. Please try again.");
+                }
+            } catch (e) {
+                setError("Failed to select plan. Please try again.");
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const finishOnboarding = () => {
         router.push("/dashboard");
     };
 
-    const handleSkip = () => {
-        router.push("/dashboard");
+    const handleSkipToStep3 = () => {
+        setCurrentStep(3);
     };
 
     return (
@@ -211,6 +262,17 @@ export default function BusinessOnboardingPage() {
                     </Button>
                 )}
 
+                {currentStep === 3 && (
+                    <Button
+                        variant="ghost"
+                        onClick={() => setCurrentStep(2)}
+                        className="text-muted-foreground hover:text-foreground"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back
+                    </Button>
+                )}
+
                 <Card className="border-0 shadow-lg">
                     <CardHeader className="text-center">
                         <div className="text-base font-bold mx-auto">
@@ -232,6 +294,15 @@ export default function BusinessOnboardingPage() {
                                 <CardTitle className="text-2xl">Invite your team</CardTitle>
                                 <CardDescription>
                                     Add team members to help manage {shopName}
+                                </CardDescription>
+                            </>
+                        )}
+
+                        {currentStep === 3 && (
+                            <>
+                                <CardTitle className="text-2xl">Choose your plan</CardTitle>
+                                <CardDescription>
+                                    Start with a {TRIAL_DURATION_DAYS}-day free trial on any plan
                                 </CardDescription>
                             </>
                         )}
@@ -352,17 +423,14 @@ export default function BusinessOnboardingPage() {
                                     <Button
                                         type="button"
                                         variant="secondary"
-                                        onClick={handleSkip}
+                                        onClick={handleSkipToStep3}
                                         className="w-1/4 h-12"
                                     >
                                         Skip
                                     </Button>
                                     <Button
                                         type="button"
-                                        onClick={async () => {
-                                            await sendAllInvites();
-                                            finishOnboarding();
-                                        }}
+                                        onClick={sendAllInvites}
                                         disabled={isLoading}
                                         className="w-3/4 h-12 bg-green-600 hover:bg-green-700 text-white"
                                     >
@@ -374,7 +442,7 @@ export default function BusinessOnboardingPage() {
                                         ) : (
                                             <>
                                                 <UserPlus className="h-4 w-4 mr-2" />
-                                                Send Invites
+                                                Send Invites & Continue
                                             </>
                                         )}
                                     </Button>
@@ -382,6 +450,90 @@ export default function BusinessOnboardingPage() {
 
                                 <p className="text-xs text-center text-muted-foreground">
                                     Team members will receive an email with a link to join your shop.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Step 3: Select Plan */}
+                        {currentStep === 3 && (
+                            <div className="space-y-4">
+                                {error && (
+                                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                                        {error}
+                                    </div>
+                                )}
+
+                                {plans.map((plan) => {
+                                    const Icon = PLAN_ICONS[plan.id];
+                                    return (
+                                        <div
+                                            key={plan.id}
+                                            className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${PLAN_COLORS[plan.id]} ${
+                                                selectedPlan === plan.id ? "ring-2 ring-green-500" : ""
+                                            }`}
+                                            onClick={() => !isLoading && setSelectedPlan(plan.id)}
+                                        >
+                                            {plan.popular && (
+                                                <Badge className="absolute -top-2 right-4 bg-green-600 text-xs">
+                                                    Popular
+                                                </Badge>
+                                            )}
+
+                                            <div className="flex items-start gap-4">
+                                                <div className={`p-2 rounded-lg ${
+                                                    plan.id === "starter" ? "bg-blue-100" :
+                                                    plan.id === "growth" ? "bg-green-100" : "bg-purple-100"
+                                                }`}>
+                                                    <Icon className={`h-5 w-5 ${
+                                                        plan.id === "starter" ? "text-blue-600" :
+                                                        plan.id === "growth" ? "text-green-600" : "text-purple-600"
+                                                    }`} />
+                                                </div>
+
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <h3 className="font-semibold">{plan.name}</h3>
+                                                        <span className="font-bold">${plan.price}/mo</span>
+                                                    </div>
+                                                    <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+                                                    <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                                                        <span>{formatLimit(plan.limits.maxProducts)} products</span>
+                                                        <span>{formatLimit(plan.limits.maxCustomers)} customers</span>
+                                                        <span>{formatLimit(plan.limits.maxTeamMembers)} team members</span>
+                                                    </div>
+                                                </div>
+
+                                                {selectedPlan === plan.id && (
+                                                    <div className="h-5 w-5 rounded-full bg-green-600 flex items-center justify-center">
+                                                        <Check className="h-3 w-3 text-white" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+
+                                <Button
+                                    type="button"
+                                    onClick={() => selectedPlan && handleSelectPlan(selectedPlan)}
+                                    disabled={isLoading || !selectedPlan}
+                                    className="w-full h-12 bg-green-600 hover:bg-green-700 text-white mt-4"
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Start {TRIAL_DURATION_DAYS}-Day Free Trial
+                                            <ArrowRight className="h-4 w-4 ml-2" />
+                                        </>
+                                    )}
+                                </Button>
+
+                                <p className="text-xs text-center text-muted-foreground">
+                                    No credit card required. You won't be charged until the trial ends.
                                 </p>
                             </div>
                         )}
