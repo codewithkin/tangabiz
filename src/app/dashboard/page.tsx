@@ -3,8 +3,9 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, Users, Package, TrendingUp } from "lucide-react";
+import { ShoppingCart, Users, Package, TrendingUp, Plus, FileText } from "lucide-react";
 import { DashboardCharts } from "@/components/dashboard";
+import { QuickActions } from "@/components/dashboard/quick-actions";
 
 async function getDashboardStats(userId: string, organizationId: string) {
     const member = await prisma.member.findFirst({
@@ -119,11 +120,14 @@ export default async function DashboardPage() {
 
     return (
         <div className="space-y-8">
-            <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-                <p className="text-muted-foreground">
-                    Welcome back! Here's an overview of your business.
-                </p>
+            <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                    <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+                    <p className="text-muted-foreground">
+                        Welcome back! Here's an overview of your business.
+                    </p>
+                </div>
+                <QuickActions />
             </div>
 
             {/* Stats Grid */}
