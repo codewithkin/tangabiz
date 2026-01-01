@@ -449,7 +449,7 @@ export default function POSPage() {
                             {/* Payment Method */}
                             <div className="space-y-2">
                                 <Label>Payment Method</Label>
-                                <div className="p-3 border rounded-lg bg-muted/50">
+                                <div className="p-3 border rounded-lg bg-green-50">
                                     <div className="flex items-center gap-2 text-sm">
                                         <Banknote className="h-4 w-4 text-green-600" />
                                         <span className="font-medium">Cash Only</span>
