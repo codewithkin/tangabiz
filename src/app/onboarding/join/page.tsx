@@ -4,6 +4,9 @@ import { useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSessionRedirect } from "@/lib/use-session-redirect";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function JoinOnboardingPage() {
     const router = useRouter();
@@ -30,78 +33,79 @@ export default function JoinOnboardingPage() {
         <div className="min-h-screen flex items-center justify-center bg-background p-8">
             <div className="w-full max-w-md space-y-8">
                 {/* Back button */}
-                <button
-                    type="button"
+                <Button
+                    variant="ghost"
                     onClick={() => router.back()}
-                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-muted-foreground hover:text-foreground"
                 >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
-                </button>
+                </Button>
 
-                {/* Header */}
-                <div className="space-y-2">
-                    <h1 className="text-2xl font-bold">
-                        <span className="text-yellow-400">Tanga</span>
-                        <span className="text-green-600">biz</span>
-                    </h1>
-                    <h2 className="text-3xl font-semibold text-foreground">
-                        Join a shop
-                    </h2>
-                    <p className="text-muted-foreground">
-                        Enter the invite code provided by your manager
-                    </p>
-                </div>
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                        <label
-                            htmlFor="inviteCode"
-                            className="block text-sm font-medium text-foreground"
-                        >
-                            Invite code
-                        </label>
-                        <input
-                            id="inviteCode"
-                            name="inviteCode"
-                            type="text"
-                            required
-                            value={inviteCode}
-                            onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                            className="block w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all font-mono text-center text-lg tracking-widest"
-                            placeholder="XXXX-XXXX"
-                            maxLength={9}
-                        />
-                    </div>
-
-                    {error && (
-                        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
-                            {error}
+                <Card>
+                    <CardHeader>
+                        <div className="text-2xl font-bold">
+                            <span className="text-yellow-400">Tanga</span>
+                            <span className="text-green-600">biz</span>
                         </div>
-                    )}
+                        <CardTitle className="text-3xl">Join a shop</CardTitle>
+                        <CardDescription>
+                            Enter the invite code provided by your manager
+                        </CardDescription>
+                    </CardHeader>
 
-                    <button
-                        type="submit"
-                        disabled={isLoading || !inviteCode}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-500/50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                                Joining...
-                            </>
-                        ) : (
-                            "Join Shop"
-                        )}
-                    </button>
-                </form>
+                    <CardContent className="space-y-6">
+                        {/* Form */}
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="inviteCode"
+                                    className="block text-sm font-medium text-foreground"
+                                >
+                                    Invite code
+                                </label>
+                                <Input
+                                    id="inviteCode"
+                                    name="inviteCode"
+                                    type="text"
+                                    required
+                                    value={inviteCode}
+                                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                                    placeholder="XXXX-XXXX"
+                                    maxLength={9}
+                                    className="h-12 font-mono text-center text-lg tracking-widest"
+                                />
+                            </div>
 
-                {/* Help */}
-                <p className="text-center text-sm text-muted-foreground">
-                    Don&apos;t have an invite code? Ask your manager or shop owner to send
-                    you one.
-                </p>
+                            {error && (
+                                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            <Button
+                                type="submit"
+                                disabled={isLoading || !inviteCode}
+                                className="w-full h-12 bg-yellow-500 hover:bg-yellow-600 text-white"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                        Joining...
+                                    </>
+                                ) : (
+                                    "Join Shop"
+                                )}
+                            </Button>
+                        </form>
+
+                        {/* Help */}
+                        <p className="text-center text-sm text-muted-foreground">
+                            Don&apos;t have an invite code? Ask your manager or shop owner to send
+                            you one.
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

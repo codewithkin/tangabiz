@@ -3,6 +3,16 @@
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Mail, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 
 export default function AuthPage() {
     const [email, setEmail] = useState("");
@@ -45,113 +55,119 @@ export default function AuthPage() {
             {/* Main Card */}
             <div className="w-full max-w-md relative z-10">
                 {!isSent ? (
-                    <div className="bg-white rounded-2xl shadow-lg p-8 space-y-8">
-                        {/* Header */}
-                        <div className="text-center space-y-2">
-                            <h1 className="text-3xl font-bold">
+                    <Card className="shadow-lg border-0">
+                        <CardHeader className="text-center pb-2">
+                            <CardTitle className="text-3xl font-bold">
                                 <span className="text-yellow-400">Tanga</span>
                                 <span className="text-green-600">biz</span>
-                            </h1>
-                            <p className="text-sm text-gray-600">Smart POS for Smart Business</p>
-                        </div>
+                            </CardTitle>
+                            <CardDescription>
+                                Smart POS for Smart Business
+                            </CardDescription>
+                        </CardHeader>
 
-                        {/* (removed Login heading for magic-link auth) */}
-
-                        {/* Form */}
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Email Field */}
-                            <div className="space-y-2">
-                                <label
-                                    htmlFor="email"
-                                    className="block text-sm font-semibold text-gray-900"
-                                >
-                                    Email*
-                                </label>
-                                <input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    autoComplete="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:border-green-600 focus:ring-2 focus:ring-green-600/20 transition-all"
-                                    placeholder="Your email address"
-                                />
-                            </div>
-
-                            {error && (
-                                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
-                                    {error}
+                        <CardContent>
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                {/* Email Field */}
+                                <div className="space-y-2">
+                                    <label
+                                        htmlFor="email"
+                                        className="block text-sm font-semibold text-foreground"
+                                    >
+                                        Email*
+                                    </label>
+                                    <Input
+                                        id="email"
+                                        name="email"
+                                        type="email"
+                                        autoComplete="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Your email address"
+                                        className="h-12"
+                                    />
                                 </div>
-                            )}
 
-                            {/* Submit Button */}
-                            <button
-                                type="submit"
-                                disabled={isLoading || !email}
-                                className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-green-600/50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
-                            >
-                                {isLoading ? (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        Sending...
-                                    </span>
-                                ) : (
-                                    "Login"
+                                {error && (
+                                    <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                                        {error}
+                                    </div>
                                 )}
-                            </button>
-                        </form>
 
+                                {/* Submit Button */}
+                                <Button
+                                    type="submit"
+                                    disabled={isLoading || !email}
+                                    className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Sending...
+                                        </>
+                                    ) : (
+                                        "Continue with Email"
+                                    )}
+                                </Button>
+                            </form>
+                        </CardContent>
 
-                        {/* Terms Message */}
-                        <div className="pt-4 border-t border-gray-200">
-                            <p className="text-xs text-gray-600 text-center leading-relaxed">
-                                By signing up, you agree to our{" "}
-                                <a href="/terms" className="text-green-600 hover:underline font-medium">
-                                    Terms of Service
-                                </a>{" "}
-                                and{" "}
-                                <a href="/privacy" className="text-green-600 hover:underline font-medium">
-                                    Privacy Policy
-                                </a>
-                            </p>
-                        </div>
-                    </div>
+                        <CardFooter className="flex-col gap-4 pt-0">
+                            <div className="w-full border-t pt-4">
+                                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                                    By signing up, you agree to our{" "}
+                                    <a href="/terms" className="text-green-600 hover:underline font-medium">
+                                        Terms of Service
+                                    </a>{" "}
+                                    and{" "}
+                                    <a href="/privacy" className="text-green-600 hover:underline font-medium">
+                                        Privacy Policy
+                                    </a>
+                                </p>
+                            </div>
+                        </CardFooter>
+                    </Card>
                 ) : (
                     /* Success State */
-                    <div className="bg-white rounded-2xl shadow-lg p-8 space-y-8 text-center">
-                        <div className="space-y-4">
-                            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                    <Card className="shadow-lg border-0 text-center">
+                        <CardHeader>
+                            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                                 <Mail className="h-8 w-8 text-green-600" />
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-900">
-                                Check your email
-                            </h2>
-                            <p className="text-gray-600">
-                                We sent a magic link to
-                            </p>
-                            <p className="font-semibold text-gray-900 break-all">{email}</p>
-                        </div>
+                            <CardTitle className="text-2xl">Check your email</CardTitle>
+                            <CardDescription className="space-y-2">
+                                <span className="block">We sent a magic link to</span>
+                                <span className="block font-semibold text-foreground break-all">
+                                    {email}
+                                </span>
+                            </CardDescription>
+                        </CardHeader>
 
-                        <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200/50">
-                            <p className="text-sm text-yellow-800">
-                                ✨ Click the link in the email to sign in. The link expires in 5 minutes.
-                            </p>
-                        </div>
+                        <CardContent>
+                            <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200/50">
+                                <p className="text-sm text-yellow-800">
+                                    ✨ Click the link in the email to sign in. The link expires in 5 minutes.
+                                </p>
+                            </div>
+                        </CardContent>
 
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setIsSent(false);
-                                setEmail("");
-                            }}
-                            className="w-full py-2 px-4 text-green-600 hover:text-green-700 hover:bg-green-50 font-medium rounded-lg transition-colors"
-                        >
-                            ← Use a different email
-                        </button>
-                    </div>
-                )}            </div>
+                        <CardFooter>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => {
+                                    setIsSent(false);
+                                    setEmail("");
+                                }}
+                                className="w-full text-green-600 hover:text-green-700 hover:bg-green-50"
+                            >
+                                ← Use a different email
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                )}
+            </div>
         </div>
     );
 }
