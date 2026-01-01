@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -10,10 +11,7 @@ import {
 import { Plus, FileText, ShoppingCart, Users, Package, BarChart, UsersRound } from "lucide-react";
 
 export function QuickActions() {
-    const handleAction = (action: string) => {
-        // TODO: Implement navigation/actions
-        console.log(`Action: ${action}`);
-    };
+    const router = useRouter();
 
     return (
         <div className="flex items-center gap-2">
@@ -28,11 +26,11 @@ export function QuickActions() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => handleAction("create-report")}>
+                    <DropdownMenuItem onClick={() => router.push("/dashboard/reports/new")}>
                         <BarChart className="h-4 w-4 mr-2" />
                         Report
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleAction("create-team")}>
+                    <DropdownMenuItem onClick={() => router.push("/dashboard/team/new")}>
                         <UsersRound className="h-4 w-4 mr-2" />
                         Team
                     </DropdownMenuItem>
@@ -50,15 +48,15 @@ export function QuickActions() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => handleAction("add-sale")}>
+                    <DropdownMenuItem onClick={() => router.push("/dashboard/sales/new")}>
                         <ShoppingCart className="h-4 w-4 mr-2" />
                         Sale
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleAction("add-customer")}>
+                    <DropdownMenuItem onClick={() => router.push("/dashboard/customers/new")}>
                         <Users className="h-4 w-4 mr-2" />
                         Customer
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleAction("add-product")}>
+                    <DropdownMenuItem onClick={() => router.push("/dashboard/products/new")}>
                         <Package className="h-4 w-4 mr-2" />
                         Product
                     </DropdownMenuItem>
