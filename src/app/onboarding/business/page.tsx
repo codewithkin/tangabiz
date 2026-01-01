@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, UserPlus, Check, Sparkles, Zap, Crown } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSessionRedirect } from "@/lib/use-session-redirect";
@@ -16,7 +16,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { getAllPlans, formatLimit, FEATURE_NAMES, TRIAL_DURATION_DAYS, type Plan } from "@/lib/plans";
+import { getAllPlans, formatLimit, TRIAL_DURATION_DAYS } from "@/lib/plans";
 
 const TOTAL_STEPS = 3;
 
@@ -31,27 +31,23 @@ function ProgressIndicator({ currentStep, totalSteps }: { currentStep: number; t
             {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
                 <div
                     key={step}
-                    className={`h-2 w-12 rounded-full transition-colors ${step <= currentStep ? "bg-green-500" : "bg-gray-300"
-                        }`}
+                    className={`h-2 w-12 rounded-full transition-colors ${step <= currentStep ? "bg-green-500" : "bg-gray-300"}`}
                 />
             ))}
         </div>
     );
 }
 
-export default function BusinessOnboardingPage() {
+function BusinessOnboardingContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     useSessionRedirect(true);
 
-    // Initialize step from query param if present
     const [currentStep, setCurrentStep] = useState(() => {
         const stepParam = searchParams.get("step");
         if (stepParam) {
             const step = parseInt(stepParam, 10);
-            if (step >= 1 && step <= TOTAL_STEPS) {
-                return step;
-            }
+            if (step >= 1 && step <= TOTAL_STEPS) return step;
         }
         return 1;
     });
@@ -60,22 +56,14 @@ export default function BusinessOnboardingPage() {
     const [organizationId, setOrganizationId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
-
-    // Step 2 state (plan selection)
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-    const plans = getAllPlans();
-
-    // Step 3 state (team invites)
     const [invites, setInvites] = useState<Invite[]>([{ email: "", role: "member" }]);
     const [inviteErrors, setInviteErrors] = useState<string[]>([]);
     const [inviteSuccess, setInviteSuccess] = useState<boolean[]>([]);
 
-    const PLAN_ICONS = {
-        starter: Sparkles,
-        growth: Zap,
-        enterprise: Crown,
-    };
+    const plans = getAllPlans();
 
+    const PLAN_ICONS = { starter: Sparkles, growth: Zap, enterprise: Crown };
     const PLAN_COLORS = {
         starter: "border-blue-200 hover:border-blue-400 hover:bg-blue-50/50",
         growth: "border-green-200 hover:border-green-400 hover:bg-green-50/50",
@@ -89,11 +77,7 @@ export default function BusinessOnboardingPage() {
 
         try {
             const slug = shopName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-
-            const { data, error: createError } = await authClient.organization.create({
-                name: shopName,
-                slug,
-            });
+            const { data, error: createError } = await authClient.organization.create({ name: shopName, slug });
 
             if (createError) {
                 setError(createError.message || "Failed to create shop");
@@ -102,9 +86,7 @@ export default function BusinessOnboardingPage() {
             }
 
             if (data?.id) {
-                await authClient.organization.setActive({
-                    organizationId: data.id,
-                });
+                await authClient.organization.setActive({ organizationId: data.id });
                 setOrganizationId(data.id);
                 setCurrentStep(2);
             }
@@ -131,7 +113,6 @@ export default function BusinessOnboardingPage() {
         const updated = [...invites];
         updated[index] = { ...updated[index], [field]: value };
         setInvites(updated);
-        // Clear error when editing
         const errors = [...inviteErrors];
         errors[index] = "";
         setInviteErrors(errors);
@@ -151,14 +132,12 @@ export default function BusinessOnboardingPage() {
         const success = [...inviteSuccess];
 
         try {
-            // First, ensure user account exists
             await fetch("/api/users/ensure", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: invite.email }),
             });
 
-            // Now send the invitation
             const { error: inviteError } = await authClient.organization.inviteMember({
                 email: invite.email,
                 role: invite.role,
@@ -202,7 +181,6 @@ export default function BusinessOnboardingPage() {
         setError("");
 
         try {
-            // Update organization's selected plan
             const res = await fetch("/api/billing/select-plan", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -215,7 +193,6 @@ export default function BusinessOnboardingPage() {
                 return;
             }
 
-            // Redirect to payments page
             router.push("/payments");
         } catch (e) {
             setError("Failed to select plan. Please try again.");
@@ -223,52 +200,21 @@ export default function BusinessOnboardingPage() {
         }
     };
 
-    const handleSkipToFinish = () => {
-        router.push("/dashboard");
-    };
-
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-8">
-            {/* Decorative elements */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-yellow-500/10 rounded-full blur-3xl" />
                 <div className="absolute top-1/2 -left-40 w-80 h-80 bg-green-600/10 rounded-full blur-3xl" />
             </div>
 
             <div className="relative w-full max-w-md space-y-6">
-                {/* Step indicator */}
-                <div className="text-center text-sm text-muted-foreground mb-2">
-                    Step {currentStep} of {TOTAL_STEPS}
-                </div>
+                <div className="text-center text-sm text-muted-foreground mb-2">Step {currentStep} of {TOTAL_STEPS}</div>
                 <ProgressIndicator currentStep={currentStep} totalSteps={TOTAL_STEPS} />
 
-                {/* Back button */}
-                {currentStep === 1 && (
+                {currentStep > 1 && (
                     <Button
                         variant="ghost"
-                        onClick={() => router.back()}
-                        className="text-muted-foreground hover:text-foreground"
-                    >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back
-                    </Button>
-                )}
-
-                {currentStep === 2 && (
-                    <Button
-                        variant="ghost"
-                        onClick={() => setCurrentStep(1)}
-                        className="text-muted-foreground hover:text-foreground"
-                    >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back
-                    </Button>
-                )}
-
-                {currentStep === 3 && (
-                    <Button
-                        variant="ghost"
-                        onClick={() => setCurrentStep(2)}
+                        onClick={() => setCurrentStep(currentStep - 1)}
                         className="text-muted-foreground hover:text-foreground"
                     >
                         <ArrowLeft className="w-4 h-4 mr-2" />
@@ -286,45 +232,32 @@ export default function BusinessOnboardingPage() {
                         {currentStep === 1 && (
                             <>
                                 <CardTitle className="text-2xl">Create your shop</CardTitle>
-                                <CardDescription>
-                                    Set up your business to start using Tangabiz POS
-                                </CardDescription>
+                                <CardDescription>Set up your business to start using Tangabiz POS</CardDescription>
                             </>
                         )}
-
                         {currentStep === 2 && (
                             <>
                                 <CardTitle className="text-2xl">Choose your plan</CardTitle>
-                                <CardDescription>
-                                    Start with a {TRIAL_DURATION_DAYS}-day free trial on any plan
-                                </CardDescription>
+                                <CardDescription>Start with a {TRIAL_DURATION_DAYS}-day free trial on any plan</CardDescription>
                             </>
                         )}
-
                         {currentStep === 3 && (
                             <>
                                 <CardTitle className="text-2xl">Invite your team</CardTitle>
-                                <CardDescription>
-                                    Add team members to help manage {shopName}
-                                </CardDescription>
+                                <CardDescription>Add team members to help manage {shopName}</CardDescription>
                             </>
                         )}
                     </CardHeader>
 
                     <CardContent className="space-y-6">
-                        {/* Step 1: Create Shop */}
                         {currentStep === 1 && (
                             <form onSubmit={handleCreateShop} className="space-y-6">
                                 <div className="space-y-2">
-                                    <label
-                                        htmlFor="shopName"
-                                        className="block text-sm font-medium text-foreground"
-                                    >
+                                    <label htmlFor="shopName" className="block text-sm font-medium text-foreground">
                                         Shop name
                                     </label>
                                     <Input
                                         id="shopName"
-                                        name="shopName"
                                         type="text"
                                         required
                                         value={shopName}
@@ -335,9 +268,7 @@ export default function BusinessOnboardingPage() {
                                 </div>
 
                                 {error && (
-                                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                                        {error}
-                                    </div>
+                                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</div>
                                 )}
 
                                 <Button
@@ -360,13 +291,10 @@ export default function BusinessOnboardingPage() {
                             </form>
                         )}
 
-                        {/* Step 2: Select Plan */}
                         {currentStep === 2 && (
                             <div className="space-y-4">
                                 {error && (
-                                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                                        {error}
-                                    </div>
+                                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</div>
                                 )}
 
                                 {plans.map((plan) => {
@@ -374,23 +302,16 @@ export default function BusinessOnboardingPage() {
                                     return (
                                         <div
                                             key={plan.id}
-                                            className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${PLAN_COLORS[plan.id]} ${selectedPlan === plan.id ? "ring-2 ring-green-500" : ""
-                                                }`}
+                                            className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${PLAN_COLORS[plan.id]} ${selectedPlan === plan.id ? "ring-2 ring-green-500" : ""}`}
                                             onClick={() => !isLoading && setSelectedPlan(plan.id)}
                                         >
                                             {plan.popular && (
-                                                <Badge className="absolute -top-2 right-4 bg-green-600 text-xs">
-                                                    Popular
-                                                </Badge>
+                                                <Badge className="absolute -top-2 right-4 bg-green-600 text-xs">Popular</Badge>
                                             )}
 
                                             <div className="flex items-start gap-4">
-                                                <div className={`p-2 rounded-lg ${plan.id === "starter" ? "bg-blue-100" :
-                                                    plan.id === "growth" ? "bg-green-100" : "bg-purple-100"
-                                                    }`}>
-                                                    <Icon className={`h-5 w-5 ${plan.id === "starter" ? "text-blue-600" :
-                                                        plan.id === "growth" ? "text-green-600" : "text-purple-600"
-                                                        }`} />
+                                                <div className={`p-2 rounded-lg ${plan.id === "starter" ? "bg-blue-100" : plan.id === "growth" ? "bg-green-100" : "bg-purple-100"}`}>
+                                                    <Icon className={`h-5 w-5 ${plan.id === "starter" ? "text-blue-600" : plan.id === "growth" ? "text-green-600" : "text-purple-600"}`} />
                                                 </div>
 
                                                 <div className="flex-1">
@@ -441,7 +362,6 @@ export default function BusinessOnboardingPage() {
                             </div>
                         )}
 
-                        {/* Step 3: Invite Team */}
                         {currentStep === 3 && (
                             <div className="space-y-6">
                                 <div className="space-y-4">
@@ -507,7 +427,7 @@ export default function BusinessOnboardingPage() {
                                     <Button
                                         type="button"
                                         variant="secondary"
-                                        onClick={handleSkipToFinish}
+                                        onClick={() => router.push("/dashboard")}
                                         className="w-1/4 h-12"
                                     >
                                         Skip
@@ -541,5 +461,13 @@ export default function BusinessOnboardingPage() {
                 </Card>
             </div>
         </div>
+    );
+}
+
+export default function BusinessOnboardingPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <BusinessOnboardingContent />
+        </Suspense>
     );
 }
