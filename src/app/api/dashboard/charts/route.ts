@@ -3,6 +3,21 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+interface SaleWithRelations {
+    id: string;
+    receiptNumber: string;
+    subtotal: unknown;
+    tax: unknown;
+    discount: unknown;
+    total: unknown;
+    paymentMethod: string;
+    status: string;
+    createdAt: Date;
+    customer: { name: string; email: string | null } | null;
+    member: { user: { name: string | null; email: string } } | null;
+    items: { product: { name: string }; quantity: number; unitPrice: unknown }[];
+}
+
 export async function GET(request: Request) {
     try {
         const session = await auth.api.getSession({
@@ -110,7 +125,7 @@ export async function GET(request: Request) {
         }));
 
         // Get recent sales for table
-        const recentSales = await prisma.sale.findMany({
+        const recentSales = (await prisma.sale.findMany({
             where: {
                 organizationId,
                 ...(isStaff ? { memberId: member.id } : {}),
@@ -126,7 +141,7 @@ export async function GET(request: Request) {
             },
             orderBy: { createdAt: "desc" },
             take: 20,
-        });
+        })) as unknown as SaleWithRelations[];
 
         const salesTableData = recentSales.map((sale) => ({
             id: sale.id,
@@ -137,7 +152,7 @@ export async function GET(request: Request) {
             items: sale.items.map((item) => ({
                 product: item.product.name,
                 quantity: item.quantity,
-                price: Number(item.price),
+                price: Number(item.unitPrice),
             })),
             subtotal: Number(sale.subtotal),
             tax: Number(sale.tax),
@@ -167,14 +182,14 @@ export async function GET(request: Request) {
 
             // Get purchase totals for each customer
             const customerIds = recentCustomers.map((c) => c.id);
-            const purchaseTotals = await prisma.sale.groupBy({
+            const purchaseTotals = (await prisma.sale.groupBy({
                 by: ["customerId"],
                 where: {
                     customerId: { in: customerIds },
                     status: "completed",
                 },
                 _sum: { total: true },
-            });
+            })) as unknown as { customerId: string; _sum: { total: number | null } }[];
 
             const purchaseMap = new Map(
                 purchaseTotals.map((p) => [p.customerId, Number(p._sum.total || 0)])
