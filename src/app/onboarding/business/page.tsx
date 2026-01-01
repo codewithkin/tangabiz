@@ -320,7 +320,7 @@ function BusinessOnboardingContent() {
                                                         <span className="font-bold">${plan.price}/mo</span>
                                                     </div>
                                                     <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
-                                                    <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                                                    <div className="flex gap-4 mt-2 text-xs text-foreground">
                                                         <span>{formatLimit(plan.limits.maxProducts)} products</span>
                                                         <span>{formatLimit(plan.limits.maxCustomers)} customers</span>
                                                         <span>{formatLimit(plan.limits.maxTeamMembers)} team members</span>
