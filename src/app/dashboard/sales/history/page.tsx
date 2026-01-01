@@ -125,21 +125,21 @@ export default function SalesHistoryPage() {
     };
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("en-KE", {
+        return new Intl.NumberFormat("en-US", {
             style: "currency",
-            currency: "KES",
+            currency: "USD",
         }).format(amount);
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString("en-KE", {
+    const formatDateTime = (dateString: string) => {
+        return new Date(dateString).toLocaleString("en-US", {
             dateStyle: "medium",
             timeStyle: "short",
         });
     };
 
-    const formatDateShort = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString("en-KE", {
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString("en-US", {
             day: "2-digit",
             month: "short",
             year: "numeric",

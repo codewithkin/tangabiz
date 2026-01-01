@@ -224,9 +224,9 @@ export default function POSPage() {
     };
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("en-KE", {
+        return new Intl.NumberFormat("en-US", {
             style: "currency",
-            currency: "KES",
+            currency: "USD",
         }).format(amount);
     };
 
