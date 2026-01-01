@@ -83,6 +83,7 @@ model Organization {
   metadata    String?
   plan        String?  // starter, growth, enterprise - null means no plan selected yet
   planStartedAt DateTime? // When the plan/trial started
+  selectedPlan String?  // The plan user selected (before payment completes)
   members     Member[]
   invitations Invitation[]
 

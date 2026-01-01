@@ -202,21 +202,23 @@ export default function BusinessOnboardingPage() {
         setError("");
 
         try {
-            // Update plan for trial (no checkout yet)
-            const res = await fetch("/api/billing/plan", {
+            // Update organization's selected plan
+            const res = await fetch("/api/billing/select-plan", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ plan: planId }),
+                body: JSON.stringify({ planId }),
             });
 
-            if (res.ok) {
-                setCurrentStep(3); // Move to team invites
-            } else {
+            if (!res.ok) {
                 setError("Failed to select plan. Please try again.");
+                setIsLoading(false);
+                return;
             }
+
+            // Redirect to payments page
+            router.push("/payments");
         } catch (e) {
             setError("Failed to select plan. Please try again.");
-        } finally {
             setIsLoading(false);
         }
     };
