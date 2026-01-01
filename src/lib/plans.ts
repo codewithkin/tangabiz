@@ -30,6 +30,7 @@ export interface Plan {
     price: number; // Monthly price in USD
     yearlyPrice: number; // Yearly price in USD (discounted)
     polarProductId: string; // Polar product ID
+    yearlyPolarProductId: string; // Polar yearly product ID
     limits: PlanLimits;
     popular?: boolean;
 }
@@ -43,6 +44,7 @@ export const PLANS: Record<PlanType, Plan> = {
         price: 19.99,
         yearlyPrice: 203.90, // Save 15%
         polarProductId: process.env.NEXT_PUBLIC_POLAR_STARTER_PRODUCT_ID || "",
+        yearlyPolarProductId: process.env.NEXT_PUBLIC_POLAR_STARTER_YEARLY_PRODUCT_ID || "",
         limits: {
             maxProducts: 50,
             maxCustomers: 100,
@@ -72,6 +74,7 @@ export const PLANS: Record<PlanType, Plan> = {
         price: 49.99,
         yearlyPrice: 509.90, // Save 15%
         polarProductId: process.env.NEXT_PUBLIC_POLAR_GROWTH_PRODUCT_ID || "",
+        yearlyPolarProductId: process.env.NEXT_PUBLIC_POLAR_GROWTH_YEARLY_PRODUCT_ID || "",
         popular: true,
         limits: {
             maxProducts: 500,
@@ -102,6 +105,7 @@ export const PLANS: Record<PlanType, Plan> = {
         price: 89.99,
         yearlyPrice: 917.90, // Save 15%
         polarProductId: process.env.NEXT_PUBLIC_POLAR_ENTERPRISE_PRODUCT_ID || "",
+        yearlyPolarProductId: process.env.NEXT_PUBLIC_POLAR_ENTERPRISE_YEARLY_PRODUCT_ID || "",
         limits: {
             maxProducts: -1, // Unlimited
             maxCustomers: -1, // Unlimited
