@@ -5,7 +5,7 @@ import { SalesChart, SalesDataPoint } from "./sales-chart";
 import { PaymentPieChart, PaymentMethodData } from "./payment-pie-chart";
 import { SalesTable, SaleData } from "./sales-table";
 import { CustomersTable, CustomerData } from "./customers-table";
-import { ExportButton } from "./export-button";
+import { ChartExportButton } from "./chart-export-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
@@ -105,14 +105,6 @@ export function DashboardCharts() {
 
     return (
         <div className="space-y-6">
-            {/* Export button */}
-            <div className="flex justify-end">
-                <ExportButton
-                    salesData={data.salesTable}
-                    customersData={data.customersTable}
-                />
-            </div>
-
             {/* Charts row */}
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2">
@@ -120,18 +112,62 @@ export function DashboardCharts() {
                         data={data.salesChart}
                         timeRange={timeRange}
                         onTimeRangeChange={handleTimeRangeChange}
+                        showExportButton={data.salesTable.length > 0}
+                        exportButton={
+                            data.salesTable.length > 0 ? (
+                                <ChartExportButton
+                                    salesData={data.salesTable}
+                                    customersData={data.customersTable}
+                                    size="sm"
+                                />
+                            ) : null
+                        }
                     />
                 </div>
                 <div>
-                    <PaymentPieChart data={data.paymentChart} />
+                    <PaymentPieChart
+                        data={data.paymentChart}
+                        showExportButton={data.salesTable.length > 0}
+                        exportButton={
+                            data.salesTable.length > 0 ? (
+                                <ChartExportButton
+                                    salesData={data.salesTable}
+                                    customersData={data.customersTable}
+                                    size="sm"
+                                />
+                            ) : null
+                        }
+                    />
                 </div>
             </div>
 
             {/* Tables */}
-            <SalesTable data={data.salesTable} />
+            <SalesTable
+                data={data.salesTable}
+                showExportButton={data.salesTable.length > 0}
+                exportButton={
+                    data.salesTable.length > 0 ? (
+                        <ChartExportButton
+                            salesData={data.salesTable}
+                            customersData={data.customersTable}
+                        />
+                    ) : null
+                }
+            />
 
             {showCustomers && (
-                <CustomersTable data={data.customersTable} />
+                <CustomersTable
+                    data={data.customersTable}
+                    showExportButton={data.customersTable.length > 0}
+                    exportButton={
+                        data.customersTable.length > 0 ? (
+                            <ChartExportButton
+                                salesData={data.salesTable}
+                                customersData={data.customersTable}
+                            />
+                        ) : null
+                    }
+                />
             )}
         </div>
     );
