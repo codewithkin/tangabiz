@@ -21,8 +21,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Save, Package } from "lucide-react";
-import Image from "next/image";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 interface Category {
     id: string;
@@ -211,34 +211,15 @@ export default function NewProductPage() {
                         <CardHeader>
                             <CardTitle>Product Image</CardTitle>
                             <CardDescription>
-                                Visual representation
+                                Upload a product image
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="aspect-square relative bg-muted rounded-lg overflow-hidden">
-                                {imageUrl ? (
-                                    <Image
-                                        src={imageUrl}
-                                        alt={name || "Product"}
-                                        fill
-                                        className="object-cover"
-                                    />
-                                ) : (
-                                    <div className="flex items-center justify-center h-full">
-                                        <Package className="h-16 w-16 text-muted-foreground" />
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="imageUrl">Image URL</Label>
-                                <Input
-                                    id="imageUrl"
-                                    value={imageUrl}
-                                    onChange={(e) => setImageUrl(e.target.value)}
-                                    placeholder="https://..."
-                                />
-                            </div>
+                        <CardContent>
+                            <ImageUpload
+                                value={imageUrl}
+                                onChange={setImageUrl}
+                                folder="products"
+                            />
                         </CardContent>
                     </Card>
 
