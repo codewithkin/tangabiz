@@ -81,6 +81,8 @@ model Organization {
   logo        String?
   createdAt   DateTime
   metadata    String?
+  plan        String?  // starter, growth, enterprise - null means no plan selected yet
+  planStartedAt DateTime? // When the plan/trial started
   members     Member[]
   invitations Invitation[]
 
