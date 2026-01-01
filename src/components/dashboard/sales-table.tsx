@@ -16,6 +16,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Receipt } from "./receipt";
 
 export interface SaleData {
     id: string;
@@ -113,6 +114,7 @@ export function SalesTable({ data, showExportButton, exportButton }: SalesTableP
                                     <TableHead>Payment</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Date</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -137,6 +139,9 @@ export function SalesTable({ data, showExportButton, exportButton }: SalesTableP
                                         <TableCell>{getStatusBadge(sale.status)}</TableCell>
                                         <TableCell className="text-muted-foreground">
                                             {formatDate(sale.createdAt)}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Receipt sale={sale} />
                                         </TableCell>
                                     </TableRow>
                                 ))}
