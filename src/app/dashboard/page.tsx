@@ -2,8 +2,9 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, Users, Package, TrendingUp } from "lucide-react";
+import { DashboardCharts } from "@/components/dashboard";
 
 async function getDashboardStats(userId: string, organizationId: string) {
     const member = await prisma.member.findFirst({
@@ -75,31 +76,12 @@ async function getDashboardStats(userId: string, organizationId: string) {
         AND stock <= "lowStockAlert"
     `;
 
-    // Recent activity
-    const recentSales = await prisma.sale.findMany({
-        where: salesWhere,
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        include: {
-            customer: { select: { name: true } },
-            member: { include: { user: { select: { name: true, email: true } } } },
-        },
-    });
-
     return {
         role: member.role,
         sales: { total: currentSales, count: salesThisMonth._count, change: salesChange },
         customers: customerStats,
         products: { total: totalProducts, lowStock: Number(lowStockCount[0]?.count || 0) },
         revenue: { total: currentSales, change: salesChange },
-        recentActivity: recentSales.map((sale) => ({
-            id: sale.id,
-            receiptNumber: sale.receiptNumber,
-            total: Number(sale.total),
-            customerName: sale.customer?.name || "Walk-in",
-            staffName: sale.member?.user?.name || sale.member?.user?.email || "Unknown",
-            createdAt: sale.createdAt,
-        })),
     };
 }
 
@@ -219,43 +201,8 @@ export default async function DashboardPage() {
                 )}
             </div>
 
-            {/* Recent Activity */}
-            <Card className="border-0 shadow-lg">
-                <CardHeader className="pb-6">
-                    <CardTitle>Recent Activity</CardTitle>
-                    <CardDescription>
-                        Your latest transactions and updates
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {stats.recentActivity.length > 0 ? (
-                        <div className="space-y-4">
-                            {stats.recentActivity.map((sale) => (
-                                <div key={sale.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                                    <div>
-                                        <p className="font-medium">#{sale.receiptNumber}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {sale.customerName} • {sale.staffName}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="font-medium">{formatCurrency(sale.total)}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {new Date(sale.createdAt).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-center py-8">
-                            <p className="text-sm text-muted-foreground">
-                                No recent activity. Start making sales to see your activity here.
-                            </p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+            {/* Charts, Tables, and Export */}
+            <DashboardCharts />
         </div>
     );
 }
