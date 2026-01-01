@@ -147,6 +147,7 @@ model Product {
   description    String?
   sku            String?
   barcode        String?
+  image          String?
   price          Decimal      @db.Decimal(10, 2)
   cost           Decimal?     @db.Decimal(10, 2)
   stock          Int          @default(0)
