@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { NoPlanGuard } from "@/components/no-plan-guard";
 
 export default async function DashboardLayout({
     children,
@@ -32,7 +33,7 @@ export default async function DashboardLayout({
                     </div>
                 </header>
                 <main className="relative z-1 flex-1 p-8">
-                    {children}
+                    <NoPlanGuard>{children}</NoPlanGuard>
                 </main>
             </SidebarInset>
         </SidebarProvider>
