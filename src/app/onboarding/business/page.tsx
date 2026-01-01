@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSessionRedirect } from "@/lib/use-session-redirect";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,16 +15,41 @@ export default function BusinessOnboardingPage() {
     useSessionRedirect(true);
     const [shopName, setShopName] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        setError("");
 
-        // TODO: Create organization via better-auth organization plugin
-        // For now, just redirect to dashboard
-        setTimeout(() => {
+        try {
+            // Create organization (shop) using better-auth organization plugin
+            const slug = shopName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+            const { data, error: createError } = await authClient.organization.create({
+                name: shopName,
+                slug,
+            });
+
+            if (createError) {
+                setError(createError.message || "Failed to create shop");
+                setIsLoading(false);
+                return;
+            }
+
+            // Set the newly created organization as active
+            if (data?.id) {
+                await authClient.organization.setActive({
+                    organizationId: data.id,
+                });
+            }
+
+            // Redirect to dashboard
             router.push("/dashboard");
-        }, 1000);
+        } catch (err) {
+            setError("An unexpected error occurred");
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -72,6 +98,12 @@ export default function BusinessOnboardingPage() {
                                     className="h-12"
                                 />
                             </div>
+
+                            {error && (
+                                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                                    {error}
+                                </div>
+                            )}
 
                             <Button
                                 type="submit"
