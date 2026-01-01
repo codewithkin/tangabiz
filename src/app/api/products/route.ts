@@ -82,8 +82,10 @@ export async function GET(request: Request) {
 
         const { searchParams } = new URL(request.url);
         const search = searchParams.get("search") || "";
+        const lowStock = searchParams.get("lowStock") === "true";
+        const categoryId = searchParams.get("categoryId");
 
-        const products = await prisma.product.findMany({
+        let products = await prisma.product.findMany({
             where: {
                 organizationId,
                 isActive: true,
@@ -94,12 +96,18 @@ export async function GET(request: Request) {
                         { barcode: { contains: search, mode: "insensitive" } },
                     ],
                 }),
+                ...(categoryId && { categoryId }),
             },
             include: {
                 category: { select: { id: true, name: true } },
             },
             orderBy: { name: "asc" },
         });
+
+        // Filter for low stock if requested
+        if (lowStock) {
+            products = products.filter((p) => p.stock <= p.lowStockAlert);
+        }
 
         return NextResponse.json({ products });
     } catch (error) {
