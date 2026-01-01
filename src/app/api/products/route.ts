@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canAddProduct } from "@/lib/plan-limits";
 
 export async function POST(request: Request) {
     try {
@@ -16,6 +17,21 @@ export async function POST(request: Request) {
         const organizationId = session.session.activeOrganizationId;
         if (!organizationId) {
             return NextResponse.json({ error: "No active organization" }, { status: 400 });
+        }
+
+        // Check plan limit
+        const canAdd = await canAddProduct(organizationId);
+        if (!canAdd.allowed) {
+            return NextResponse.json(
+                { 
+                    error: "Plan limit reached",
+                    message: `You've reached your plan's limit of ${canAdd.limit} products. Please upgrade your plan to add more.`,
+                    limitType: "products",
+                    current: canAdd.current,
+                    limit: canAdd.limit,
+                },
+                { status: 403 }
+            );
         }
 
         const body = await request.json();
