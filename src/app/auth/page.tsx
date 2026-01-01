@@ -173,4 +173,7 @@ export default function AuthPage() {
                             ← Use a different email
                         </button>
                     </div>
-                )}
+                )}            </div>
+        </div>
+    );
+}
