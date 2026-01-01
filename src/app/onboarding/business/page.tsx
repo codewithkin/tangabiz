@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, UserPlus, Check, Sparkles, Zap, Crown } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSessionRedirect } from "@/lib/use-session-redirect";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -41,22 +41,34 @@ function ProgressIndicator({ currentStep, totalSteps }: { currentStep: number; t
 
 export default function BusinessOnboardingPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     useSessionRedirect(true);
 
-    const [currentStep, setCurrentStep] = useState(1);
+    // Initialize step from query param if present
+    const [currentStep, setCurrentStep] = useState(() => {
+        const stepParam = searchParams.get("step");
+        if (stepParam) {
+            const step = parseInt(stepParam, 10);
+            if (step >= 1 && step <= TOTAL_STEPS) {
+                return step;
+            }
+        }
+        return 1;
+    });
+
     const [shopName, setShopName] = useState("");
     const [organizationId, setOrganizationId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
 
-    // Step 2 state
+    // Step 2 state (plan selection)
+    const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+    const plans = getAllPlans();
+
+    // Step 3 state (team invites)
     const [invites, setInvites] = useState<Invite[]>([{ email: "", role: "member" }]);
     const [inviteErrors, setInviteErrors] = useState<string[]>([]);
     const [inviteSuccess, setInviteSuccess] = useState<boolean[]>([]);
-
-    // Step 3 state (plan selection)
-    const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-    const plans = getAllPlans();
 
     const PLAN_ICONS = {
         starter: Sparkles,
@@ -170,7 +182,7 @@ export default function BusinessOnboardingPage() {
     const sendAllInvites = async () => {
         const validInvites = invites.filter(inv => inv.email && inv.email.includes("@"));
         if (validInvites.length === 0) {
-            setCurrentStep(3);
+            router.push("/dashboard");
             return;
         }
 
@@ -181,7 +193,7 @@ export default function BusinessOnboardingPage() {
             }
         }
         setIsLoading(false);
-        setCurrentStep(3);
+        router.push("/dashboard");
     };
 
     const handleSelectPlan = async (planId: string) => {
@@ -190,38 +202,27 @@ export default function BusinessOnboardingPage() {
         setError("");
 
         try {
-            // Try to start checkout with Polar
-            await authClient.checkout({
-                slug: planId,
+            // Update plan for trial (no checkout yet)
+            const res = await fetch("/api/billing/plan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ plan: planId }),
             });
-        } catch (err) {
-            // If Polar checkout fails, update plan directly for trial
-            try {
-                const res = await fetch("/api/billing/plan", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ plan: planId }),
-                });
 
-                if (res.ok) {
-                    router.push("/dashboard");
-                } else {
-                    setError("Failed to select plan. Please try again.");
-                }
-            } catch (e) {
+            if (res.ok) {
+                setCurrentStep(3); // Move to team invites
+            } else {
                 setError("Failed to select plan. Please try again.");
             }
+        } catch (e) {
+            setError("Failed to select plan. Please try again.");
         } finally {
             setIsLoading(false);
         }
     };
 
-    const finishOnboarding = () => {
+    const handleSkipToFinish = () => {
         router.push("/dashboard");
-    };
-
-    const handleSkipToStep3 = () => {
-        setCurrentStep(3);
     };
 
     return (
@@ -291,18 +292,18 @@ export default function BusinessOnboardingPage() {
 
                         {currentStep === 2 && (
                             <>
-                                <CardTitle className="text-2xl">Invite your team</CardTitle>
+                                <CardTitle className="text-2xl">Choose your plan</CardTitle>
                                 <CardDescription>
-                                    Add team members to help manage {shopName}
+                                    Start with a {TRIAL_DURATION_DAYS}-day free trial on any plan
                                 </CardDescription>
                             </>
                         )}
 
                         {currentStep === 3 && (
                             <>
-                                <CardTitle className="text-2xl">Choose your plan</CardTitle>
+                                <CardTitle className="text-2xl">Invite your team</CardTitle>
                                 <CardDescription>
-                                    Start with a {TRIAL_DURATION_DAYS}-day free trial on any plan
+                                    Add team members to help manage {shopName}
                                 </CardDescription>
                             </>
                         )}
@@ -357,8 +358,89 @@ export default function BusinessOnboardingPage() {
                             </form>
                         )}
 
-                        {/* Step 2: Invite Team */}
+                        {/* Step 2: Select Plan */}
                         {currentStep === 2 && (
+                            <div className="space-y-4">
+                                {error && (
+                                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                                        {error}
+                                    </div>
+                                )}
+
+                                {plans.map((plan) => {
+                                    const Icon = PLAN_ICONS[plan.id];
+                                    return (
+                                        <div
+                                            key={plan.id}
+                                            className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${PLAN_COLORS[plan.id]} ${selectedPlan === plan.id ? "ring-2 ring-green-500" : ""
+                                                }`}
+                                            onClick={() => !isLoading && setSelectedPlan(plan.id)}
+                                        >
+                                            {plan.popular && (
+                                                <Badge className="absolute -top-2 right-4 bg-green-600 text-xs">
+                                                    Popular
+                                                </Badge>
+                                            )}
+
+                                            <div className="flex items-start gap-4">
+                                                <div className={`p-2 rounded-lg ${plan.id === "starter" ? "bg-blue-100" :
+                                                    plan.id === "growth" ? "bg-green-100" : "bg-purple-100"
+                                                    }`}>
+                                                    <Icon className={`h-5 w-5 ${plan.id === "starter" ? "text-blue-600" :
+                                                        plan.id === "growth" ? "text-green-600" : "text-purple-600"
+                                                        }`} />
+                                                </div>
+
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <h3 className="font-semibold">{plan.name}</h3>
+                                                        <span className="font-bold">${plan.price}/mo</span>
+                                                    </div>
+                                                    <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+                                                    <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                                                        <span>{formatLimit(plan.limits.maxProducts)} products</span>
+                                                        <span>{formatLimit(plan.limits.maxCustomers)} customers</span>
+                                                        <span>{formatLimit(plan.limits.maxTeamMembers)} team members</span>
+                                                    </div>
+                                                </div>
+
+                                                {selectedPlan === plan.id && (
+                                                    <div className="h-5 w-5 rounded-full bg-green-600 flex items-center justify-center">
+                                                        <Check className="h-3 w-3 text-white" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+
+                                <Button
+                                    type="button"
+                                    onClick={() => selectedPlan && handleSelectPlan(selectedPlan)}
+                                    disabled={isLoading || !selectedPlan}
+                                    className="w-full h-12 bg-green-600 hover:bg-green-700 text-white mt-4"
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Continue
+                                            <ArrowRight className="h-4 w-4 ml-2" />
+                                        </>
+                                    )}
+                                </Button>
+
+                                <p className="text-xs text-center text-muted-foreground">
+                                    Start with a {TRIAL_DURATION_DAYS}-day free trial. No credit card required.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Step 3: Invite Team */}
+                        {currentStep === 3 && (
                             <div className="space-y-6">
                                 <div className="space-y-4">
                                     {invites.map((invite, index) => (
@@ -423,7 +505,7 @@ export default function BusinessOnboardingPage() {
                                     <Button
                                         type="button"
                                         variant="secondary"
-                                        onClick={handleSkipToStep3}
+                                        onClick={handleSkipToFinish}
                                         className="w-1/4 h-12"
                                     >
                                         Skip
@@ -442,7 +524,7 @@ export default function BusinessOnboardingPage() {
                                         ) : (
                                             <>
                                                 <UserPlus className="h-4 w-4 mr-2" />
-                                                Send Invites & Continue
+                                                Finish Setup
                                             </>
                                         )}
                                     </Button>
@@ -450,87 +532,6 @@ export default function BusinessOnboardingPage() {
 
                                 <p className="text-xs text-center text-muted-foreground">
                                     Team members will receive an email with a link to join your shop.
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Step 3: Select Plan */}
-                        {currentStep === 3 && (
-                            <div className="space-y-4">
-                                {error && (
-                                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                                        {error}
-                                    </div>
-                                )}
-
-                                {plans.map((plan) => {
-                                    const Icon = PLAN_ICONS[plan.id];
-                                    return (
-                                        <div
-                                            key={plan.id}
-                                            className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${PLAN_COLORS[plan.id]} ${selectedPlan === plan.id ? "ring-2 ring-green-500" : ""
-                                                }`}
-                                            onClick={() => !isLoading && setSelectedPlan(plan.id)}
-                                        >
-                                            {plan.popular && (
-                                                <Badge className="absolute -top-2 right-4 bg-green-600 text-xs">
-                                                    Popular
-                                                </Badge>
-                                            )}
-
-                                            <div className="flex items-start gap-4">
-                                                <div className={`p-2 rounded-lg ${plan.id === "starter" ? "bg-blue-100" :
-                                                        plan.id === "growth" ? "bg-green-100" : "bg-purple-100"
-                                                    }`}>
-                                                    <Icon className={`h-5 w-5 ${plan.id === "starter" ? "text-blue-600" :
-                                                            plan.id === "growth" ? "text-green-600" : "text-purple-600"
-                                                        }`} />
-                                                </div>
-
-                                                <div className="flex-1">
-                                                    <div className="flex items-center justify-between">
-                                                        <h3 className="font-semibold">{plan.name}</h3>
-                                                        <span className="font-bold">${plan.price}/mo</span>
-                                                    </div>
-                                                    <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
-                                                    <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                                                        <span>{formatLimit(plan.limits.maxProducts)} products</span>
-                                                        <span>{formatLimit(plan.limits.maxCustomers)} customers</span>
-                                                        <span>{formatLimit(plan.limits.maxTeamMembers)} team members</span>
-                                                    </div>
-                                                </div>
-
-                                                {selectedPlan === plan.id && (
-                                                    <div className="h-5 w-5 rounded-full bg-green-600 flex items-center justify-center">
-                                                        <Check className="h-3 w-3 text-white" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-
-                                <Button
-                                    type="button"
-                                    onClick={() => selectedPlan && handleSelectPlan(selectedPlan)}
-                                    disabled={isLoading || !selectedPlan}
-                                    className="w-full h-12 bg-green-600 hover:bg-green-700 text-white mt-4"
-                                >
-                                    {isLoading ? (
-                                        <>
-                                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                                            Processing...
-                                        </>
-                                    ) : (
-                                        <>
-                                            Start {TRIAL_DURATION_DAYS}-Day Free Trial
-                                            <ArrowRight className="h-4 w-4 ml-2" />
-                                        </>
-                                    )}
-                                </Button>
-
-                                <p className="text-xs text-center text-muted-foreground">
-                                    No credit card required. You won't be charged until the trial ends.
                                 </p>
                             </div>
                         )}
