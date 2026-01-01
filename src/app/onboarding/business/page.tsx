@@ -351,11 +351,11 @@ export default function BusinessOnboardingPage() {
                                 <div className="flex gap-3">
                                     <Button
                                         type="button"
-                                        variant="outline"
+                                        variant="secondary"
                                         onClick={handleSkip}
-                                        className="flex-1 h-12"
+                                        className="w-1/4 h-12"
                                     >
-                                        Skip for now
+                                        Skip
                                     </Button>
                                     <Button
                                         type="button"
@@ -364,7 +364,7 @@ export default function BusinessOnboardingPage() {
                                             finishOnboarding();
                                         }}
                                         disabled={isLoading}
-                                        className="flex-1 h-12 bg-green-600 hover:bg-green-700 text-white"
+                                        className="w-3/4 h-12 bg-green-600 hover:bg-green-700 text-white"
                                     >
                                         {isLoading ? (
                                             <>
