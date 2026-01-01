@@ -169,10 +169,9 @@ export default function BillingPage() {
                                 {(() => {
                                     const Icon = PLAN_ICONS[currentPlan.id];
                                     return (
-                                        <div className={`p-3 rounded-lg ${
-                                            currentPlan.id === "starter" ? "bg-blue-100" :
-                                            currentPlan.id === "growth" ? "bg-green-100" : "bg-purple-100"
-                                        }`}>
+                                        <div className={`p-3 rounded-lg ${currentPlan.id === "starter" ? "bg-blue-100" :
+                                                currentPlan.id === "growth" ? "bg-green-100" : "bg-purple-100"
+                                            }`}>
                                             <Icon className={`h-6 w-6 ${PLAN_COLORS[currentPlan.id]}`} />
                                         </div>
                                     );
@@ -264,9 +263,8 @@ export default function BillingPage() {
                                 {Object.entries(currentPlan.limits.features).map(([key, enabled]) => (
                                     <div
                                         key={key}
-                                        className={`flex items-center gap-2 text-sm ${
-                                            enabled ? "" : "text-muted-foreground line-through"
-                                        }`}
+                                        className={`flex items-center gap-2 text-sm ${enabled ? "" : "text-muted-foreground line-through"
+                                            }`}
                                     >
                                         <Check className={`h-4 w-4 ${enabled ? "text-green-500" : "text-gray-300"}`} />
                                         <span>{FEATURE_NAMES[key as keyof typeof FEATURE_NAMES]}</span>
@@ -322,7 +320,7 @@ export default function BillingPage() {
                         {allPlans.map((plan) => {
                             const Icon = PLAN_ICONS[plan.id];
                             const isCurrent = planId === plan.id;
-                            const isUpgrade = !planId || 
+                            const isUpgrade = !planId ||
                                 (planId === "starter" && (plan.id === "growth" || plan.id === "enterprise")) ||
                                 (planId === "growth" && plan.id === "enterprise");
 

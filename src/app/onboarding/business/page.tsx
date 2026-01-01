@@ -468,9 +468,8 @@ export default function BusinessOnboardingPage() {
                                     return (
                                         <div
                                             key={plan.id}
-                                            className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${PLAN_COLORS[plan.id]} ${
-                                                selectedPlan === plan.id ? "ring-2 ring-green-500" : ""
-                                            }`}
+                                            className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${PLAN_COLORS[plan.id]} ${selectedPlan === plan.id ? "ring-2 ring-green-500" : ""
+                                                }`}
                                             onClick={() => !isLoading && setSelectedPlan(plan.id)}
                                         >
                                             {plan.popular && (
@@ -480,14 +479,12 @@ export default function BusinessOnboardingPage() {
                                             )}
 
                                             <div className="flex items-start gap-4">
-                                                <div className={`p-2 rounded-lg ${
-                                                    plan.id === "starter" ? "bg-blue-100" :
-                                                    plan.id === "growth" ? "bg-green-100" : "bg-purple-100"
-                                                }`}>
-                                                    <Icon className={`h-5 w-5 ${
-                                                        plan.id === "starter" ? "text-blue-600" :
-                                                        plan.id === "growth" ? "text-green-600" : "text-purple-600"
-                                                    }`} />
+                                                <div className={`p-2 rounded-lg ${plan.id === "starter" ? "bg-blue-100" :
+                                                        plan.id === "growth" ? "bg-green-100" : "bg-purple-100"
+                                                    }`}>
+                                                    <Icon className={`h-5 w-5 ${plan.id === "starter" ? "text-blue-600" :
+                                                            plan.id === "growth" ? "text-green-600" : "text-purple-600"
+                                                        }`} />
                                                 </div>
 
                                                 <div className="flex-1">
