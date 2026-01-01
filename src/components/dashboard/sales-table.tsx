@@ -39,9 +39,11 @@ export interface SaleData {
 
 interface SalesTableProps {
     data: SaleData[];
+    showExportButton?: boolean;
+    exportButton?: React.ReactNode;
 }
 
-export function SalesTable({ data }: SalesTableProps) {
+export function SalesTable({ data, showExportButton, exportButton }: SalesTableProps) {
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat("en-US", {
             style: "currency",
@@ -87,10 +89,15 @@ export function SalesTable({ data }: SalesTableProps) {
     return (
         <Card className="border-0 shadow-lg">
             <CardHeader>
-                <CardTitle>Recent Sales</CardTitle>
-                <CardDescription>
-                    Your latest transactions
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle>Recent Sales</CardTitle>
+                        <CardDescription>
+                            Your latest transactions
+                        </CardDescription>
+                    </div>
+                    {data.length > 0 && showExportButton && exportButton}
+                </div>
             </CardHeader>
             <CardContent>
                 {data.length > 0 ? (

@@ -27,9 +27,11 @@ export interface CustomerData {
 
 interface CustomersTableProps {
     data: CustomerData[];
+    showExportButton?: boolean;
+    exportButton?: React.ReactNode;
 }
 
-export function CustomersTable({ data }: CustomersTableProps) {
+export function CustomersTable({ data, showExportButton, exportButton }: CustomersTableProps) {
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat("en-US", {
             style: "currency",
@@ -48,10 +50,15 @@ export function CustomersTable({ data }: CustomersTableProps) {
     return (
         <Card className="border-0 shadow-lg">
             <CardHeader>
-                <CardTitle>Recent Customers</CardTitle>
-                <CardDescription>
-                    Your latest customer registrations
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle>Recent Customers</CardTitle>
+                        <CardDescription>
+                            Your latest customer registrations
+                        </CardDescription>
+                    </div>
+                    {data.length > 0 && showExportButton && exportButton}
+                </div>
             </CardHeader>
             <CardContent>
                 {data.length > 0 ? (
