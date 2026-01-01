@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canCreateSale } from "@/lib/plan-limits";
 
 export async function POST(request: Request) {
     try {
@@ -16,6 +17,21 @@ export async function POST(request: Request) {
         const organizationId = session.session.activeOrganizationId;
         if (!organizationId) {
             return NextResponse.json({ error: "No active organization" }, { status: 400 });
+        }
+
+        // Check plan limit
+        const canSell = await canCreateSale(organizationId);
+        if (!canSell.allowed) {
+            return NextResponse.json(
+                { 
+                    error: "Plan limit reached",
+                    message: `You've reached your plan's limit of ${canSell.limit} monthly sales. Please upgrade your plan to continue selling.`,
+                    limitType: "monthlySales",
+                    current: canSell.current,
+                    limit: canSell.limit,
+                },
+                { status: 403 }
+            );
         }
 
         // Get member for this user

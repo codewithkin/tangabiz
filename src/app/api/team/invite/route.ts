@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { sendInviteEmail } from "@/lib/email";
 import { randomUUID } from "crypto";
+import { canAddTeamMember } from "@/lib/plan-limits";
 
 export async function POST(request: NextRequest) {
     try {
@@ -32,6 +33,21 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: "You must be part of an organization to invite members" },
                 { status: 400 }
+            );
+        }
+
+        // Check plan limit
+        const canAdd = await canAddTeamMember(activeMember.organizationId);
+        if (!canAdd.allowed) {
+            return NextResponse.json(
+                { 
+                    error: "Plan limit reached",
+                    message: `You've reached your plan's limit of ${canAdd.limit} team members. Please upgrade your plan to invite more.`,
+                    limitType: "teamMembers",
+                    current: canAdd.current,
+                    limit: canAdd.limit,
+                },
+                { status: 403 }
             );
         }
 
