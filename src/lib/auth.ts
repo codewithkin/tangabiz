@@ -41,7 +41,7 @@ export const auth = betterAuth({
     }),
     polar({
       client: polarClient,
-      createCustomerOnSignUp: true, // Customers created during checkout instead
+      createCustomerOnSignUp: false, // Customers created during checkout
       use: [
         checkout({
           products: [
@@ -49,7 +49,7 @@ export const auth = betterAuth({
             { productId: process.env.POLAR_GROWTH_PRODUCT_ID!, slug: "growth" },
             { productId: process.env.POLAR_ENTERPRISE_PRODUCT_ID!, slug: "enterprise" },
           ],
-          successUrl: "/dashboard/billing/success?checkout_id={CHECKOUT_ID}",
+          successUrl: "/payments?status=success",
           authenticatedUsersOnly: true,
         }),
         portal({
