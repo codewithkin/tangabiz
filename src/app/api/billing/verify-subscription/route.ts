@@ -38,13 +38,16 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Fetch subscriptions from Polar using the customer session token
+        // Use server-side Polar API with access token to fetch subscriptions
+        // We'll list all subscriptions and find the ones for this user's email
+        const userEmail = session.user.email;
+
         const polarResponse = await fetch(
-            "https://api.polar.sh/v1/customer-portal/subscriptions",
+            "https://api.polar.sh/v1/subscriptions",
             {
                 method: "GET",
                 headers: {
-                    "Authorization": `Bearer ${customerSessionToken}`,
+                    "Authorization": `Bearer ${process.env.POLAR_ACCESS_TOKEN || ""}`,
                     "Content-Type": "application/json",
                 },
             }
@@ -62,14 +65,16 @@ export async function POST(req: NextRequest) {
         const subscriptionData = await polarResponse.json();
         const subscriptions = subscriptionData.items || [];
 
-        // Find an active subscription
+        // Find an active subscription for this user's email
         const activeSubscription = subscriptions.find(
-            (sub: any) => sub.status === "active" || sub.status === "trialing"
+            (sub: any) =>
+                (sub.status === "active" || sub.status === "trialing") &&
+                sub.customer?.email === userEmail
         );
 
         if (!activeSubscription) {
             return NextResponse.json(
-                { error: "No active subscription found", subscriptions },
+                { error: "No active subscription found for this user", subscriptions: subscriptions.length },
                 { status: 404 }
             );
         }
