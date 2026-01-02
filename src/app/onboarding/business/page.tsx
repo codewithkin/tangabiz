@@ -193,9 +193,25 @@ function BusinessOnboardingContent() {
                 return;
             }
 
-            router.push("/payments");
+            console.log("Selected plan saved, initiating Polar checkout for:", planId);
+
+            // Initiate Polar checkout using Better Auth plugin
+            // This should redirect to Polar's payment page
+            const checkoutResult = await authClient.checkout({
+                slug: planId,
+            });
+
+            console.log("Checkout result:", checkoutResult);
+
+            // If checkout returns a result instead of redirecting, handle the error
+            if (checkoutResult?.error) {
+                console.error("Checkout error:", checkoutResult.error);
+                setError(checkoutResult.error.message || "Failed to initiate checkout.");
+                setIsLoading(false);
+            }
         } catch (e) {
-            setError("Failed to select plan. Please try again.");
+            console.error("Checkout exception:", e);
+            setError(`Failed to initiate checkout: ${e instanceof Error ? e.message : "Unknown error"}`);
             setIsLoading(false);
         }
     };
