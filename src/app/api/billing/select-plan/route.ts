@@ -50,17 +50,7 @@ export async function POST(req: NextRequest) {
             data: { selectedPlan: planId },
         });
 
-        // Map plan slug to server-side Polar product ID
-        let productId: string | null = null;
-        if (planId === "starter") productId = process.env.POLAR_STARTER_PRODUCT_ID || null;
-        if (planId === "growth") productId = process.env.POLAR_GROWTH_PRODUCT_ID || null;
-        if (planId === "enterprise") productId = process.env.POLAR_ENTERPRISE_PRODUCT_ID || null;
-
-        return NextResponse.json({
-            success: true,
-            planId,
-            productId,
-        });
+        return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Error selecting plan:", error);
         return NextResponse.json(
