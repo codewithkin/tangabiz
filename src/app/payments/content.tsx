@@ -16,7 +16,7 @@ export default function PaymentsContent() {
     const { data: org } = useActiveOrganization();
 
     const [status, setStatus] = useState<"success" | "error">("success");
-    
+
     const orgData = org as any;
     const planId = orgData?.plan || orgData?.selectedPlan;
     const plan = planId ? getPlan(planId) : null;
