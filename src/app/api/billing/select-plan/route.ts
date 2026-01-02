@@ -45,14 +45,17 @@ export async function POST(req: NextRequest) {
         }
 
         // Update the selected plan
-        const updatedOrg = await prisma.organization.update({
+        await prisma.organization.update({
             where: { id: org.id },
             data: { selectedPlan: planId },
         });
 
+        // Initiate checkout using Better Auth Polar plugin
+        // The checkout will be handled client-side via authClient.checkout()
+        // This endpoint just saves the selected plan and returns success
         return NextResponse.json({
             success: true,
-            organization: updatedOrg,
+            planId,
         });
     } catch (error) {
         console.error("Error selecting plan:", error);
