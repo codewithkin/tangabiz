@@ -50,12 +50,16 @@ export async function POST(req: NextRequest) {
             data: { selectedPlan: planId },
         });
 
-        // Initiate checkout using Better Auth Polar plugin
-        // The checkout will be handled client-side via authClient.checkout()
-        // This endpoint just saves the selected plan and returns success
+        // Map plan slug to server-side Polar product ID
+        let productId: string | null = null;
+        if (planId === "starter") productId = process.env.POLAR_STARTER_PRODUCT_ID || null;
+        if (planId === "growth") productId = process.env.POLAR_GROWTH_PRODUCT_ID || null;
+        if (planId === "enterprise") productId = process.env.POLAR_ENTERPRISE_PRODUCT_ID || null;
+
         return NextResponse.json({
             success: true,
             planId,
+            productId,
         });
     } catch (error) {
         console.error("Error selecting plan:", error);

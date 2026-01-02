@@ -195,10 +195,10 @@ function BusinessOnboardingContent() {
 
             console.log("Selected plan saved, initiating Polar checkout for:", planId);
 
-            // Initiate Polar checkout using Better Auth plugin with explicit product ID
+            // Use productId returned from server to start checkout
             try {
-                const planObj = getPlan(planId);
-                const productId = planObj?.polarProductId;
+                const data = await res.json();
+                const productId = data?.productId as string | null;
 
                 if (!productId) {
                     setError("No product configured for this plan. Contact support.");
