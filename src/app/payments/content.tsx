@@ -91,19 +91,57 @@ export default function PaymentsContent() {
     // Loading state
     if (status === "loading") {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 to-gray-100 p-8">
                 <div className="fixed inset-0 overflow-hidden pointer-events-none">
                     <div className="absolute -top-40 -right-40 w-80 h-80 bg-yellow-500/10 rounded-full blur-3xl" />
                     <div className="absolute top-1/2 -left-40 w-80 h-80 bg-green-600/10 rounded-full blur-3xl" />
                 </div>
 
                 <div className="relative w-full max-w-md">
-                    <Card className="border-0 shadow-lg">
-                        <CardContent className="py-12 text-center">
-                            <Loader2 className="h-12 w-12 animate-spin text-green-600 mx-auto mb-4" />
-                            <h2 className="text-xl font-semibold mb-2">Verifying your subscription...</h2>
-                            <p className="text-muted-foreground">
-                                Please wait while we confirm your payment with Polar.
+                    <Card className="border-0 shadow-xl">
+                        <CardHeader className="text-center pb-4">
+                            <div className="text-base font-bold mx-auto mb-6">
+                                <span className="text-yellow-400">Tanga</span>
+                                <span className="text-green-600">biz</span>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-8 py-8 text-center">
+                            {/* Animated Loader */}
+                            <div className="flex justify-center">
+                                <div className="relative w-20 h-20">
+                                    <div className="absolute inset-0 rounded-full bg-linear-to-r from-green-500 to-emerald-500 opacity-20 animate-pulse" />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <Loader2 className="h-10 w-10 animate-spin text-green-600" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Text Content */}
+                            <div className="space-y-3">
+                                <h2 className="text-2xl font-bold text-foreground">Verifying Payment</h2>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    We&apos;re confirming your subscription with Polar and activating your plan.
+                                </p>
+                            </div>
+
+                            {/* Progress indicator */}
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                                    <span>Payment received</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <div className="h-2 w-2 rounded-full bg-green-500/50 animate-pulse" />
+                                    <span>Verifying subscription</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <div className="h-2 w-2 rounded-full bg-gray-300" />
+                                    <span>Activating plan</span>
+                                </div>
+                            </div>
+
+                            <p className="text-xs text-muted-foreground pt-4">
+                                This typically takes a few seconds...
                             </p>
                         </CardContent>
                     </Card>
