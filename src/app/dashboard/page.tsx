@@ -1,109 +1,50 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, Users, Package, TrendingUp, Plus, FileText } from "lucide-react";
+import { ShoppingCart, Users, Package, TrendingUp } from "lucide-react";
 import { DashboardCharts } from "@/components/dashboard";
 import { QuickActions } from "@/components/dashboard/quick-actions";
+import { useActiveOrganization, useSession } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-async function getDashboardStats(userId: string, organizationId: string) {
-    const member = await prisma.member.findFirst({
-        where: { userId, organizationId },
-    });
+export default function DashboardPage() {
+    const router = useRouter();
+    const { data: session } = useSession();
+    const { data: org } = useActiveOrganization();
+    const [stats, setStats] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    if (!member) return null;
+    useEffect(() => {
+        if (!session) {
+            router.push("/auth");
+            return;
+        }
 
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const startOfWeek = new Date();
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+        const organizationId = (session as any)?.session?.activeOrganizationId;
+        if (!organizationId) {
+            router.push("/onboarding");
+            return;
+        }
 
-    const isStaff = member.role === "member";
-    const salesWhere = {
-        organizationId,
-        ...(isStaff ? { memberId: member.id } : {}),
-    };
+        // Fetch dashboard stats
+        fetch("/api/dashboard/stats")
+            .then(res => res.json())
+            .then(data => {
+                setStats(data);
+                setLoading(false);
+            })
+            .catch(() => {
+                setLoading(false);
+            });
+    }, [session, router]);
 
-    // Total sales this month
-    const salesThisMonth = await prisma.sale.aggregate({
-        where: {
-            ...salesWhere,
-            createdAt: { gte: startOfMonth },
-            status: "completed",
-        },
-        _sum: { total: true },
-        _count: true,
-    });
-
-    // Total sales last month
-    const salesLastMonth = await prisma.sale.aggregate({
-        where: {
-            ...salesWhere,
-            createdAt: { gte: startOfLastMonth, lt: startOfMonth },
-            status: "completed",
-        },
-        _sum: { total: true },
-    });
-
-    const currentSales = Number(salesThisMonth._sum.total || 0);
-    const lastMonthSales = Number(salesLastMonth._sum.total || 0);
-    const salesChange = lastMonthSales > 0
-        ? ((currentSales - lastMonthSales) / lastMonthSales) * 100
-        : 0;
-
-    // Customers
-    let customerStats = { total: 0, newThisWeek: 0 };
-    if (!isStaff) {
-        const [totalCustomers, newCustomersThisWeek] = await Promise.all([
-            prisma.customer.count({ where: { organizationId } }),
-            prisma.customer.count({
-                where: { organizationId, createdAt: { gte: startOfWeek } },
-            }),
-        ]);
-        customerStats = { total: totalCustomers, newThisWeek: newCustomersThisWeek };
-    }
-
-    // Products
-    const totalProducts = await prisma.product.count({
-        where: { organizationId, isActive: true },
-    });
-
-    const lowStockCount = await prisma.$queryRaw<[{ count: bigint }]>`
-        SELECT COUNT(*) as count FROM product 
-        WHERE "organizationId" = ${organizationId} 
-        AND "isActive" = true 
-        AND stock <= "lowStockAlert"
-    `;
-
-    return {
-        role: member.role,
-        sales: { total: currentSales, count: salesThisMonth._count, change: salesChange },
-        customers: customerStats,
-        products: { total: totalProducts, lowStock: Number(lowStockCount[0]?.count || 0) },
-        revenue: { total: currentSales, change: salesChange },
-    };
-}
-
-export default async function DashboardPage() {
-    const session = await auth.api.getSession({ headers: await headers() });
-
-    if (!session) {
-        redirect("/auth");
-    }
-
-    const organizationId = session.session.activeOrganizationId;
-
-    // If no active organization, redirect to onboarding
-    if (!organizationId) {
-        redirect("/onboarding");
-    }
-
-    const stats = await getDashboardStats(session.user.id, organizationId);
-
-    if (!stats) {
-        redirect("/onboarding");
+    if (loading || !stats) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-muted-foreground">Loading...</div>
+            </div>
+        );
     }
 
     const formatCurrency = (amount: number) => {
@@ -122,7 +63,7 @@ export default async function DashboardPage() {
         <div className="space-y-8">
             <div className="flex items-start justify-between">
                 <div className="space-y-2">
-                    <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">{org?.name || "Dashboard"}</h2>
                     <p className="text-muted-foreground">
                         Welcome back! Here's an overview of your business.
                     </p>

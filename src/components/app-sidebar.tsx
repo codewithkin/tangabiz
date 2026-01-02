@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { useActiveOrganization } from "@/lib/auth-client";
 
 // Navigation item type
 type NavItem = {
@@ -190,10 +191,13 @@ export function AppSidebar() {
     const router = useRouter();
     const { state } = useSidebar();
     const { data: session } = authClient.useSession();
+    const { data: org } = useActiveOrganization();
 
-    // TODO: Get actual user role from session/database
-    // For now, default to admin
-    const userRole = "admin"; // This should come from session.user.role
+    // Get organization data and member info
+    const orgData = org as any;
+    const members = orgData?.members || [];
+    const currentMember = members.find((m: any) => m.userId === session?.user?.id);
+    const userRole = currentMember?.role || "member";
 
     const navigation =
         userRole === "admin" ? adminNavigation :
@@ -214,12 +218,11 @@ export function AppSidebar() {
                         <SidebarMenuButton size="lg" asChild>
                             <a href="/dashboard" className="flex items-center gap-2">
                                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-700 text-white font-bold text-sm">
-                                    T
+                                    {org?.name?.charAt(0)?.toUpperCase() || "T"}
                                 </div>
                                 <div className="flex flex-col gap-0.5 leading-none">
-                                    <span className="font-bold text-base">
-                                        <span className="text-yellow-400">Tanga</span>
-                                        <span className="text-green-600">biz</span>
+                                    <span className="font-bold text-base text-foreground">
+                                        {org?.name || "Your Shop"}
                                     </span>
                                     <span className="text-xs text-muted-foreground">
                                         Smart POS
@@ -293,10 +296,10 @@ export function AppSidebar() {
                                     </div>
                                     <div className="flex flex-col gap-0.5 leading-none">
                                         <span className="font-semibold text-sm">
-                                            {session?.user?.name || session?.user?.email || "User"}
+                                            {session?.user?.name || "User"}
                                         </span>
-                                        <span className="text-xs text-muted-foreground capitalize">
-                                            {userRole}
+                                        <span className="text-xs text-muted-foreground">
+                                            {session?.user?.email}
                                         </span>
                                     </div>
                                     <ChevronDown className="ml-auto h-4 w-4" />

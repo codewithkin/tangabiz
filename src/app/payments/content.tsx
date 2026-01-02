@@ -4,15 +4,22 @@ import { useState, useEffect } from "react";
 import { CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSessionRedirect } from "@/lib/use-session-redirect";
+import { useActiveOrganization } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getPlan } from "@/lib/plans";
 
 export default function PaymentsContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     useSessionRedirect(true);
+    const { data: org } = useActiveOrganization();
 
     const [status, setStatus] = useState<"success" | "error">("success");
+    
+    const orgData = org as any;
+    const planId = orgData?.plan || orgData?.selectedPlan;
+    const plan = planId ? getPlan(planId) : null;
 
     useEffect(() => {
         const statusParam = searchParams.get("status");
@@ -49,7 +56,7 @@ export default function PaymentsContent() {
                                 </div>
                                 <CardTitle className="text-2xl">Payment Successful!</CardTitle>
                                 <CardDescription>
-                                    Your subscription is now active. Let&apos;s finish setting up your shop.
+                                    {org?.name} is now on the {plan?.name || "selected"} plan. Let&apos;s finish setting up your shop.
                                 </CardDescription>
                             </>
                         ) : (

@@ -77,7 +77,7 @@ export default function BillingSuccessPage() {
                     <div className="mx-auto mb-4">
                         <CheckCircle2 className="h-16 w-16 text-green-600" />
                     </div>
-                    <CardTitle className="text-2xl">Welcome to TangaBiz!</CardTitle>
+                    <CardTitle className="text-2xl">Welcome to {org?.name || "TangaBiz"}!</CardTitle>
                     <CardDescription>
                         Your subscription has been activated successfully.
                     </CardDescription>
