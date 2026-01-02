@@ -16,6 +16,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { getAllPlans, getPlan, formatLimit, TRIAL_DURATION_DAYS } from "@/lib/plans";
 
 const TOTAL_STEPS = 3;
@@ -57,6 +59,7 @@ function BusinessOnboardingContent() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+    const [isYearly, setIsYearly] = useState(false);
     const [invites, setInvites] = useState<Invite[]>([{ email: "", role: "member" }]);
     const [inviteErrors, setInviteErrors] = useState<string[]>([]);
     const [inviteSuccess, setInviteSuccess] = useState<boolean[]>([]);
@@ -205,8 +208,8 @@ function BusinessOnboardingContent() {
                     return;
                 }
 
-                // Use monthly product ID (page.tsx doesn't have yearly toggle)
-                const productId = plan.polarProductId;
+                // Use yearly or monthly product ID based on toggle
+                const productId = isYearly ? plan.yearlyPolarProductId : plan.polarProductId;
 
                 if (!productId) {
                     setError("No product configured for this plan. Contact support.");
@@ -334,6 +337,24 @@ function BusinessOnboardingContent() {
                                     <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</div>
                                 )}
 
+                                {/* Yearly/Monthly Toggle */}
+                                <div className="flex items-center justify-center gap-4 mb-6">
+                                    <span className={`text-sm font-medium ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>
+                                        Monthly
+                                    </span>
+                                    <Switch
+                                        checked={isYearly}
+                                        onCheckedChange={setIsYearly}
+                                        className="data-[state=checked]:bg-green-600"
+                                    />
+                                    <span className={`text-sm font-medium ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>
+                                        Yearly
+                                    </span>
+                                    {isYearly && (
+                                        <Badge className="bg-green-100 text-green-800 ml-2 text-xs">Save 15%</Badge>
+                                    )}
+                                </div>
+
                                 {plans.map((plan) => {
                                     const Icon = PLAN_ICONS[plan.id];
                                     return (
@@ -354,7 +375,12 @@ function BusinessOnboardingContent() {
                                                 <div className="flex-1">
                                                     <div className="flex items-center justify-between">
                                                         <h3 className="font-semibold">{plan.name}</h3>
-                                                        <span className="font-bold">${plan.price}/mo</span>
+                                                        <div className="text-right">
+                                                            <span className="font-bold">${isYearly ? (plan.yearlyPrice / 12).toFixed(2) : plan.price}/mo</span>
+                                                            {isYearly && (
+                                                                <div className="text-xs text-muted-foreground">${plan.yearlyPrice}/year</div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
                                                     <div className="flex gap-4 mt-2 text-xs text-foreground">
