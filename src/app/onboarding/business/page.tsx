@@ -16,7 +16,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { getAllPlans, formatLimit, TRIAL_DURATION_DAYS } from "@/lib/plans";
+import { getAllPlans, getPlan, formatLimit, TRIAL_DURATION_DAYS } from "@/lib/plans";
 
 const TOTAL_STEPS = 3;
 
@@ -195,18 +195,31 @@ function BusinessOnboardingContent() {
 
             console.log("Selected plan saved, initiating Polar checkout for:", planId);
 
-            // Initiate Polar checkout using Better Auth plugin
-            // This should redirect to Polar's payment page
-            const checkoutResult = await authClient.checkout({
-                slug: planId,
-            });
+            // Initiate Polar checkout using Better Auth plugin with explicit product ID
+            try {
+                const planObj = getPlan(planId);
+                const productId = planObj?.polarProductId;
 
-            console.log("Checkout result:", checkoutResult);
+                if (!productId) {
+                    setError("No product configured for this plan. Contact support.");
+                    setIsLoading(false);
+                    return;
+                }
 
-            // If checkout returns a result instead of redirecting, handle the error
-            if (checkoutResult?.error) {
-                console.error("Checkout error:", checkoutResult.error);
-                setError(checkoutResult.error.message || "Failed to initiate checkout.");
+                const checkoutResult = await authClient.checkout({
+                    products: [productId],
+                });
+
+                console.log("Checkout result:", checkoutResult);
+
+                if (checkoutResult?.error) {
+                    console.error("Checkout error:", checkoutResult.error);
+                    setError(checkoutResult.error.message || "Failed to initiate checkout.");
+                    setIsLoading(false);
+                }
+            } catch (err) {
+                console.error("Checkout exception:", err);
+                setError(`Failed to initiate checkout: ${err instanceof Error ? err.message : "Unknown error"}`);
                 setIsLoading(false);
             }
         } catch (e) {
