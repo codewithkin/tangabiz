@@ -195,10 +195,18 @@ function BusinessOnboardingContent() {
 
             console.log("Selected plan saved, initiating Polar checkout for:", planId);
 
-            // Use productId returned from server to start checkout
+            // Get productId from plan configuration
             try {
-                const data = await res.json();
-                const productId = data?.productId as string | null;
+                const plan = getPlan(planId);
+
+                if (!plan) {
+                    setError("Plan not found. Please try again.");
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Use monthly product ID (page.tsx doesn't have yearly toggle)
+                const productId = plan.polarProductId;
 
                 if (!productId) {
                     setError("No product configured for this plan. Contact support.");
