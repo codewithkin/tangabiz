@@ -41,7 +41,7 @@ export const auth = betterAuth({
     }),
     polar({
       client: polarClient,
-      createCustomerOnSignUp: false, // Customers created during checkout instead
+      createCustomerOnSignUp: true, // Customers created during checkout instead
       use: [
         checkout({
           products: [
