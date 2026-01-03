@@ -3,8 +3,8 @@ import nodemailer from "nodemailer";
 // Separate transporter for marketing emails
 const marketingTransporter = nodemailer.createTransport({
     host: process.env.MARKETING_SMTP_HOST,
-    port: Number(process.env.MARKETING_SMTP_PORT) || 587,
-    secure: false,
+    port: Number(process.env.MARKETING_SMTP_PORT) || 465,
+    secure: true,
     auth: {
         user: process.env.MARKETING_SMTP_USER,
         pass: process.env.MARKETING_SMTP_PASS,
