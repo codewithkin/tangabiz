@@ -38,8 +38,10 @@ export function useImageUpload(): UseImageUploadReturn {
             }
 
             setProgress(10);
+            console.log("[UPLOAD-HOOK] Starting upload for file:", file.name, file.type);
 
             // Get presigned URL from our API
+            console.log("[UPLOAD-HOOK] Requesting presigned URL from /api/upload");
             const presignedRes = await fetch("/api/upload", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -52,13 +54,16 @@ export function useImageUpload(): UseImageUploadReturn {
 
             if (!presignedRes.ok) {
                 const err = await presignedRes.json();
-                throw new Error(err.error || "Failed to get upload URL");
+                console.error("[UPLOAD-HOOK] Failed to get presigned URL:", err);
+                throw new Error(err.error || `Failed to get upload URL (${presignedRes.status})`);
             }
 
             const { uploadUrl, fileUrl, key } = await presignedRes.json();
+            console.log("[UPLOAD-HOOK] Got presigned URL, uploading to S3...");
             setProgress(30);
 
             // Upload directly to S3
+            console.log("[UPLOAD-HOOK] Uploading file to S3:", uploadUrl.substring(0, 100) + "...");
             const uploadRes = await fetch(uploadUrl, {
                 method: "PUT",
                 headers: {
@@ -67,15 +72,21 @@ export function useImageUpload(): UseImageUploadReturn {
                 body: file,
             });
 
+            console.log("[UPLOAD-HOOK] S3 upload response status:", uploadRes.status, uploadRes.statusText);
             if (!uploadRes.ok) {
-                throw new Error("Failed to upload image to storage");
+                console.error("[UPLOAD-HOOK] S3 upload failed:", uploadRes.status, uploadRes.statusText);
+                const responseText = await uploadRes.text();
+                console.error("[UPLOAD-HOOK] S3 response body:", responseText);
+                throw new Error(`Failed to upload image to storage (${uploadRes.status}: ${uploadRes.statusText})`);
             }
 
+            console.log("[UPLOAD-HOOK] Upload completed successfully");
             setProgress(100);
 
             return { url: fileUrl, key };
         } catch (err) {
             const message = err instanceof Error ? err.message : "Upload failed";
+            console.error("[UPLOAD-HOOK] Error:", message, err);
             setError(message);
             throw err;
         } finally {
