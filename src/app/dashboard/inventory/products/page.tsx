@@ -43,6 +43,14 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
     Plus,
     Search,
     Package,
@@ -53,6 +61,7 @@ import {
     Eye,
     DollarSign,
     Tag,
+    Minus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
@@ -85,6 +94,9 @@ export default function ProductsPage() {
     const [statusFilter, setStatusFilter] = React.useState("all");
     const [deleteId, setDeleteId] = React.useState<string | null>(null);
     const [deleting, setDeleting] = React.useState(false);
+    const [adjustmentProduct, setAdjustmentProduct] = React.useState<Product | null>(null);
+    const [adjustmentQuantity, setAdjustmentQuantity] = React.useState("0");
+    const [adjusting, setAdjusting] = React.useState(false);
 
     React.useEffect(() => {
         fetchData();
@@ -134,6 +146,44 @@ export default function ProductsPage() {
             alert("Failed to delete product");
         } finally {
             setDeleting(false);
+        }
+    };
+
+    const handleAdjustment = async () => {
+        if (!adjustmentProduct) return;
+
+        const quantity = parseInt(adjustmentQuantity);
+        if (isNaN(quantity)) {
+            alert("Please enter a valid number");
+            return;
+        }
+
+        setAdjusting(true);
+        try {
+            const res = await fetch(`/api/products/${adjustmentProduct.id}/stock`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ adjustment: quantity }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setProducts(
+                    products.map((p) =>
+                        p.id === adjustmentProduct.id ? { ...p, stock: data.newStock } : p
+                    )
+                );
+                setAdjustmentProduct(null);
+                setAdjustmentQuantity("0");
+            } else {
+                const error = await res.json();
+                alert(error.error || "Failed to adjust stock");
+            }
+        } catch (error) {
+            console.error("Adjustment error:", error);
+            alert("Failed to adjust stock");
+        } finally {
+            setAdjusting(false);
         }
     };
 
@@ -362,6 +412,15 @@ export default function ProductsPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={() => {
+                                                            setAdjustmentProduct(product);
+                                                            setAdjustmentQuantity("0");
+                                                        }}
+                                                    >
+                                                        <Package className="h-4 w-4 mr-2" />
+                                                        Adjust Stock
+                                                    </DropdownMenuItem>
                                                     <DropdownMenuItem asChild>
                                                         <Link href={`/dashboard/inventory/${product.id}/edit`}>
                                                             <Pencil className="h-4 w-4 mr-2" />
@@ -415,6 +474,69 @@ export default function ProductsPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Stock Adjustment Dialog */}
+            <Dialog open={!!adjustmentProduct} onOpenChange={() => adjustmentProduct && setAdjustmentProduct(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Adjust Stock - {adjustmentProduct?.name}</DialogTitle>
+                        <DialogDescription>
+                            Current stock: <span className="font-bold text-foreground">{adjustmentProduct?.stock}</span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="flex items-center justify-between gap-4">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-10 w-10"
+                                onClick={() => setAdjustmentQuantity(String(parseInt(adjustmentQuantity) - 1))}
+                            >
+                                <Minus className="h-5 w-5" />
+                            </Button>
+                            <div className="flex-1">
+                                <p className="text-sm text-muted-foreground mb-1">Adjustment</p>
+                                <Input
+                                    type="number"
+                                    value={adjustmentQuantity}
+                                    onChange={(e) => setAdjustmentQuantity(e.target.value)}
+                                    className="text-center text-lg font-bold"
+                                    placeholder="0"
+                                />
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-10 w-10"
+                                onClick={() => setAdjustmentQuantity(String(parseInt(adjustmentQuantity) + 1))}
+                            >
+                                <Plus className="h-5 w-5" />
+                            </Button>
+                        </div>
+                        <div className="border-t pt-3">
+                            <p className="text-sm text-muted-foreground mb-2">New stock:</p>
+                            <p className="text-2xl font-bold">
+                                {(adjustmentProduct?.stock || 0) + (parseInt(adjustmentQuantity) || 0)}
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setAdjustmentProduct(null)} disabled={adjusting}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleAdjustment} disabled={adjusting} className="bg-blue-600 hover:bg-blue-700">
+                            {adjusting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Adjusting...
+                                </>
+                            ) : (
+                                "Apply Adjustment"
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

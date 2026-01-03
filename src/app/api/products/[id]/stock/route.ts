@@ -30,9 +30,23 @@ export async function PATCH(
             return NextResponse.json({ error: "Product not found" }, { status: 404 });
         }
 
-        if (body.stock === undefined || body.stock < 0) {
+        // Support both absolute stock value and relative adjustment
+        let newStock: number;
+        if (body.adjustment !== undefined) {
+            // Relative adjustment: +5 or -3
+            newStock = Math.max(0, existingProduct.stock + parseInt(body.adjustment));
+        } else if (body.stock !== undefined) {
+            // Absolute stock value
+            newStock = parseInt(body.stock);
+            if (newStock < 0) {
+                return NextResponse.json(
+                    { error: "Stock cannot be negative" },
+                    { status: 400 }
+                );
+            }
+        } else {
             return NextResponse.json(
-                { error: "Invalid stock value" },
+                { error: "Must provide either 'stock' or 'adjustment'" },
                 { status: 400 }
             );
         }
@@ -40,11 +54,11 @@ export async function PATCH(
         const product = await prisma.product.update({
             where: { id },
             data: {
-                stock: parseInt(body.stock),
+                stock: newStock,
             },
         });
 
-        return NextResponse.json({ product });
+        return NextResponse.json({ product, newStock: product.stock });
     } catch (error) {
         console.error("Update stock error:", error);
         return NextResponse.json(
