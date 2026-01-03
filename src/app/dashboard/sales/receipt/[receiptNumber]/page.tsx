@@ -149,11 +149,6 @@ export default function ReceiptPage() {
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6 print:hidden">
-                    <Link href="/dashboard/sales/pos">
-                        <Button variant="ghost" size="icon">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Button>
-                    </Link>
                     <div className="flex-1">
                         <h1 className="text-2xl font-bold tracking-tight">Receipt</h1>
                         <p className="text-sm text-muted-foreground">#{sale.receiptNumber}</p>

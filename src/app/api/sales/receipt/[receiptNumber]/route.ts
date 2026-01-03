@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -8,23 +6,10 @@ export async function GET(
     { params }: { params: { receiptNumber: string } }
 ) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const organizationId = session.session.activeOrganizationId;
-        if (!organizationId) {
-            return NextResponse.json({ error: "No active organization" }, { status: 400 });
-        }
-
+        // Public endpoint - no auth required for receipt sharing
         const sale = await prisma.sale.findFirst({
             where: {
                 receiptNumber: params.receiptNumber,
-                organizationId,
             },
             include: {
                 items: {
