@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { sendInviteEmail } from "@/lib/email";
-import { randomUUID } from "crypto";
 import { canAddTeamMember } from "@/lib/plan-limits";
 
+/**
+ * POST /api/team/invite
+ * Server-side validation for team member invitations
+ * Checks plan limits and member permissions
+ * The actual invitation is sent via better-auth's organization.inviteMember
+ */
 export async function POST(request: NextRequest) {
     try {
         const session = await auth.api.getSession({
@@ -17,30 +21,35 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { email, role } = body;
+        const { email, role, organizationId } = body;
 
         if (!email) {
             return NextResponse.json({ error: "Email is required" }, { status: 400 });
         }
 
-        // Get user's active organization
-        const activeMember = await prisma.member.findFirst({
-            where: { userId: session.user.id },
-            include: { organization: true },
-        });
+        // Determine the organization ID
+        let targetOrgId = organizationId;
 
-        if (!activeMember) {
-            return NextResponse.json(
-                { error: "You must be part of an organization to invite members" },
-                { status: 400 }
-            );
+        if (!targetOrgId) {
+            const activeMember = await prisma.member.findFirst({
+                where: { userId: session.user.id },
+            });
+
+            if (!activeMember) {
+                return NextResponse.json(
+                    { error: "You must be part of an organization to invite members" },
+                    { status: 400 }
+                );
+            }
+
+            targetOrgId = activeMember.organizationId;
         }
 
         // Check plan limit
-        const canAdd = await canAddTeamMember(activeMember.organizationId);
+        const canAdd = await canAddTeamMember(targetOrgId);
         if (!canAdd.allowed) {
             return NextResponse.json(
-                { 
+                {
                     error: "Plan limit reached",
                     message: `You've reached your plan's limit of ${canAdd.limit} team members. Please upgrade your plan to invite more.`,
                     limitType: "teamMembers",
@@ -52,7 +61,11 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if user is admin or owner
-        if (activeMember.role !== "admin" && activeMember.role !== "owner") {
+        const activeMember = await prisma.member.findFirst({
+            where: { userId: session.user.id, organizationId: targetOrgId },
+        });
+
+        if (!activeMember || (activeMember.role !== "admin" && activeMember.role !== "owner")) {
             return NextResponse.json(
                 { error: "Only admins can invite new members" },
                 { status: 403 }
@@ -62,7 +75,7 @@ export async function POST(request: NextRequest) {
         // Check if user already exists in this organization
         const existingMember = await prisma.member.findFirst({
             where: {
-                organizationId: activeMember.organizationId,
+                organizationId: targetOrgId,
                 user: { email },
             },
         });
@@ -77,7 +90,7 @@ export async function POST(request: NextRequest) {
         // Check for existing pending invitation
         const existingInvitation = await prisma.invitation.findFirst({
             where: {
-                organizationId: activeMember.organizationId,
+                organizationId: targetOrgId,
                 email,
                 status: "pending",
             },
@@ -90,61 +103,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const invitationId = randomUUID();
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-
-        // Create invitation
-        const invitation = await prisma.invitation.create({
-            data: {
-                id: invitationId,
-                email,
-                role: role || "member",
-                organizationId: activeMember.organizationId,
-                inviterId: session.user.id,
-                status: "pending",
-                expiresAt,
-                createdAt: new Date(),
-            },
-        });
-
-        // Build invite link
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-        const inviteLink = `${baseUrl}/accept-invitation/${invitation.id}`;
-
-        // Send invitation email
-        try {
-            await sendInviteEmail({
-                email,
-                inviteLink,
-                inviterName: session.user.name || "",
-                inviterEmail: session.user.email || "",
-                shopName: activeMember.organization.name,
-                role: role || "member",
-            });
-        } catch (emailError) {
-            console.error("Failed to send invitation email:", emailError);
-            // Delete the invitation if email fails
-            await prisma.invitation.delete({ where: { id: invitation.id } });
-            return NextResponse.json(
-                { error: "Failed to send invitation email" },
-                { status: 500 }
-            );
-        }
-
+        // All validations passed - return success
+        // The actual invitation will be sent via authClient.organization.inviteMember on client
         return NextResponse.json({
             success: true,
-            message: `Invitation sent to ${email}`,
-            invitation: {
-                id: invitation.id,
-                email: invitation.email,
-                role: invitation.role,
-                expiresAt: invitation.expiresAt,
-            },
+            message: "Validation passed. Invitation can be sent.",
+            organizationId: targetOrgId,
         });
     } catch (error) {
-        console.error("Invite error:", error);
+        console.error("Invite validation error:", error);
         return NextResponse.json(
-            { error: "Failed to send invitation" },
+            { error: "Failed to validate invitation" },
             { status: 500 }
         );
     }
