@@ -302,38 +302,65 @@ export default function ReceiptPage() {
                 {/* Print Styles */}
                 <style jsx global>{`
                     @media print {
+                        @page {
+                            size: 80mm auto;
+                            margin: 5mm;
+                        }
                         body {
                             margin: 0;
                             padding: 0;
+                        }
+                        .min-h-screen {
+                            min-height: auto !important;
+                            padding: 0 !important;
                         }
                         .max-w-md {
                             max-width: 80mm !important;
                             margin: 0 auto;
                         }
                         * {
-                            font-size: 11px !important;
+                            font-size: 10px !important;
+                            page-break-inside: avoid;
                         }
                         h2 {
-                            font-size: 18px !important;
-                        }
-                        .text-3xl {
-                            font-size: 18px !important;
-                        }
-                        .text-2xl {
                             font-size: 16px !important;
                         }
-                        .text-xl {
+                        .text-3xl {
+                            font-size: 16px !important;
+                        }
+                        .text-2xl {
                             font-size: 14px !important;
                         }
+                        .text-xl {
+                            font-size: 13px !important;
+                        }
                         img {
-                            max-height: 40px !important;
+                            max-height: 35px !important;
                         }
                         .p-3 {
-                            padding: 0.5rem !important;
+                            padding: 0.4rem !important;
                         }
                         .pt-6, .pb-6 {
-                            padding-top: 1rem !important;
-                            padding-bottom: 1rem !important;
+                            padding-top: 0.8rem !important;
+                            padding-bottom: 0.8rem !important;
+                        }
+                        .py-8 {
+                            padding-top: 0 !important;
+                            padding-bottom: 0 !important;
+                        }
+                        .px-4 {
+                            padding-left: 0 !important;
+                            padding-right: 0 !important;
+                        }
+                        .mt-6, .mb-6 {
+                            margin-top: 0.5rem !important;
+                            margin-bottom: 0.5rem !important;
+                        }
+                        .space-y-6 > * + * {
+                            margin-top: 1rem !important;
+                        }
+                        .gap-4, .gap-6 {
+                            gap: 0.5rem !important;
                         }
                     }
                 `}</style>
