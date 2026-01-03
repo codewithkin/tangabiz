@@ -237,7 +237,7 @@ export default function PaymentsContent() {
                                 </div>
 
                                 <Button
-                                    onClick={() => router.push("/onboarding?step=3")}
+                                    onClick={() => router.push("/onboarding/business/?step=3")}
                                     className="w-full h-12 bg-green-600 hover:bg-green-700 text-white"
                                 >
                                     Finish Onboarding
