@@ -329,9 +329,9 @@ export default function POSPage() {
             )}
 
             {/* Main Content */}
-            <div className="flex-1 grid gap-4 lg:grid-cols-3 overflow-hidden">
+            <div className="flex-1 grid gap-4 lg:grid-cols-3 overflow-hidden h-full">
                 {/* Products Grid */}
-                <Card className="border-0 shadow-lg lg:col-span-2 flex flex-col overflow-hidden">
+                <Card className="border-0 shadow-lg lg:col-span-2 flex flex-col overflow-hidden h-full">
                     <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
                             <div>
@@ -412,7 +412,7 @@ export default function POSPage() {
                 </Card>
 
                 {/* Cart */}
-                <Card className="border-0 shadow-lg flex flex-col overflow-hidden">
+                <Card className="border-0 shadow-lg flex flex-col overflow-hidden h-full">
                     <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
                             <div>
