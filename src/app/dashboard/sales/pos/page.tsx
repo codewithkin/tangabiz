@@ -541,8 +541,8 @@ export default function POSPage() {
                                     </PopoverTrigger>
                                     <PopoverContent className="w-full p-0" align="start">
                                         <Command>
-                                            <CommandInput 
-                                                placeholder="Search customers..." 
+                                            <CommandInput
+                                                placeholder="Search customers..."
                                                 value={customerSearch}
                                                 onValueChange={setCustomerSearch}
                                             />
