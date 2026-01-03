@@ -34,25 +34,34 @@ export function NoPlanGuard({ children }: { children: React.ReactNode }) {
     // Fetch full organization data from database (including plan fields)
     React.useEffect(() => {
         const fetchOrgPlan = async () => {
+            console.log("[NoPlanGuard] Starting org plan fetch", { orgId: org?.id, pathname });
+
             if (!org?.id) {
+                console.log("[NoPlanGuard] No org ID found, skipping fetch");
                 setIsLoadingPlan(false);
                 return;
             }
 
             try {
+                console.log("[NoPlanGuard] Fetching org data for:", org.id);
                 // Add cache-busting to ensure fresh data after payment
                 const response = await fetch(`/api/organizations/${org.id}?t=${Date.now()}`, {
                     cache: 'no-store'
                 });
+                console.log("[NoPlanGuard] Fetch response status:", response.status);
+
                 if (response.ok) {
                     const data = await response.json();
+                    console.log("[NoPlanGuard] Org data received:", { plan: data.plan, planStartedAt: data.planStartedAt, orgId: data.id });
                     setOrgPlanData({
                         plan: data.plan,
                         planStartedAt: data.planStartedAt,
                     });
+                } else {
+                    console.error("[NoPlanGuard] Failed to fetch org data:", response.status);
                 }
             } catch (error) {
-                console.error("Error fetching org plan data:", error);
+                console.error("[NoPlanGuard] Error fetching org plan data:", error);
             } finally {
                 setIsLoadingPlan(false);
             }
@@ -62,33 +71,51 @@ export function NoPlanGuard({ children }: { children: React.ReactNode }) {
     }, [org?.id, pathname]); // Re-fetch when pathname changes (e.g., coming from /payments)
 
     React.useEffect(() => {
-        if (isPending) return;
+        console.log("[NoPlanGuard] Plan check effect triggered", { isPending, hasSession: !!session, hasOrg: !!org, pathname, orgPlanData });
+
+        if (isPending) {
+            console.log("[NoPlanGuard] Still pending, skipping check");
+            return;
+        }
 
         // If no session, auth middleware will handle redirect
-        if (!session) return;
+        if (!session) {
+            console.log("[NoPlanGuard] No session found");
+            return;
+        }
 
         // If no org, user needs to complete onboarding
         if (!org) {
+            console.log("[NoPlanGuard] No org found, redirecting to onboarding");
             router.push("/onboarding");
             return;
         }
 
         // Check if current path is exempt
         const isExempt = EXEMPT_PATHS.some((path) => pathname.startsWith(path));
-        if (isExempt) return;
+        console.log("[NoPlanGuard] Path exempt check:", { pathname, isExempt, exemptPaths: EXEMPT_PATHS });
+        if (isExempt) {
+            console.log("[NoPlanGuard] Path is exempt, allowing access");
+            return;
+        }
 
         // Check plan from database
         const plan = orgPlanData?.plan;
         const planStartedAt = orgPlanData?.planStartedAt;
+        console.log("[NoPlanGuard] Checking plan:", { plan, planStartedAt, orgId: org.id });
 
         // If no plan, redirect to billing to select a plan
         if (!plan) {
+            console.error("[NoPlanGuard] NO PLAN FOUND - Redirecting to billing", { orgId: org.id, orgPlanData });
             router.push("/dashboard/billing");
             return;
         }
 
+        console.log("[NoPlanGuard] Plan check passed:", plan);
+
         // If plan exists, check if trial is active (for trial users)
         if (planStartedAt && !isTrialActive(planStartedAt ? new Date(planStartedAt) : null)) {
+            console.log("[NoPlanGuard] Trial expired, redirecting to billing");
             // Trial expired, redirect to billing to upgrade
             router.push("/dashboard/billing?expired=true");
             return;
