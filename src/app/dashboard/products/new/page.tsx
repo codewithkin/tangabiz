@@ -20,7 +20,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Upload, Loader2, ImageIcon } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, ImageIcon, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -29,12 +29,21 @@ interface Category {
     name: string;
 }
 
+interface PlanLimitError {
+    error: string;
+    message: string;
+    limitType: string;
+    current: number;
+    limit: number;
+}
+
 export default function NewProductPage() {
     const router = useRouter();
     const [loading, setLoading] = React.useState(false);
     const [uploading, setUploading] = React.useState(false);
     const [categories, setCategories] = React.useState<Category[]>([]);
     const [imageUrl, setImageUrl] = React.useState<string | null>(null);
+    const [limitError, setLimitError] = React.useState<PlanLimitError | null>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = React.useState({
@@ -51,7 +60,34 @@ export default function NewProductPage() {
 
     React.useEffect(() => {
         fetchCategories();
+        checkLimits();
     }, []);
+
+    // Check plan limits on mount
+    const checkLimits = async () => {
+        try {
+            const res = await fetch("/api/billing/usage");
+            const data = await res.json();
+            
+            if (data.limits && data.usage) {
+                const maxProducts = data.limits.maxProducts;
+                const currentProducts = data.usage.products;
+                
+                // -1 means unlimited
+                if (maxProducts !== -1 && currentProducts >= maxProducts) {
+                    setLimitError({
+                        error: "Plan limit reached",
+                        message: `You've reached your plan's limit of ${maxProducts} products. Please upgrade your plan to add more.`,
+                        limitType: "products",
+                        current: currentProducts,
+                        limit: maxProducts,
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Failed to check limits:", error);
+        }
+    };
 
     const fetchCategories = async () => {
         try {
@@ -122,6 +158,13 @@ export default function NewProductPage() {
 
             if (!res.ok) {
                 const error = await res.json();
+                
+                // Check if it's a plan limit error
+                if (res.status === 403 && error.limitType) {
+                    setLimitError(error as PlanLimitError);
+                    return;
+                }
+                
                 throw new Error(error.error || "Failed to create product");
             }
 
@@ -150,6 +193,27 @@ export default function NewProductPage() {
                 </div>
             </div>
 
+            {/* Plan Limit Warning */}
+            {limitError && (
+                <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="flex items-start gap-4 pt-6">
+                        <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                        <div className="flex-1">
+                            <h3 className="font-medium text-amber-900">Product Limit Reached</h3>
+                            <p className="text-sm text-amber-700 mt-1">{limitError.message}</p>
+                            <p className="text-sm text-amber-600 mt-2">
+                                Current: {limitError.current} / {limitError.limit} products
+                            </p>
+                            <Link href="/dashboard/billing">
+                                <Button className="mt-3 bg-amber-600 hover:bg-amber-700" size="sm">
+                                    Upgrade Plan
+                                </Button>
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             <form onSubmit={handleSubmit}>
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* Main Info */}
@@ -171,6 +235,7 @@ export default function NewProductPage() {
                                         setFormData({ ...formData, name: e.target.value })
                                     }
                                     required
+                                    disabled={!!limitError}
                                 />
                             </div>
 
@@ -388,13 +453,15 @@ export default function NewProductPage() {
                                 <Button
                                     type="submit"
                                     className="w-full bg-green-600 hover:bg-green-700"
-                                    disabled={loading || uploading}
+                                    disabled={loading || uploading || !!limitError}
                                 >
                                     {loading ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                             Creating...
                                         </>
+                                    ) : limitError ? (
+                                        "Limit Reached"
                                     ) : (
                                         "Create Product"
                                     )}
