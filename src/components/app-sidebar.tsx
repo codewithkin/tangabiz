@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
+import Image from "next/image";
 import {
     LayoutDashboard,
     ShoppingCart,
@@ -194,7 +196,7 @@ export function AppSidebar() {
     const { state } = useSidebar();
     const { data: session } = authClient.useSession();
     const { data: org, refetch: refetchOrg } = useActiveOrganization();
-    const [orgPlanData, setOrgPlanData] = React.useState<{ plan: string | null; planStartedAt: string | null } | null>(null);
+    const [orgPlanData, setOrgPlanData] = React.useState<{ plan: string | null; planStartedAt: string | null; logo: string | null } | null>(null);
     const [userOrganizations, setUserOrganizations] = React.useState<any[]>([]);
     const [isLoadingOrgs, setIsLoadingOrgs] = React.useState(false);
     const [isSwitchingOrg, setIsSwitchingOrg] = React.useState(false);
@@ -233,6 +235,7 @@ export function AppSidebar() {
                     setOrgPlanData({
                         plan: data.plan,
                         planStartedAt: data.planStartedAt,
+                        logo: data.logo,
                     });
                 }
             } catch (error) {
@@ -287,9 +290,21 @@ export function AppSidebar() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <SidebarMenuButton size="lg" className="hover:bg-gray-300/50">
-                                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-linear-to-br from-green-600 to-green-700 text-white font-bold text-sm">
-                                        {org?.name?.charAt(0)?.toUpperCase() || "T"}
-                                    </div>
+                                    {orgPlanData?.logo ? (
+                                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden bg-white">
+                                            <Image
+                                                src={orgPlanData.logo}
+                                                alt={org?.name || "Logo"}
+                                                width={32}
+                                                height={32}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-linear-to-br from-green-600 to-green-700 text-white font-bold text-sm">
+                                            {org?.name?.charAt(0)?.toUpperCase() || "T"}
+                                        </div>
+                                    )}
                                     <div className="flex flex-col gap-0.5 leading-none">
                                         <span className="font-bold text-base text-foreground">
                                             {org?.name || "Your Shop"}

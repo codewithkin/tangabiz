@@ -378,10 +378,10 @@ export default function StockPage() {
                                         <TableCell className="text-right">
                                             <span
                                                 className={`font-bold ${product.stock === 0
-                                                        ? "text-red-600"
-                                                        : product.stock <= product.lowStockAlert
-                                                            ? "text-yellow-600"
-                                                            : ""
+                                                    ? "text-red-600"
+                                                    : product.stock <= product.lowStockAlert
+                                                        ? "text-yellow-600"
+                                                        : ""
                                                     }`}
                                             >
                                                 {product.stock}
