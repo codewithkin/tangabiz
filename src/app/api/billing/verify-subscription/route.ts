@@ -1,19 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getUserSubscription } from "@/lib/polar";
+import { getUserSubscription, getPlanTypeFromProductId } from "@/lib/polar";
 import { NextRequest, NextResponse } from "next/server";
-
-// Map Polar product IDs to plan types
-const PRODUCT_ID_TO_PLAN: Record<string, string> = {
-    // Monthly plans
-    [process.env.POLAR_STARTER_PRODUCT_ID || ""]: "starter",
-    [process.env.POLAR_GROWTH_PRODUCT_ID || ""]: "growth",
-    [process.env.POLAR_ENTERPRISE_PRODUCT_ID || ""]: "enterprise",
-    // Yearly plans
-    [process.env.POLAR_STARTER_YEARLY_PRODUCT_ID || ""]: "starter",
-    [process.env.POLAR_GROWTH_YEARLY_PRODUCT_ID || ""]: "growth",
-    [process.env.POLAR_ENTERPRISE_YEARLY_PRODUCT_ID || ""]: "enterprise",
-};
 
 export async function POST(req: NextRequest) {
     try {
@@ -33,6 +21,8 @@ export async function POST(req: NextRequest) {
         const userEmail = session.user.email;
         const activeSubscription = await getUserSubscription(userEmail);
 
+        console.log("Active subscription:", activeSubscription);
+
         if (!activeSubscription) {
             return NextResponse.json(
                 { error: "No active subscription found for this user" },
@@ -40,9 +30,12 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Get the product ID from the subscription
-        const productId = activeSubscription.product_id;
-        const planType = PRODUCT_ID_TO_PLAN[productId];
+        // Get the product ID from the subscription (using correct property name)
+        const productId = activeSubscription.productId;
+        const planType = getPlanTypeFromProductId(productId);
+
+        console.log("Product ID:", productId);
+        console.log("Plan Type:", planType);
 
         if (!planType) {
             console.error("Unknown product ID:", productId);
@@ -80,8 +73,8 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        // Determine billing interval from subscription
-        const isYearly = activeSubscription.recurring_interval === "year";
+        // Determine billing interval from subscription (using correct property name)
+        const isYearly = activeSubscription.recurringInterval === "year";
 
         return NextResponse.json({
             success: true,
@@ -90,7 +83,7 @@ export async function POST(req: NextRequest) {
             subscription: {
                 id: activeSubscription.id,
                 status: activeSubscription.status,
-                currentPeriodEnd: activeSubscription.current_period_end,
+                currentPeriodEnd: activeSubscription.currentPeriodEnd,
                 productName: activeSubscription.product?.name,
             },
         });
