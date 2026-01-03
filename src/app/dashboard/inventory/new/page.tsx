@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { authClient } from "@/lib/auth-client";
 
 interface Category {
     id: string;
@@ -31,6 +32,7 @@ interface Category {
 
 export default function NewProductPage() {
     const router = useRouter();
+    const { data: session } = authClient.useSession();
 
     const [categories, setCategories] = React.useState<Category[]>([]);
     const [loading, setLoading] = React.useState(true);
@@ -218,7 +220,7 @@ export default function NewProductPage() {
                             <ImageUpload
                                 value={imageUrl}
                                 onChange={setImageUrl}
-                                folder="products"
+                                organizationId={session?.session.activeOrganizationId || ""}
                             />
                         </CardContent>
                     </Card>

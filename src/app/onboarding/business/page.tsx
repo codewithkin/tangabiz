@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, UserPlus, Check, Sparkles, Zap, Crown } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Plus, Trash2, UserPlus, Check, Sparkles, Zap, Crown, Camera } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSessionRedirect } from "@/lib/use-session-redirect";
 import { authClient } from "@/lib/auth-client";
@@ -19,6 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { getAllPlans, getPlan, formatLimit, TRIAL_DURATION_DAYS } from "@/lib/plans";
+import { uploadLogo } from "@/lib/s3Client";
+import { toast } from "sonner";
 
 const TOTAL_STEPS = 3;
 
@@ -55,6 +57,8 @@ function BusinessOnboardingContent() {
     });
 
     const [shopName, setShopName] = useState("");
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
+    const [uploadingLogo, setUploadingLogo] = useState(false);
     const [organizationId, setOrganizationId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -80,7 +84,11 @@ function BusinessOnboardingContent() {
 
         try {
             const slug = shopName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-            const { data, error: createError } = await authClient.organization.create({ name: shopName, slug });
+            const { data, error: createError } = await authClient.organization.create({ 
+                name: shopName, 
+                slug,
+                logo: logoUrl || undefined
+            });
 
             if (createError) {
                 setError(createError.message || "Failed to create shop");
@@ -97,6 +105,32 @@ function BusinessOnboardingContent() {
             setError("An unexpected error occurred");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleLogoUpload = async (file: File) => {
+        const MAX_SIZE_MB = 2;
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+            toast.error("Logo must be smaller than 2MB");
+            return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+            toast.error("Please select an image file");
+            return;
+        }
+
+        setUploadingLogo(true);
+
+        try {
+            const { url } = await uploadLogo(file);
+            setLogoUrl(url);
+            toast.success("Logo uploaded successfully!");
+        } catch (error) {
+            console.error('Logo upload error:', error);
+            toast.error("Failed to upload logo. Please try again.");
+        } finally {
+            setUploadingLogo(false);
         }
     };
 
@@ -292,6 +326,41 @@ function BusinessOnboardingContent() {
                     <CardContent className="space-y-6">
                         {currentStep === 1 && (
                             <form onSubmit={handleCreateShop} className="space-y-6">
+                                <div className="flex flex-col items-center gap-4 mb-6">
+                                    <label className="text-sm font-medium">Logo (optional)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                            onChange={(e) =>
+                                                e.target.files &&
+                                                handleLogoUpload(e.target.files[0])
+                                            }
+                                            disabled={uploadingLogo}
+                                        />
+                                        <div className={`w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center transition-all hover:border-gray-400 hover:bg-gray-50 ${
+                                            uploadingLogo ? 'cursor-not-allowed' : 'cursor-pointer'
+                                        }`}>
+                                            {uploadingLogo ? (
+                                                <Loader2 className="w-6 h-6 text-gray-600 animate-spin" />
+                                            ) : logoUrl ? (
+                                                <img
+                                                    src={logoUrl}
+                                                    alt="Logo"
+                                                    className="w-full h-full rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <Camera className="w-6 h-6 text-gray-400" />
+                                            )}
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-gray-500 text-center">
+                                        {logoUrl ? 'Click to change logo' : 'Click to upload logo'}
+                                        <br />PNG, JPG up to 2MB
+                                    </p>
+                                </div>
+
                                 <div className="space-y-2">
                                     <label htmlFor="shopName" className="block text-sm font-medium text-foreground">
                                         Shop name

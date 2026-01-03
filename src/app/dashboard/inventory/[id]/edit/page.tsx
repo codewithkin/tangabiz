@@ -24,6 +24,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { authClient } from "@/lib/auth-client";
 
 interface Category {
     id: string;
@@ -48,6 +49,7 @@ interface Product {
 
 export default function EditProductPage() {
     const params = useParams();
+    const { data: session } = authClient.useSession();
     const router = useRouter();
     const productId = params.id as string;
 
@@ -268,7 +270,7 @@ export default function EditProductPage() {
                             <ImageUpload
                                 value={imageUrl}
                                 onChange={setImageUrl}
-                                folder="products"
+                                organizationId={session?.session.activeOrganizationId || ""}
                             />
                         </CardContent>
                     </Card>

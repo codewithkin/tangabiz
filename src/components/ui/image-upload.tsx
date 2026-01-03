@@ -10,11 +10,11 @@ import { useImageUpload } from "@/hooks/use-image-upload";
 interface ImageUploadProps {
     value: string;
     onChange: (url: string) => void;
-    folder?: string;
+    organizationId: string;
     className?: string;
 }
 
-export function ImageUpload({ value, onChange, folder = "products", className }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, organizationId, className }: ImageUploadProps) {
     const { uploadImage, uploading, progress, error } = useImageUpload();
     const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -23,7 +23,7 @@ export function ImageUpload({ value, onChange, folder = "products", className }:
         if (!file) return;
 
         try {
-            const result = await uploadImage(file, folder);
+            const result = await uploadImage(file, organizationId);
             onChange(result.url);
         } catch (err) {
             // Error is handled by the hook
@@ -94,7 +94,7 @@ export function ImageUpload({ value, onChange, folder = "products", className }:
             </div>
 
             {error && (
-                <div className="mt-3 p-3 border border-red-300 bg-red-50 rounded text-red-700 text-sm">
+                <div className="mt-3 p-3 border border-red-300 bg-red-50 rounded text-red-700 text-sm text-center">
                     {error}
                 </div>
             )}

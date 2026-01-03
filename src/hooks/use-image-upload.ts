@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { uploadProductImage } from "@/lib/s3Client";
 
 interface UploadResult {
     url: string;
@@ -8,7 +9,7 @@ interface UploadResult {
 }
 
 interface UseImageUploadReturn {
-    uploadImage: (file: File, folder?: string) => Promise<UploadResult>;
+    uploadImage: (file: File, organizationId: string) => Promise<UploadResult>;
     uploading: boolean;
     progress: number;
     error: string | null;
@@ -19,7 +20,7 @@ export function useImageUpload(): UseImageUploadReturn {
     const [progress, setProgress] = React.useState(0);
     const [error, setError] = React.useState<string | null>(null);
 
-    const uploadImage = async (file: File, folder = "products"): Promise<UploadResult> => {
+    const uploadImage = async (file: File, organizationId: string): Promise<UploadResult> => {
         setUploading(true);
         setProgress(0);
         setError(null);
@@ -40,50 +41,16 @@ export function useImageUpload(): UseImageUploadReturn {
             setProgress(10);
             console.log("[UPLOAD-HOOK] Starting upload for file:", file.name, file.type);
 
-            // Get presigned URL from our API
-            console.log("[UPLOAD-HOOK] Requesting presigned URL from /api/upload");
-            const presignedRes = await fetch("/api/upload", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    filename: file.name,
-                    contentType: file.type,
-                    folder,
-                }),
-            });
-
-            if (!presignedRes.ok) {
-                const err = await presignedRes.json();
-                console.error("[UPLOAD-HOOK] Failed to get presigned URL:", err);
-                throw new Error(err.error || `Failed to get upload URL (${presignedRes.status})`);
-            }
-
-            const { uploadUrl, fileUrl, key } = await presignedRes.json();
-            console.log("[UPLOAD-HOOK] Got presigned URL, uploading to S3...");
             setProgress(30);
-
-            // Upload directly to S3
-            console.log("[UPLOAD-HOOK] Uploading file to S3:", uploadUrl.substring(0, 100) + "...");
-            const uploadRes = await fetch(uploadUrl, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": file.type,
-                },
-                body: file,
-            });
-
-            console.log("[UPLOAD-HOOK] S3 upload response status:", uploadRes.status, uploadRes.statusText);
-            if (!uploadRes.ok) {
-                console.error("[UPLOAD-HOOK] S3 upload failed:", uploadRes.status, uploadRes.statusText);
-                const responseText = await uploadRes.text();
-                console.error("[UPLOAD-HOOK] S3 response body:", responseText);
-                throw new Error(`Failed to upload image to storage (${uploadRes.status}: ${uploadRes.statusText})`);
-            }
-
+            
+            // Upload directly to S3 using new client
+            console.log("[UPLOAD-HOOK] Uploading file to S3...");
+            const result = await uploadProductImage(file, organizationId);
+            
             console.log("[UPLOAD-HOOK] Upload completed successfully");
             setProgress(100);
 
-            return { url: fileUrl, key };
+            return result;
         } catch (err) {
             const message = err instanceof Error ? err.message : "Upload failed";
             console.error("[UPLOAD-HOOK] Error:", message, err);
