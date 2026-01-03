@@ -19,6 +19,19 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import {
     ArrowLeft,
     Plus,
     Minus,
@@ -33,6 +46,7 @@ import {
     Check,
     Package,
     AlertTriangle,
+    ChevronsUpDown,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -83,6 +97,8 @@ export default function POSPage() {
     const [showSuccess, setShowSuccess] = React.useState(false);
     const [lastReceipt, setLastReceipt] = React.useState<string>("");
     const [limitError, setLimitError] = React.useState<PlanLimitError | null>(null);
+    const [customerSearchOpen, setCustomerSearchOpen] = React.useState(false);
+    const [customerSearch, setCustomerSearch] = React.useState("");
 
     React.useEffect(() => {
         fetchProducts();
@@ -504,24 +520,78 @@ export default function POSPage() {
 
                         {/* Customer Selection */}
                         <div className="space-y-3 border-t pt-3">
-                            <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                                <Select
-                                    value={selectedCustomer}
-                                    onValueChange={setSelectedCustomer}
-                                >
-                                    <SelectTrigger className="flex-1">
-                                        <SelectValue placeholder="Walk-in Customer" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="walk-in">Walk-in Customer</SelectItem>
-                                        {customers.map((customer) => (
-                                            <SelectItem key={customer.id} value={customer.id}>
-                                                {customer.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    Customer
+                                </Label>
+                                <Popover open={customerSearchOpen} onOpenChange={setCustomerSearchOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            aria-expanded={customerSearchOpen}
+                                            className="w-full justify-between"
+                                        >
+                                            {selectedCustomer && selectedCustomer !== "walk-in"
+                                                ? customers.find((c) => c.id === selectedCustomer)?.name
+                                                : "Walk-in Customer"}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-full p-0" align="start">
+                                        <Command>
+                                            <CommandInput 
+                                                placeholder="Search customers..." 
+                                                value={customerSearch}
+                                                onValueChange={setCustomerSearch}
+                                            />
+                                            <CommandList>
+                                                <CommandEmpty>No customer found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    <CommandItem
+                                                        value="walk-in"
+                                                        onSelect={() => {
+                                                            setSelectedCustomer("walk-in");
+                                                            setCustomerSearchOpen(false);
+                                                            setCustomerSearch("");
+                                                        }}
+                                                    >
+                                                        <Check
+                                                            className={`mr-2 h-4 w-4 ${selectedCustomer === "walk-in" ? "opacity-100" : "opacity-0"
+                                                                }`}
+                                                        />
+                                                        Walk-in Customer
+                                                    </CommandItem>
+                                                    {customers.map((customer) => (
+                                                        <CommandItem
+                                                            key={customer.id}
+                                                            value={customer.name}
+                                                            onSelect={() => {
+                                                                setSelectedCustomer(customer.id);
+                                                                setCustomerSearchOpen(false);
+                                                                setCustomerSearch("");
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={`mr-2 h-4 w-4 ${selectedCustomer === customer.id ? "opacity-100" : "opacity-0"
+                                                                    }`}
+                                                            />
+                                                            <div className="flex-1">
+                                                                <div className="font-medium">{customer.name}</div>
+                                                                {customer.email && (
+                                                                    <div className="text-xs text-muted-foreground">
+                                                                        {customer.email}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
 
                             {/* Payment Method */}

@@ -116,7 +116,7 @@ export async function POST(request: Request) {
                 status: "completed",
                 notes: notes || null,
                 organizationId,
-                customerId: customerId || null,
+                customerId: customerId && customerId !== "walk-in" ? customerId : null,
                 memberId: member.id,
                 items: {
                     create: saleItems,
