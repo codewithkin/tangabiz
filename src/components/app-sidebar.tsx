@@ -48,8 +48,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useActiveOrganization } from "@/lib/auth-client";
+import Link from "next/link";
 
 // Navigation item type
 type NavItem = {
@@ -216,6 +217,7 @@ export function AppSidebar() {
     const { state } = useSidebar();
     const { data: session } = authClient.useSession();
     const { data: org, refetch: refetchOrg } = useActiveOrganization();
+    const pathname = usePathname();
     const [orgPlanData, setOrgPlanData] = React.useState<{ plan: string | null; planStartedAt: string | null; logo: string | null } | null>(null);
     const [userOrganizations, setUserOrganizations] = React.useState<any[]>([]);
     const [isLoadingOrgs, setIsLoadingOrgs] = React.useState(false);
@@ -385,37 +387,54 @@ export function AppSidebar() {
                                     <Collapsible key={item.title} defaultOpen className="group/collapsible">
                                         <SidebarMenuItem>
                                             <CollapsibleTrigger asChild>
-                                                <SidebarMenuButton className="hover:bg-gray-300/50">
-                                                    <item.icon className="h-4 w-4" />
-                                                    <span>{item.title}</span>
-                                                    <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                                                </SidebarMenuButton>
+                                                {
+                                                    // Parent is active if any child path matches
+                                                    (() => {
+                                                        const pathname = usePathname();
+                                                        const isParentActive = item.items?.some((si) => pathname?.startsWith(si.url));
+                                                        return (
+                                                            <SidebarMenuButton className="hover:bg-gray-300/50" isActive={!!isParentActive}>
+                                                                <item.icon className="h-4 w-4" />
+                                                                <span>{item.title}</span>
+                                                                <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                                                            </SidebarMenuButton>
+                                                        );
+                                                    })()
+                                                }
                                             </CollapsibleTrigger>
                                             <CollapsibleContent>
                                                 <SidebarMenuSub>
-                                                    {item.items.map((subItem) => (
-                                                        <SidebarMenuSubItem key={subItem.title}>
-                                                            <SidebarMenuSubButton asChild>
-                                                                <a href={subItem.url}>
-                                                                    <span>{subItem.title}</span>
-                                                                </a>
-                                                            </SidebarMenuSubButton>
-                                                        </SidebarMenuSubItem>
-                                                    ))}
+                                                    {item.items.map((subItem) => {
+                                                        const isSubActive = pathname === subItem.url || pathname?.startsWith(subItem.url);
+                                                        return (
+                                                            <SidebarMenuSubItem key={subItem.title}>
+                                                                <SidebarMenuSubButton asChild isActive={!!isSubActive}>
+                                                                    <Link href={subItem.url}>
+                                                                        <span>{subItem.title}</span>
+                                                                    </Link>
+                                                                </SidebarMenuSubButton>
+                                                            </SidebarMenuSubItem>
+                                                        );
+                                                    })}
                                                 </SidebarMenuSub>
                                             </CollapsibleContent>
                                         </SidebarMenuItem>
                                     </Collapsible>
                                 ) : (
                                     // Regular item
-                                    <SidebarMenuItem key={item.title}>
-                                        <SidebarMenuButton asChild className="hover:bg-gray-300/50">
-                                            <a href={item.url}>
-                                                <item.icon className="h-4 w-4" />
-                                                <span>{item.title}</span>
-                                            </a>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
+                                    (() => {
+                                        const isActive = pathname === item.url || pathname?.startsWith(item.url);
+                                        return (
+                                            <SidebarMenuItem key={item.title}>
+                                                <SidebarMenuButton asChild className="hover:bg-gray-300/50" isActive={!!isActive}>
+                                                    <Link href={item.url}>
+                                                        <item.icon className="h-4 w-4" />
+                                                        <span>{item.title}</span>
+                                                    </Link>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        );
+                                    })()
                                 )
                             ))}
                         </SidebarMenu>
