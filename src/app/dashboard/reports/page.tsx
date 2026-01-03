@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -55,29 +56,19 @@ interface ReportStats {
     };
 }
 
+async function fetchReports(dateRange: string): Promise<ReportStats> {
+    const res = await fetch(`/api/reports?days=${dateRange}`);
+    if (!res.ok) throw new Error("Failed to fetch reports");
+    return res.json();
+}
+
 export default function ReportsPage() {
-    const [stats, setStats] = React.useState<ReportStats | null>(null);
-    const [loading, setLoading] = React.useState(true);
     const [dateRange, setDateRange] = React.useState("30");
 
-    React.useEffect(() => {
-        const fetchReports = async () => {
-            setLoading(true);
-            try {
-                const res = await fetch(`/api/reports?days=${dateRange}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setStats(data);
-                }
-            } catch (error) {
-                console.error("Error fetching reports:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchReports();
-    }, [dateRange]);
+    const { data: stats, isLoading } = useQuery({
+        queryKey: ["reports", dateRange],
+        queryFn: () => fetchReports(dateRange),
+    });
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("en-US", {
@@ -130,7 +121,7 @@ export default function ReportsPage() {
         a.click();
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <Loader2 className="h-8 w-8 animate-spin text-green-600" />
@@ -281,10 +272,10 @@ export default function ReportsPage() {
                                             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                                                 <div
                                                     className={`h-full rounded-full ${method.method === "cash"
-                                                            ? "bg-green-500"
-                                                            : method.method === "card"
-                                                                ? "bg-blue-500"
-                                                                : "bg-yellow-500"
+                                                        ? "bg-green-500"
+                                                        : method.method === "card"
+                                                            ? "bg-blue-500"
+                                                            : "bg-yellow-500"
                                                         }`}
                                                     style={{ width: `${percentage}%` }}
                                                 />

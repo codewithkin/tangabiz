@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -91,10 +92,19 @@ interface Invitation {
     createdAt: string;
 }
 
+async function fetchTeamData(): Promise<{ members: TeamMember[]; invitations: Invitation[] }> {
+    const [membersRes, invitationsRes] = await Promise.all([
+        fetch("/api/team/members"),
+        fetch("/api/team/invitations/pending"),
+    ]);
+
+    const members = membersRes.ok ? (await membersRes.json()).members || [] : [];
+    const invitations = invitationsRes.ok ? (await invitationsRes.json()).invitations || [] : [];
+    return { members, invitations };
+}
+
 export default function TeamPage() {
-    const [members, setMembers] = React.useState<TeamMember[]>([]);
-    const [invitations, setInvitations] = React.useState<Invitation[]>([]);
-    const [loading, setLoading] = React.useState(true);
+    const queryClient = useQueryClient();
     const [search, setSearch] = React.useState("");
     const [deleteId, setDeleteId] = React.useState<string | null>(null);
     const [deletingInvitation, setDeletingInvitation] = React.useState<string | null>(null);
@@ -103,32 +113,17 @@ export default function TeamPage() {
     const [isSaving, setIsSaving] = React.useState(false);
     const { data: session } = authClient.useSession();
 
-    const fetchTeam = React.useCallback(async () => {
-        try {
-            const [membersRes, invitationsRes] = await Promise.all([
-                fetch("/api/team/members"),
-                fetch("/api/team/invitations/pending"),
-            ]);
+    const { data, isLoading } = useQuery({
+        queryKey: ["team"],
+        queryFn: fetchTeamData,
+    });
 
-            if (membersRes.ok) {
-                const data = await membersRes.json();
-                setMembers(data.members || []);
-            }
+    const members = data?.members || [];
+    const invitations = data?.invitations || [];
 
-            if (invitationsRes.ok) {
-                const data = await invitationsRes.json();
-                setInvitations(data.invitations || []);
-            }
-        } catch (error) {
-            console.error("Error fetching team:", error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    React.useEffect(() => {
-        fetchTeam();
-    }, [fetchTeam]);
+    const refetchTeam = () => {
+        queryClient.invalidateQueries({ queryKey: ["team"] });
+    };
 
     const handleDeleteMember = async () => {
         if (!deleteId) return;
@@ -139,7 +134,7 @@ export default function TeamPage() {
             });
 
             if (res.ok) {
-                setMembers(members.filter((m) => m.id !== deleteId));
+                refetchTeam();
             }
         } catch (error) {
             console.error("Error removing member:", error);
@@ -156,7 +151,7 @@ export default function TeamPage() {
             });
 
             if (res.ok) {
-                setInvitations(invitations.filter((i) => i.id !== invitationId));
+                refetchTeam();
             }
         } catch (error) {
             console.error("Error canceling invitation:", error);
@@ -177,9 +172,7 @@ export default function TeamPage() {
             });
 
             if (res.ok) {
-                setMembers(members.map((m) =>
-                    m.id === editMember.id ? { ...m, role: editMember.role } : m
-                ));
+                refetchTeam();
                 setIsEditDialogOpen(false);
                 setEditMember(null);
             }
@@ -325,7 +318,7 @@ export default function TeamPage() {
                     </div>
 
                     {/* Table */}
-                    {loading ? (
+                    {isLoading ? (
                         <div className="flex items-center justify-center py-12">
                             <Loader2 className="h-8 w-8 animate-spin text-green-600" />
                         </div>

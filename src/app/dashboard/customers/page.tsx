@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -73,9 +74,15 @@ interface Customer {
     };
 }
 
+async function fetchCustomers(search: string): Promise<Customer[]> {
+    const res = await fetch(`/api/customers?search=${encodeURIComponent(search)}`);
+    if (!res.ok) throw new Error("Failed to fetch customers");
+    const data = await res.json();
+    return data.customers || [];
+}
+
 export default function CustomersPage() {
-    const [customers, setCustomers] = React.useState<Customer[]>([]);
-    const [loading, setLoading] = React.useState(true);
+    const queryClient = useQueryClient();
     const [search, setSearch] = React.useState("");
     const [deleteId, setDeleteId] = React.useState<string | null>(null);
     const [editCustomer, setEditCustomer] = React.useState<Customer | null>(null);
@@ -83,21 +90,14 @@ export default function CustomersPage() {
     const [isNewDialogOpen, setIsNewDialogOpen] = React.useState(false);
     const [isSaving, setIsSaving] = React.useState(false);
 
-    const fetchCustomers = React.useCallback(async () => {
-        try {
-            const res = await fetch(`/api/customers?search=${encodeURIComponent(search)}`);
-            const data = await res.json();
-            setCustomers(data.customers || []);
-        } catch (error) {
-            console.error("Error fetching customers:", error);
-        } finally {
-            setLoading(false);
-        }
-    }, [search]);
+    const { data: customers = [], isLoading } = useQuery({
+        queryKey: ["customers", search],
+        queryFn: () => fetchCustomers(search),
+    });
 
-    React.useEffect(() => {
-        fetchCustomers();
-    }, [fetchCustomers]);
+    const refetchCustomers = () => {
+        queryClient.invalidateQueries({ queryKey: ["customers"] });
+    };
 
     const handleDelete = async () => {
         if (!deleteId) return;
@@ -108,7 +108,7 @@ export default function CustomersPage() {
             });
 
             if (res.ok) {
-                setCustomers(customers.filter((c) => c.id !== deleteId));
+                refetchCustomers();
             }
         } catch (error) {
             console.error("Error deleting customer:", error);
@@ -129,10 +129,7 @@ export default function CustomersPage() {
             });
 
             if (res.ok) {
-                const data = await res.json();
-                setCustomers(customers.map((c) =>
-                    c.id === editCustomer.id ? { ...c, ...data.customer } : c
-                ));
+                refetchCustomers();
                 setIsEditDialogOpen(false);
                 setEditCustomer(null);
             }
@@ -234,7 +231,7 @@ export default function CustomersPage() {
                     </div>
 
                     {/* Table */}
-                    {loading ? (
+                    {isLoading ? (
                         <div className="flex items-center justify-center py-12">
                             <Loader2 className="h-8 w-8 animate-spin text-green-600" />
                         </div>
@@ -457,7 +454,7 @@ export default function CustomersPage() {
             <NewCustomerDialog
                 open={isNewDialogOpen}
                 onOpenChange={setIsNewDialogOpen}
-                onSuccess={fetchCustomers}
+                onSuccess={refetchCustomers}
             />
         </div>
     );
