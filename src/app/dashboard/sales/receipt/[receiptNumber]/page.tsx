@@ -16,6 +16,7 @@ import {
     Loader2,
     Printer,
     Download,
+    Share2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -90,6 +91,30 @@ export default function ReceiptPage() {
         window.print();
     };
 
+    const handleDownload = () => {
+        window.print();
+    };
+
+    const handleShare = async () => {
+        if (navigator.share && sale) {
+            try {
+                await navigator.share({
+                    title: `Receipt ${sale.receiptNumber}`,
+                    text: `Receipt for ${formatCurrency(sale.total)} - ${sale.receiptNumber}`,
+                    url: window.location.href,
+                });
+            } catch (err) {
+                if ((err as Error).name !== 'AbortError') {
+                    console.error('Share failed:', err);
+                }
+            }
+        } else {
+            // Fallback: copy link to clipboard
+            navigator.clipboard.writeText(window.location.href);
+            alert('Receipt link copied to clipboard!');
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -119,36 +144,61 @@ export default function ReceiptPage() {
     }
 
     return (
-        <div className="min-h-screen bg-muted/50 py-8 px-4">
+        <div className="min-h-screen bg-white py-8 px-4">
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
-                <div className="flex items-center gap-4 mb-6">
-                    <Link href="/dashboard/sales">
+                <div className="flex items-center gap-4 mb-6 print:hidden">
+                    <Link href="/dashboard/sales/pos">
                         <Button variant="ghost" size="icon">
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
                     </Link>
                     <div className="flex-1">
-                        <h1 className="text-3xl font-bold tracking-tight">Receipt</h1>
-                        <p className="text-muted-foreground">#{sale.receiptNumber}</p>
-                    </div>
-                    <div className="flex gap-2 print:hidden">
-                        <Button variant="outline" size="icon" onClick={handlePrint}>
-                            <Printer className="h-4 w-4" />
-                        </Button>
+                        <h1 className="text-2xl font-bold tracking-tight">Receipt</h1>
+                        <p className="text-sm text-muted-foreground">#{sale.receiptNumber}</p>
                     </div>
                 </div>
 
+                {/* Action Buttons */}
+                <div className="flex gap-2 mb-6 print:hidden">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePrint}
+                        className="w-[10%]"
+                    >
+                        <Printer className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleShare}
+                        className="w-[10%]"
+                    >
+                        <Share2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        onClick={handleDownload}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Receipt
+                    </Button>
+                </div>
+
                 {/* Receipt Card */}
-                <Card className="border-0 shadow-lg print:shadow-none print:border">
-                    <CardHeader className="border-b pb-4">
+                <Card className="border-2 shadow-sm print:shadow-none">
+                    <CardHeader className="border-b-2 border-green-600 pb-6">
+                        <div className="text-center mb-4">
+                            <h2 className="text-2xl font-bold text-green-600">RECEIPT</h2>
+                        </div>
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                                <p className="text-muted-foreground mb-1">Receipt Number</p>
-                                <p className="font-mono font-bold text-lg">{sale.receiptNumber}</p>
+                                <p className="text-xs text-muted-foreground mb-1">Receipt Number</p>
+                                <p className="font-mono font-bold">{sale.receiptNumber}</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-muted-foreground mb-1">Date</p>
+                                <p className="text-xs text-muted-foreground mb-1">Date</p>
                                 <p className="font-medium">{formatDate(sale.createdAt)}</p>
                             </div>
                         </div>
@@ -156,60 +206,57 @@ export default function ReceiptPage() {
 
                     <CardContent className="pt-6 space-y-6">
                         {/* Customer & Staff Info */}
-                        <div>
-                            <h3 className="font-semibold mb-3">Transaction Details</h3>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <p className="text-muted-foreground">Customer</p>
-                                    <p className="font-medium">
-                                        {sale.customer?.name || "Walk-in Customer"}
-                                    </p>
-                                    {sale.customer?.email && (
-                                        <p className="text-muted-foreground text-xs">{sale.customer.email}</p>
-                                    )}
-                                    {sale.customer?.phone && (
-                                        <p className="text-muted-foreground text-xs">{sale.customer.phone}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-muted-foreground">Staff</p>
-                                    <p className="font-medium">
-                                        {sale.member?.user.name || "Unknown"}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-muted-foreground">Payment Method</p>
-                                    <p className="font-medium capitalize">{sale.paymentMethod}</p>
-                                </div>
-                                <div>
-                                    <p className="text-muted-foreground">Status</p>
-                                    <Badge className="capitalize">{sale.status}</Badge>
-                                </div>
+                        <div className="grid grid-cols-2 gap-6 text-sm pb-4 border-b">
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Customer</p>
+                                <p className="font-medium">
+                                    {sale.customer?.name || "Walk-in Customer"}
+                                </p>
+                                {sale.customer?.email && (
+                                    <p className="text-muted-foreground text-xs">{sale.customer.email}</p>
+                                )}
+                                {sale.customer?.phone && (
+                                    <p className="text-muted-foreground text-xs">{sale.customer.phone}</p>
+                                )}
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Staff</p>
+                                <p className="font-medium">
+                                    {sale.member?.user.name || "Unknown"}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Payment Method</p>
+                                <p className="font-medium capitalize">{sale.paymentMethod}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Status</p>
+                                <Badge variant="outline" className="capitalize">{sale.status}</Badge>
                             </div>
                         </div>
 
                         {/* Items */}
                         <div>
-                            <h3 className="font-semibold mb-3">Items</h3>
+                            <h3 className="font-semibold mb-3 text-sm">Items Purchased</h3>
                             <div className="border rounded-lg overflow-hidden">
                                 <table className="w-full text-sm">
-                                    <thead className="bg-muted">
+                                    <thead className="bg-gray-50 border-b">
                                         <tr>
-                                            <th className="text-left p-2">Product</th>
-                                            <th className="text-center p-2">Qty</th>
-                                            <th className="text-right p-2">Unit Price</th>
-                                            <th className="text-right p-2">Total</th>
+                                            <th className="text-left p-3 font-medium">Product</th>
+                                            <th className="text-center p-3 font-medium">Qty</th>
+                                            <th className="text-right p-3 font-medium">Unit Price</th>
+                                            <th className="text-right p-3 font-medium">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {sale.items.map((item) => (
-                                            <tr key={item.id} className="border-t">
-                                                <td className="p-2">{item.product.name}</td>
-                                                <td className="text-center p-2">{item.quantity}</td>
-                                                <td className="text-right p-2">
+                                        {sale.items.map((item, index) => (
+                                            <tr key={item.id} className={index !== sale.items.length - 1 ? "border-b" : ""}>
+                                                <td className="p-3">{item.product.name}</td>
+                                                <td className="text-center p-3">{item.quantity}</td>
+                                                <td className="text-right p-3 text-muted-foreground">
                                                     {formatCurrency(item.unitPrice)}
                                                 </td>
-                                                <td className="text-right p-2 font-medium">
+                                                <td className="text-right p-3 font-medium">
                                                     {formatCurrency(item.total)}
                                                 </td>
                                             </tr>
@@ -220,32 +267,32 @@ export default function ReceiptPage() {
                         </div>
 
                         {/* Totals */}
-                        <div className="border-t pt-4 space-y-2 text-sm">
+                        <div className="border-t-2 pt-4 space-y-2 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Subtotal</span>
-                                <span>{formatCurrency(sale.subtotal)}</span>
+                                <span className="font-medium">{formatCurrency(sale.subtotal)}</span>
                             </div>
                             {sale.tax > 0 && (
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Tax</span>
-                                    <span>{formatCurrency(sale.tax)}</span>
+                                    <span className="font-medium">{formatCurrency(sale.tax)}</span>
                                 </div>
                             )}
                             {sale.discount > 0 && (
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Discount</span>
-                                    <span>-{formatCurrency(sale.discount)}</span>
+                                    <span className="font-medium">-{formatCurrency(sale.discount)}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                                <span>Total</span>
+                            <div className="flex justify-between text-xl font-bold pt-3 border-t-2 border-green-600">
+                                <span>Total Paid</span>
                                 <span className="text-green-600">{formatCurrency(sale.total)}</span>
                             </div>
                         </div>
 
                         {sale.notes && (
                             <div className="border-t pt-4">
-                                <p className="text-xs text-muted-foreground">Notes</p>
+                                <p className="text-xs text-muted-foreground mb-1">Notes</p>
                                 <p className="text-sm">{sale.notes}</p>
                             </div>
                         )}
@@ -253,9 +300,9 @@ export default function ReceiptPage() {
                 </Card>
 
                 {/* Print Footer */}
-                <div className="text-center text-xs text-muted-foreground mt-6 print:block hidden">
-                    <p>Thank you for your purchase!</p>
-                    <p>Please keep this receipt for your records.</p>
+                <div className="text-center text-sm text-muted-foreground mt-6">
+                    <p className="font-medium">Thank you for your purchase!</p>
+                    <p className="text-xs mt-1">Please keep this receipt for your records.</p>
                 </div>
             </div>
 
@@ -268,8 +315,8 @@ export default function ReceiptPage() {
                     .print\\:hidden {
                         display: none !important;
                     }
-                    .print\\:block {
-                        display: block !important;
+                    @page {
+                        margin: 1cm;
                     }
                 }
             `}</style>
