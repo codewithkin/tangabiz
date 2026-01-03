@@ -3,11 +3,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertCircle } from "lucide-react";
-import {
-    Alert,
-    AlertDescription,
-} from "@/components/ui/alert";
+import { Loader2, Upload, X, ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { useImageUpload } from "@/hooks/use-image-upload";
 
@@ -98,13 +94,9 @@ export function ImageUpload({ value, onChange, folder = "products", className }:
             </div>
 
             {error && (
-                <Alert variant="destructive" className="mt-3">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                        <div className="font-semibold">Upload failed</div>
-                        <div className="text-sm mt-1">{error}</div>
-                    </AlertDescription>
-                </Alert>
+                <div className="mt-3 p-3 border border-red-300 bg-red-50 rounded text-red-700 text-sm">
+                    {error}
+                </div>
             )}
 
             {value && (
