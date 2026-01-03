@@ -64,9 +64,10 @@ export async function POST(req: NextRequest) {
         console.log("[API /verify-subscription] Finding ACTIVE organization for user:", session.user.id);
         
         // First try to get the active organization from session
-        let org = session.user.activeOrganizationId 
+        const activeOrgId = session.session.activeOrganizationId;
+        let org = activeOrgId 
             ? await prisma.organization.findUnique({
-                where: { id: session.user.activeOrganizationId },
+                where: { id: activeOrgId },
               })
             : null;
 
