@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/helpers/auth/session";
-import prisma from "@/lib/prisma";
+import { getSession } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
 
 interface RouteParams {
     params: Promise<{ id: string }>;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/helpers/auth/session";
-import prisma from "@/lib/prisma";
+import { getSession } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
 import { sendBulkMarketingEmails } from "@/lib/marketing-email";
 
 interface RouteParams {
@@ -78,15 +78,16 @@ export async function POST(_request: Request, { params }: RouteParams) {
         });
 
         // Create recipient records
-        const recipients = customers
-            .filter((c): c is { email: string; name: string } => c.email !== null)
+        type CustomerWithEmail = { email: string; name: string };
+        const recipients: CustomerWithEmail[] = customers
+            .filter((c): c is CustomerWithEmail => c.email !== null)
             .map((c) => ({
                 email: c.email,
                 name: c.name,
             }));
 
         await prisma.emailRecipient.createMany({
-            data: recipients.map((r) => ({
+            data: recipients.map((r: CustomerWithEmail) => ({
                 campaignId: id,
                 email: r.email,
                 name: r.name,
