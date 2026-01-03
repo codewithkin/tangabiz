@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
 
         // Build invite link
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-        const inviteLink = `${baseUrl}/invite/${invitation.id}`;
+        const inviteLink = `${baseUrl}/accept-invitation/${invitation.id}`;
 
         // Send invitation email
         try {
