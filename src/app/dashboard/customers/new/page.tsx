@@ -13,12 +13,21 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+
+interface PlanLimitError {
+    error: string;
+    message: string;
+    limitType: string;
+    current: number;
+    limit: number;
+}
 
 export default function NewCustomerPage() {
     const router = useRouter();
     const [loading, setLoading] = React.useState(false);
+    const [limitError, setLimitError] = React.useState<PlanLimitError | null>(null);
 
     const [formData, setFormData] = React.useState({
         name: "",
@@ -27,6 +36,36 @@ export default function NewCustomerPage() {
         address: "",
         notes: "",
     });
+
+    // Check plan limits on mount
+    React.useEffect(() => {
+        const checkLimits = async () => {
+            try {
+                const res = await fetch("/api/billing/usage");
+                const data = await res.json();
+                
+                if (data.limits && data.usage) {
+                    const maxCustomers = data.limits.maxCustomers;
+                    const currentCustomers = data.usage.customers;
+                    
+                    // -1 means unlimited
+                    if (maxCustomers !== -1 && currentCustomers >= maxCustomers) {
+                        setLimitError({
+                            error: "Plan limit reached",
+                            message: `You've reached your plan's limit of ${maxCustomers} customers. Please upgrade your plan to add more.`,
+                            limitType: "customers",
+                            current: currentCustomers,
+                            limit: maxCustomers,
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to check limits:", error);
+            }
+        };
+        
+        checkLimits();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,6 +80,13 @@ export default function NewCustomerPage() {
 
             if (!res.ok) {
                 const error = await res.json();
+                
+                // Check if it's a plan limit error
+                if (res.status === 403 && error.limitType) {
+                    setLimitError(error as PlanLimitError);
+                    return;
+                }
+                
                 throw new Error(error.error || "Failed to create customer");
             }
 
@@ -69,6 +115,27 @@ export default function NewCustomerPage() {
                 </div>
             </div>
 
+            {/* Plan Limit Warning */}
+            {limitError && (
+                <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="flex items-start gap-4 pt-6">
+                        <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                        <div className="flex-1">
+                            <h3 className="font-medium text-amber-900">Customer Limit Reached</h3>
+                            <p className="text-sm text-amber-700 mt-1">{limitError.message}</p>
+                            <p className="text-sm text-amber-600 mt-2">
+                                Current: {limitError.current} / {limitError.limit} customers
+                            </p>
+                            <Link href="/dashboard/billing">
+                                <Button className="mt-3 bg-amber-600 hover:bg-amber-700" size="sm">
+                                    Upgrade Plan
+                                </Button>
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             <form onSubmit={handleSubmit}>
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* Customer Info */}
@@ -90,6 +157,7 @@ export default function NewCustomerPage() {
                                         setFormData({ ...formData, name: e.target.value })
                                     }
                                     required
+                                    disabled={!!limitError}
                                 />
                             </div>
 
@@ -161,13 +229,15 @@ export default function NewCustomerPage() {
                                 <Button
                                     type="submit"
                                     className="w-full bg-green-600 hover:bg-green-700"
-                                    disabled={loading}
+                                    disabled={loading || !!limitError}
                                 >
                                     {loading ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                             Creating...
                                         </>
+                                    ) : limitError ? (
+                                        "Limit Reached"
                                     ) : (
                                         "Create Customer"
                                     )}
