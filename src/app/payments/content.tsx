@@ -85,7 +85,13 @@ export default function PaymentsContent() {
     }, [searchParams, refetch]);
 
     const handleReturnToOnboarding = () => {
-        router.push("/onboarding/business?step=3");
+        // Check if coming from onboarding or billing
+        const source = searchParams.get("source");
+        if (source === "onboarding") {
+            router.push("/onboarding/business?step=3");
+        } else {
+            router.push("/dashboard");
+        }
     };
 
     // Loading state
@@ -235,7 +241,7 @@ export default function PaymentsContent() {
                                     onClick={handleReturnToOnboarding}
                                     className="w-full h-12 bg-green-600 hover:bg-green-700 text-white"
                                 >
-                                    Continue Setup
+                                    {searchParams.get("source") === "onboarding" ? "Continue Setup" : "Go to Dashboard"}
                                     <ArrowRight className="h-4 w-4 ml-2" />
                                 </Button>
 

@@ -383,10 +383,10 @@ export default function BillingPage() {
                                 <Card
                                     key={plan.id}
                                     className={`relative transition-all cursor-pointer ${isCurrent
-                                            ? "border-green-500 border-2"
-                                            : loading === plan.id
-                                                ? "border-green-400 border-2 opacity-70"
-                                                : "hover:border-green-300 hover:shadow-lg"
+                                        ? "border-green-500 border-2"
+                                        : loading === plan.id
+                                            ? "border-green-400 border-2 opacity-70"
+                                            : "hover:border-green-300 hover:shadow-lg"
                                         }`}
                                     onClick={() => !isCurrent && loading === null && handleUpgrade(plan)}
                                 >

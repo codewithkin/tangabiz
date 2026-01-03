@@ -8,9 +8,11 @@ import { Loader2 } from "lucide-react";
 
 // Pages that don't require a plan
 const EXEMPT_PATHS = [
+    "/payments",
     "/dashboard/billing/success",
     "/dashboard/billing",
     "/dashboard/settings",
+    "/onboarding",
 ];
 
 interface OrgPlanData {
@@ -38,7 +40,10 @@ export function NoPlanGuard({ children }: { children: React.ReactNode }) {
             }
 
             try {
-                const response = await fetch(`/api/organizations/${org.id}`);
+                // Add cache-busting to ensure fresh data after payment
+                const response = await fetch(`/api/organizations/${org.id}?t=${Date.now()}`, {
+                    cache: 'no-store'
+                });
                 if (response.ok) {
                     const data = await response.json();
                     setOrgPlanData({
@@ -54,7 +59,7 @@ export function NoPlanGuard({ children }: { children: React.ReactNode }) {
         };
 
         fetchOrgPlan();
-    }, [org?.id]);
+    }, [org?.id, pathname]); // Re-fetch when pathname changes (e.g., coming from /payments)
 
     React.useEffect(() => {
         if (isPending) return;
