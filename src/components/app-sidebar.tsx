@@ -393,7 +393,7 @@ export function AppSidebar() {
                                                         const pathname = usePathname();
                                                         const isParentActive = item.items?.some((si) => pathname?.startsWith(si.url));
                                                         return (
-                                                            <SidebarMenuButton className="hover:bg-gray-300/50" isActive={!!isParentActive}>
+                                                            <SidebarMenuButton className="hover:bg-gray-300/50">
                                                                 <item.icon className="h-4 w-4" />
                                                                 <span>{item.title}</span>
                                                                 <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
