@@ -10,6 +10,8 @@ interface SaleWithRelations {
     tax: unknown;
     discount: unknown;
     total: unknown;
+    amountPaid: unknown;
+    changeGiven: unknown;
     paymentMethod: string;
     status: string;
     createdAt: Date;
@@ -158,6 +160,8 @@ export async function GET(request: Request) {
             tax: Number(sale.tax),
             discount: Number(sale.discount),
             total: Number(sale.total),
+            amountPaid: sale.amountPaid ? Number(sale.amountPaid) : null,
+            changeGiven: sale.changeGiven ? Number(sale.changeGiven) : null,
             paymentMethod: sale.paymentMethod,
             status: sale.status,
             createdAt: sale.createdAt.toISOString(),

@@ -38,6 +38,8 @@ interface Sale {
     status: string;
     notes: string | null;
     createdAt: string;
+    amountPaid: number | null;
+    changeGiven: number | null;
     items: SaleItem[];
     customer: { name: string; email: string | null; phone: string | null } | null;
     member: { user: { name: string | null } } | null;
@@ -269,6 +271,20 @@ export default function ReceiptPage() {
                                 <span>Total Paid</span>
                                 <span className="text-green-600">{formatCurrency(sale.total)}</span>
                             </div>
+                            {sale.amountPaid !== null && sale.amountPaid !== undefined && (
+                                <>
+                                    <div className="flex justify-between pt-2">
+                                        <span className="text-muted-foreground">Amount Paid</span>
+                                        <span className="font-medium">{formatCurrency(sale.amountPaid)}</span>
+                                    </div>
+                                    {sale.changeGiven !== null && sale.changeGiven !== undefined && sale.changeGiven > 0 && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Change</span>
+                                            <span className="font-medium">{formatCurrency(sale.changeGiven)}</span>
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
 
                         {sale.notes && (

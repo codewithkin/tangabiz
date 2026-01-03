@@ -214,6 +214,20 @@ export function Receipt({ sale, businessName = "Tangabiz Store", businessAddress
                             <span>TOTAL:</span>
                             <span>{formatCurrency(sale.total)}</span>
                         </div>
+                        {sale.amountPaid != null && sale.amountPaid > 0 && (
+                            <>
+                                <div className="flex justify-between mt-2">
+                                    <span>Amount Paid:</span>
+                                    <span>{formatCurrency(sale.amountPaid)}</span>
+                                </div>
+                                {sale.changeGiven != null && sale.changeGiven > 0 && (
+                                    <div className="flex justify-between font-bold">
+                                        <span>Change:</span>
+                                        <span>{formatCurrency(sale.changeGiven)}</span>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
 
                     <div className="payment-method text-center mt-3 text-xs font-bold uppercase">

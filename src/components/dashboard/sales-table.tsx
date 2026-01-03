@@ -33,6 +33,8 @@ export interface SaleData {
     tax: number;
     discount: number;
     total: number;
+    amountPaid: number | null;
+    changeGiven: number | null;
     paymentMethod: string;
     status: string;
     createdAt: string;

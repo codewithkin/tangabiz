@@ -94,6 +94,7 @@ export default function POSPage() {
     const [cart, setCart] = React.useState<CartItem[]>([]);
     const [selectedCustomer, setSelectedCustomer] = React.useState<string>("");
     const [paymentMethod, setPaymentMethod] = React.useState("cash");
+    const [amountPaid, setAmountPaid] = React.useState<string>("");
     const [showSuccess, setShowSuccess] = React.useState(false);
     const [lastReceipt, setLastReceipt] = React.useState<string>("");
     const [limitError, setLimitError] = React.useState<PlanLimitError | null>(null);
@@ -228,8 +229,18 @@ export default function POSPage() {
     const discount = 0;
     const total = subtotal + tax - discount;
 
+    // Calculate change based on amount paid
+    const amountPaidNum = parseFloat(amountPaid) || 0;
+    const changeAmount = amountPaidNum > total ? amountPaidNum - total : 0;
+
     const handleSubmit = async () => {
         if (cart.length === 0) return;
+
+        // Validate amount paid for cash payments
+        if (paymentMethod === "cash" && amountPaidNum < total) {
+            alert("Amount paid must be at least equal to the total");
+            return;
+        }
 
         setSubmitting(true);
         try {
@@ -245,6 +256,8 @@ export default function POSPage() {
                     })),
                     customerId: selectedCustomer || null,
                     paymentMethod,
+                    amountPaid: paymentMethod === "cash" ? amountPaidNum : null,
+                    changeGiven: paymentMethod === "cash" ? changeAmount : null,
                     tax,
                     discount,
                     notes: "",
@@ -268,6 +281,7 @@ export default function POSPage() {
             setShowSuccess(true);
             setCart([]);
             setSelectedCustomer("");
+            setAmountPaid("");
 
             // Hide success message after 5 seconds
             setTimeout(() => {
@@ -614,6 +628,68 @@ export default function POSPage() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Amount Paid & Change */}
+                            {cart.length > 0 && (
+                                <div className="space-y-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="amountPaid" className="flex items-center gap-2">
+                                            <Banknote className="h-4 w-4 text-muted-foreground" />
+                                            Amount Paid
+                                        </Label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                                            <Input
+                                                id="amountPaid"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                placeholder={total.toFixed(2)}
+                                                value={amountPaid}
+                                                onChange={(e) => setAmountPaid(e.target.value)}
+                                                className="pl-7 text-lg font-medium"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Quick Amount Buttons */}
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {[20, 50, 100, Math.ceil(total)].map((amount) => (
+                                            <Button
+                                                key={amount}
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setAmountPaid(amount.toString())}
+                                                className={`text-xs ${amountPaid === amount.toString() ? "border-green-500 bg-green-50" : ""}`}
+                                            >
+                                                ${amount}
+                                            </Button>
+                                        ))}
+                                    </div>
+
+                                    {/* Change Display */}
+                                    {amountPaidNum > 0 && (
+                                        <div className={`p-3 rounded-lg border-2 ${amountPaidNum >= total
+                                            ? "border-green-500 bg-green-50"
+                                            : "border-red-300 bg-red-50"
+                                            }`}>
+                                            <div className="flex items-center justify-between">
+                                                <span className={`text-sm font-medium ${amountPaidNum >= total ? "text-green-700" : "text-red-700"
+                                                    }`}>
+                                                    {amountPaidNum >= total ? "Change Due" : "Amount Short"}
+                                                </span>
+                                                <span className={`text-xl font-bold ${amountPaidNum >= total ? "text-green-600" : "text-red-600"
+                                                    }`}>
+                                                    {amountPaidNum >= total
+                                                        ? formatCurrency(changeAmount)
+                                                        : `-${formatCurrency(total - amountPaidNum)}`}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Totals */}
