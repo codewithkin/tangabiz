@@ -390,8 +390,7 @@ export function AppSidebar() {
                                                 {
                                                     // Parent is active if any child path matches
                                                     (() => {
-                                                        const pathname = usePathname();
-                                                        const isParentActive = item.items?.some((si) => pathname?.startsWith(si.url));
+                                                        const isParentActive = item.items?.some((si) => pathname === si.url);
                                                         return (
                                                             <SidebarMenuButton className="hover:bg-gray-300/50">
                                                                 <item.icon className="h-4 w-4" />
@@ -405,7 +404,7 @@ export function AppSidebar() {
                                             <CollapsibleContent>
                                                 <SidebarMenuSub>
                                                     {item.items.map((subItem) => {
-                                                        const isSubActive = pathname === subItem.url || pathname?.startsWith(subItem.url);
+                                                        const isSubActive = pathname === subItem.url;
                                                         return (
                                                             <SidebarMenuSubItem key={subItem.title}>
                                                                 <SidebarMenuSubButton asChild isActive={!!isSubActive}>
@@ -423,7 +422,7 @@ export function AppSidebar() {
                                 ) : (
                                     // Regular item
                                     (() => {
-                                        const isActive = pathname === item.url || pathname?.startsWith(item.url);
+                                        const isActive = pathname === item.url;
                                         return (
                                             <SidebarMenuItem key={item.title}>
                                                 <SidebarMenuButton asChild className="hover:bg-gray-300/50" isActive={!!isActive}>
