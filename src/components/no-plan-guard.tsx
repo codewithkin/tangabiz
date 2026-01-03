@@ -13,13 +13,48 @@ const EXEMPT_PATHS = [
     "/dashboard/settings",
 ];
 
+interface OrgPlanData {
+    plan: string | null;
+    planStartedAt: string | null;
+}
+
 export function NoPlanGuard({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
     const { data: session, isPending: sessionPending } = useSession();
     const { data: org, isPending: orgPending } = useActiveOrganization();
+    
+    const [orgPlanData, setOrgPlanData] = React.useState<OrgPlanData | null>(null);
+    const [isLoadingPlan, setIsLoadingPlan] = React.useState(true);
 
-    const isPending = sessionPending || orgPending;
+    const isPending = sessionPending || orgPending || isLoadingPlan;
+
+    // Fetch full organization data from database (including plan fields)
+    React.useEffect(() => {
+        const fetchOrgPlan = async () => {
+            if (!org?.id) {
+                setIsLoadingPlan(false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/organizations/${org.id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setOrgPlanData({
+                        plan: data.plan,
+                        planStartedAt: data.planStartedAt,
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching org plan data:", error);
+            } finally {
+                setIsLoadingPlan(false);
+            }
+        };
+
+        fetchOrgPlan();
+    }, [org?.id]);
 
     React.useEffect(() => {
         if (isPending) return;
@@ -37,10 +72,9 @@ export function NoPlanGuard({ children }: { children: React.ReactNode }) {
         const isExempt = EXEMPT_PATHS.some((path) => pathname.startsWith(path));
         if (isExempt) return;
 
-        // Get org plan info (cast to any to access custom fields)
-        const orgData = org as any;
-        const plan = orgData.plan as string | null;
-        const planStartedAt = orgData.planStartedAt as string | null;
+        // Check plan from database
+        const plan = orgPlanData?.plan;
+        const planStartedAt = orgPlanData?.planStartedAt;
 
         // If no plan, redirect to billing to select a plan
         if (!plan) {
@@ -49,12 +83,12 @@ export function NoPlanGuard({ children }: { children: React.ReactNode }) {
         }
 
         // If plan exists, check if trial is active (for trial users)
-        if (planStartedAt && !isTrialActive(planStartedAt)) {
+        if (planStartedAt && !isTrialActive(planStartedAt ? new Date(planStartedAt) : null)) {
             // Trial expired, redirect to billing to upgrade
             router.push("/dashboard/billing?expired=true");
             return;
         }
-    }, [isPending, session, org, pathname, router]);
+    }, [isPending, session, org, orgPlanData, pathname, router]);
 
     // Show loading while checking
     if (isPending) {
@@ -80,9 +114,8 @@ export function NoPlanGuard({ children }: { children: React.ReactNode }) {
     }
 
     // Check plan status
-    const orgData = org as any;
-    const plan = orgData.plan as string | null;
-    const planStartedAt = orgData.planStartedAt as string | null;
+    const plan = orgPlanData?.plan;
+    const planStartedAt = orgPlanData?.planStartedAt;
 
     // If no plan, don't render (will redirect)
     if (!plan) {
@@ -97,7 +130,7 @@ export function NoPlanGuard({ children }: { children: React.ReactNode }) {
     }
 
     // If trial expired, don't render (will redirect)
-    if (planStartedAt && !isTrialActive(planStartedAt)) {
+    if (planStartedAt && !isTrialActive(planStartedAt ? new Date(planStartedAt) : null)) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
