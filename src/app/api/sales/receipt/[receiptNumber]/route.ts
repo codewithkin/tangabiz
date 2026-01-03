@@ -34,6 +34,7 @@ export async function GET(
                 },
                 customer: { select: { name: true, email: true, phone: true } },
                 member: { select: { user: { select: { name: true } } } },
+                organization: { select: { name: true, logo: true, metadata: true } },
             },
         });
 

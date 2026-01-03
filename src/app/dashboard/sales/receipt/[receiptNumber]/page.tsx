@@ -43,6 +43,7 @@ interface Sale {
     items: SaleItem[];
     customer: { name: string; email: string | null; phone: string | null } | null;
     member: { user: { name: string | null } } | null;
+    organization: { name: string; logo: string | null; metadata: string | null };
 }
 
 export default function ReceiptPage() {
@@ -189,8 +190,19 @@ export default function ReceiptPage() {
                 {/* Receipt Card */}
                 <Card className="border-2 shadow-sm print:shadow-none">
                     <CardHeader className="border-b-2 border-green-600 pb-6">
-                        <div className="text-center mb-4">
-                            <h2 className="text-2xl font-bold text-green-600">RECEIPT</h2>
+                        {/* Business Branding */}
+                        <div className="text-center mb-6">
+                            {sale.organization.logo && (
+                                <img
+                                    src={sale.organization.logo}
+                                    alt={sale.organization.name}
+                                    className="h-16 w-auto mx-auto mb-3"
+                                />
+                            )}
+                            <h2 className="text-3xl font-bold text-green-600 mb-1">
+                                {sale.organization.name}
+                            </h2>
+                            <p className="text-lg font-semibold text-muted-foreground">RECEIPT</p>
                         </div>
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
