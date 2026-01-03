@@ -202,7 +202,7 @@ export default function BillingPage() {
                                     const Icon = PLAN_ICONS[currentPlan.id];
                                     return (
                                         <div className={`p-3 rounded-lg ${currentPlan.id === "starter" ? "bg-blue-100" :
-                                                currentPlan.id === "growth" ? "bg-green-100" : "bg-purple-100"
+                                            currentPlan.id === "growth" ? "bg-green-100" : "bg-purple-100"
                                             }`}>
                                             <Icon className={`h-6 w-6 ${PLAN_COLORS[currentPlan.id]}`} />
                                         </div>
@@ -382,13 +382,12 @@ export default function BillingPage() {
                             return (
                                 <Card
                                     key={plan.id}
-                                    className={`relative transition-all cursor-pointer ${
-                                        isCurrent
+                                    className={`relative transition-all cursor-pointer ${isCurrent
                                             ? "border-green-500 border-2"
                                             : loading === plan.id
-                                            ? "border-green-400 border-2 opacity-70"
-                                            : "hover:border-green-300 hover:shadow-lg"
-                                    }`}
+                                                ? "border-green-400 border-2 opacity-70"
+                                                : "hover:border-green-300 hover:shadow-lg"
+                                        }`}
                                     onClick={() => !isCurrent && loading === null && handleUpgrade(plan)}
                                 >
                                     {plan.popular && (
@@ -443,9 +442,12 @@ export default function BillingPage() {
                                                     Current Plan
                                                 </div>
                                             ) : (
-                                                <div className="text-center text-sm font-medium text-muted-foreground py-2">
-                                                    Click to {isUpgrade ? "upgrade" : "change"}
-                                                </div>
+                                                <Button
+                                                    className="w-full bg-green-600 hover:bg-green-700"
+                                                    variant="default"
+                                                >
+                                                    {isUpgrade ? "Upgrade Now" : "Switch Plan"}
+                                                </Button>
                                             )}
                                         </div>
                                     </CardContent>
