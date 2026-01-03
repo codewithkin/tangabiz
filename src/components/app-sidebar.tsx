@@ -16,6 +16,7 @@ import {
     CreditCard,
     Building2,
     Check,
+    Mail,
 } from "lucide-react";
 
 import {
@@ -87,6 +88,16 @@ const adminNavigation: NavItem[] = [
         title: "Customers",
         url: "/dashboard/customers",
         icon: Users,
+        items: [
+            {
+                title: "All Customers",
+                url: "/dashboard/customers",
+            },
+            {
+                title: "Email Marketing",
+                url: "/dashboard/customers/email-marketing",
+            },
+        ],
     },
     {
         title: "Inventory",
@@ -149,6 +160,16 @@ const managerNavigation: NavItem[] = [
         title: "Customers",
         url: "/dashboard/customers",
         icon: Users,
+        items: [
+            {
+                title: "All Customers",
+                url: "/dashboard/customers",
+            },
+            {
+                title: "Email Marketing",
+                url: "/dashboard/customers/email-marketing",
+            },
+        ],
     },
     {
         title: "Inventory",
