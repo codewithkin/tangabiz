@@ -2,14 +2,14 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const s3Client = new S3Client({
-    region: process.env.AWS_REGION || "us-east-1",
+    region: process.env.NEXT_PUBLIC_AWS_REGION || "us-east-1",
     credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+        accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID || "",
+        secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY || "",
     },
 });
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET || "";
+const BUCKET_NAME = process.env.NEXT_PUBLIC_S3_BUCKET_NAME || "";
 
 export async function getPresignedUploadUrl(key: string, contentType: string) {
     console.log("[S3] Getting presigned URL", { key, contentType, bucket: BUCKET_NAME });
@@ -45,7 +45,7 @@ export async function deleteFromS3(key: string) {
 }
 
 export function getS3Url(key: string) {
-    const region = process.env.AWS_REGION || "us-east-1";
+    const region = process.env.NEXT_PUBLIC_AWS_REGION || "us-east-1";
     const url = `https://${BUCKET_NAME}.s3.${region}.amazonaws.com/${key}`;
     console.log("[S3] Generated S3 URL:", url);
     return url;
