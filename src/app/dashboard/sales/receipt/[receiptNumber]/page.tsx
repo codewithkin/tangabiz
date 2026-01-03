@@ -141,7 +141,7 @@ export default function ReceiptPage() {
 
     return (
         <div className="min-h-screen bg-white py-8 px-4">
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-md mx-auto">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6 print:hidden">
                     <div className="flex-1">
@@ -298,6 +298,45 @@ export default function ReceiptPage() {
                     <p className="font-medium">Thank you for your purchase!</p>
                     <p className="text-xs mt-1">Please keep this receipt for your records.</p>
                 </div>
+
+                {/* Print Styles */}
+                <style jsx global>{`
+                    @media print {
+                        body {
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .max-w-md {
+                            max-width: 80mm !important;
+                            margin: 0 auto;
+                        }
+                        * {
+                            font-size: 11px !important;
+                        }
+                        h2 {
+                            font-size: 18px !important;
+                        }
+                        .text-3xl {
+                            font-size: 18px !important;
+                        }
+                        .text-2xl {
+                            font-size: 16px !important;
+                        }
+                        .text-xl {
+                            font-size: 14px !important;
+                        }
+                        img {
+                            max-height: 40px !important;
+                        }
+                        .p-3 {
+                            padding: 0.5rem !important;
+                        }
+                        .pt-6, .pb-6 {
+                            padding-top: 1rem !important;
+                            padding-bottom: 1rem !important;
+                        }
+                    }
+                `}</style>
             </div>
 
             {/* Print Styles */}
