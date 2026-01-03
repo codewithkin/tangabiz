@@ -436,73 +436,71 @@ export default function POSPage() {
                             )}
                         </div>
                     </CardHeader>
-                    <CardContent className="flex-1 flex flex-col overflow-hidden">
+                    <CardContent className="flex-1 flex flex-col overflow-y-auto h-full">
                         {/* Cart Items */}
-                        <div className="flex-1 overflow-auto space-y-3 mb-4 min-h-0">
-                            {cart.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                                    <ShoppingCart className="h-12 w-12 text-muted-foreground mb-4" />
-                                    <p className="text-muted-foreground">Cart is empty</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        Click products to add
-                                    </p>
-                                </div>
-                            ) : (
-                                cart.map((item) => (
-                                    <div
-                                        key={item.productId}
-                                        className="p-3 rounded-lg border bg-white"
-                                    >
-                                        <div className="flex items-start justify-between mb-2">
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-sm">
-                                                    {item.name}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {formatCurrency(item.unitPrice)} each
-                                                </p>
-                                            </div>
+                        {cart.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                                <ShoppingCart className="h-12 w-12 text-muted-foreground mb-4" />
+                                <p className="text-muted-foreground">Cart is empty</p>
+                                <p className="text-sm text-muted-foreground">
+                                    Click products to add
+                                </p>
+                            </div>
+                        ) : (
+                            cart.map((item) => (
+                                <div
+                                    key={item.productId}
+                                    className="p-3 rounded-lg border bg-white"
+                                >
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm">
+                                                {item.name}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {formatCurrency(item.unitPrice)} each
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-red-500 -mt-1 -mr-1"
+                                            onClick={() => removeFromCart(item.productId)}
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-7 w-7 text-red-500 -mt-1 -mr-1"
-                                                onClick={() => removeFromCart(item.productId)}
+                                                className="h-7 w-7 hover:bg-white"
+                                                onClick={() => updateQuantity(item.productId, -1)}
                                             >
-                                                <Trash2 className="h-3 w-3" />
+                                                <Minus className="h-3 w-3" />
+                                            </Button>
+                                            <span className="w-10 text-center font-medium text-sm">
+                                                {item.quantity}
+                                            </span>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 hover:bg-white"
+                                                onClick={() => updateQuantity(item.productId, 1)}
+                                                disabled={item.quantity >= item.stock}
+                                            >
+                                                <Plus className="h-3 w-3" />
                                             </Button>
                                         </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 hover:bg-white"
-                                                    onClick={() => updateQuantity(item.productId, -1)}
-                                                >
-                                                    <Minus className="h-3 w-3" />
-                                                </Button>
-                                                <span className="w-10 text-center font-medium text-sm">
-                                                    {item.quantity}
-                                                </span>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 hover:bg-white"
-                                                    onClick={() => updateQuantity(item.productId, 1)}
-                                                    disabled={item.quantity >= item.stock}
-                                                >
-                                                    <Plus className="h-3 w-3" />
-                                                </Button>
-                                            </div>
-                                            <p className="font-bold text-base text-green-600">
-                                                {formatCurrency(item.unitPrice * item.quantity)}
-                                            </p>
-                                        </div>
+                                        <p className="font-bold text-base text-green-600">
+                                            {formatCurrency(item.unitPrice * item.quantity)}
+                                        </p>
                                     </div>
-                                ))
-                            )}
-                        </div>
+                                </div>
+                            ))
+                        )}
 
                         {/* Customer Selection */}
                         <div className="space-y-3 border-t pt-3">
@@ -576,6 +574,6 @@ export default function POSPage() {
                     </CardContent>
                 </Card>
             </div>
-        </div>
+        </div >
     );
 }
