@@ -174,6 +174,7 @@ export const FEATURE_NAMES: Record<keyof PlanLimits["features"], string> = {
     customerLoyalty: "Customer Loyalty Program",
     inventoryAlerts: "Inventory Alerts",
     salesForecasting: "Sales Forecasting",
+    emailMarketing: "Email Marketing",
 };
 
 // Check if trial is still active
