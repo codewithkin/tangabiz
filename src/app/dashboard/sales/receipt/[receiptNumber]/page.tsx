@@ -14,7 +14,6 @@ import {
 import {
     ArrowLeft,
     Loader2,
-    Download,
     Share2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -87,10 +86,6 @@ export default function ReceiptPage() {
         }).format(new Date(date));
     };
 
-    const handleDownload = () => {
-        window.print(); // Opens print dialog where user can print or save as PDF
-    };
-
     const handleShare = async () => {
         if (navigator.share && sale) {
             try {
@@ -151,21 +146,13 @@ export default function ReceiptPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-2 mb-6 print:hidden">
+                <div className="mb-6 print:hidden">
                     <Button
-                        variant="outline"
-                        size="sm"
                         onClick={handleShare}
-                        className="w-[15%]"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
                     >
-                        <Share2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        onClick={handleDownload}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                        <Download className="h-4 w-4 mr-2" />
-                        Print / Download Receipt
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share Receipt
                     </Button>
                 </div>
 
