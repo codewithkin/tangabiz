@@ -14,7 +14,6 @@ import {
 import {
     ArrowLeft,
     Loader2,
-    Printer,
     Download,
     Share2,
 } from "lucide-react";
@@ -88,12 +87,8 @@ export default function ReceiptPage() {
         }).format(new Date(date));
     };
 
-    const handlePrint = () => {
-        window.print();
-    };
-
     const handleDownload = () => {
-        window.print();
+        window.print(); // Opens print dialog where user can print or save as PDF
     };
 
     const handleShare = async () => {
@@ -160,16 +155,8 @@ export default function ReceiptPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={handlePrint}
-                        className="w-[10%]"
-                    >
-                        <Printer className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
                         onClick={handleShare}
-                        className="w-[10%]"
+                        className="w-[15%]"
                     >
                         <Share2 className="h-4 w-4" />
                     </Button>
@@ -178,7 +165,7 @@ export default function ReceiptPage() {
                         className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                     >
                         <Download className="h-4 w-4 mr-2" />
-                        Download Receipt
+                        Print / Download Receipt
                     </Button>
                 </div>
 
