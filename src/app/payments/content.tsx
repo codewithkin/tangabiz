@@ -34,11 +34,14 @@ export default function PaymentsContent() {
 
     useEffect(() => {
         const verifySubscription = async () => {
+            console.log("[Payments] Starting subscription verification");
             const statusParam = searchParams.get("status");
             const customerSessionToken = searchParams.get("customer_session_token");
+            console.log("[Payments] URL params:", { statusParam, hasToken: !!customerSessionToken });
 
             // If status is explicitly error, show error
             if (statusParam === "error") {
+                console.log("[Payments] Status param indicates error");
                 setStatus("error");
                 setError("Payment was not completed. Please try again.");
                 return;
@@ -46,12 +49,14 @@ export default function PaymentsContent() {
 
             // If no customer session token, we can't verify
             if (!customerSessionToken) {
+                console.log("[Payments] No customer session token found");
                 setStatus("error");
                 setError("Missing payment verification data. Please try subscribing again.");
                 return;
             }
 
             try {
+                console.log("[Payments] Calling verify-subscription API");
                 // Call our API to verify the subscription and update the org
                 const response = await fetch("/api/billing/verify-subscription", {
                     method: "POST",
@@ -60,22 +65,26 @@ export default function PaymentsContent() {
                 });
 
                 const data = await response.json();
+                console.log("[Payments] API response:", { ok: response.ok, status: response.status, data });
 
                 if (!response.ok) {
-                    console.error("Verification error:", data);
+                    console.error("[Payments] Verification error:", data);
                     setError(data.error || "Failed to verify subscription. Please contact support.");
                     setStatus("error");
                     return;
                 }
 
                 // Success! Store subscription info
+                console.log("[Payments] Verification successful, storing subscription info");
                 setSubscriptionInfo(data);
                 setStatus("success");
 
                 // Refetch org to get updated plan
+                console.log("[Payments] Refetching organization data");
                 await refetch();
+                console.log("[Payments] Organization data refetched");
             } catch (err) {
-                console.error("Error verifying subscription:", err);
+                console.error("[Payments] Error verifying subscription:", err);
                 setError("An unexpected error occurred. Please contact support.");
                 setStatus("error");
             }

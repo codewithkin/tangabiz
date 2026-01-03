@@ -12,11 +12,15 @@ export async function GET(
             headers: await headers(),
         });
 
+        console.log("[API /organizations/[id]] GET request", { hasSession: !!session });
+
         if (!session?.user) {
+            console.log("[API /organizations/[id]] Unauthorized - no session");
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const { id } = await params;
+        console.log("[API /organizations/[id]] Fetching org:", id, "for user:", session.user.id);
 
         // Verify the user is a member of this organization
         const member = await prisma.member.findFirst({
@@ -26,7 +30,10 @@ export async function GET(
             },
         });
 
+        console.log("[API /organizations/[id]] Member check:", { isMember: !!member });
+
         if (!member) {
+            console.log("[API /organizations/[id]] User is not a member");
             return NextResponse.json(
                 { error: "Not a member of this organization" },
                 { status: 403 }
@@ -46,7 +53,10 @@ export async function GET(
             },
         });
 
+        console.log("[API /organizations/[id]] Organization data:", organization);
+
         if (!organization) {
+            console.log("[API /organizations/[id]] Organization not found");
             return NextResponse.json(
                 { error: "Organization not found" },
                 { status: 404 }
