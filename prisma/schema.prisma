@@ -88,10 +88,11 @@ model Organization {
   invitations Invitation[]
 
   // Business data
-  products    Product[]
-  customers   Customer[]
-  sales       Sale[]
-  categories  Category[]
+  products       Product[]
+  customers      Customer[]
+  sales          Sale[]
+  categories     Category[]
+  emailCampaigns EmailCampaign[]
 
   @@unique([slug])
   @@map("organization")
@@ -224,4 +225,39 @@ model SaleItem {
   total     Decimal @db.Decimal(10, 2)
 
   @@map("sale_item")
+}
+
+// ==================== EMAIL MARKETING ====================
+
+model EmailCampaign {
+  id             String       @id @default(cuid())
+  subject        String
+  content        String       @db.Text // HTML content from EmailJS editor
+  status         String       @default("draft") // draft, sending, sent, failed
+  recipientCount Int          @default(0)
+  sentCount      Int          @default(0)
+  failedCount    Int          @default(0)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sentAt         DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  recipients EmailRecipient[]
+
+  @@map("email_campaign")
+}
+
+model EmailRecipient {
+  id         String        @id @default(cuid())
+  campaignId String
+  campaign   EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  email      String
+  name       String?
+  status     String        @default("pending") // pending, sent, failed
+  sentAt     DateTime?
+  error      String?
+  createdAt  DateTime      @default(now())
+
+  @@map("email_recipient")
 }
