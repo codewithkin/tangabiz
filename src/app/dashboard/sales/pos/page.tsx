@@ -402,15 +402,16 @@ export default function POSPage() {
                                                 <div className="absolute -top-2 -right-2 bg-green-600 rounded-full p-1">
                                                     <Check className="h-3 w-3 text-white" />
                                                 </div>
-                                            )}
-                                            {product.image ? (
-                                                <img
-                                                    src={product.image}
-                                                    alt={product.name}
-                                                    className="w-full h-20 object-cover rounded mb-2"
-                                                />
+                                            )}  {product.image ? (
+                                                <div className="w-full aspect-square bg-gray-100 rounded mb-2 overflow-hidden">
+                                                    <img
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
                                             ) : (
-                                                <div className="w-full h-20 bg-gray-100 rounded mb-2 flex items-center justify-center">
+                                                <div className="w-full aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center">
                                                     <Package className="h-8 w-8 text-gray-400" />
                                                 </div>
                                             )}

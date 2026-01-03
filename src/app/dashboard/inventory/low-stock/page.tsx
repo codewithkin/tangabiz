@@ -225,15 +225,17 @@ export default function LowStockPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 {product.image ? (
-                                                    <Image
-                                                        src={product.image}
-                                                        alt={product.name}
-                                                        width={40}
-                                                        height={40}
-                                                        className="rounded-lg object-cover"
-                                                    />
+                                                    <div className="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0">
+                                                        <Image
+                                                            src={product.image}
+                                                            alt={product.name}
+                                                            width={40}
+                                                            height={40}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
                                                 ) : (
-                                                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                                                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                                                         <Package className="h-5 w-5 text-muted-foreground" />
                                                     </div>
                                                 )}
