@@ -175,3 +175,25 @@ export async function getOrganizationUsage(organizationId: string) {
         limits: plan?.limits || null,
     };
 }
+
+// Check if organization can use email marketing
+export async function canUseEmailMarketing(organizationId: string): Promise<PlanCheckResult> {
+    const org = await prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { plan: true },
+    });
+
+    const plan = getPlan(org?.plan);
+    if (!plan) {
+        return { allowed: false, reason: "No plan selected" };
+    }
+
+    if (!plan.limits.features.emailMarketing) {
+        return {
+            allowed: false,
+            reason: `Email marketing is not available on the ${plan.name} plan. Please upgrade to Growth or Business plan.`,
+        };
+    }
+
+    return { allowed: true };
+}

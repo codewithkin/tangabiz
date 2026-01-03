@@ -20,6 +20,7 @@ export interface PlanLimits {
         customerLoyalty: boolean;
         inventoryAlerts: boolean;
         salesForecasting: boolean;
+        emailMarketing: boolean;
     };
 }
 
@@ -64,6 +65,7 @@ export const PLANS: Record<PlanType, Plan> = {
                 customerLoyalty: false,
                 inventoryAlerts: false,
                 salesForecasting: false,
+                emailMarketing: false,
             },
         },
     },
@@ -95,6 +97,7 @@ export const PLANS: Record<PlanType, Plan> = {
                 customerLoyalty: true,
                 inventoryAlerts: true,
                 salesForecasting: false,
+                emailMarketing: true,
             },
         },
     },
@@ -125,6 +128,7 @@ export const PLANS: Record<PlanType, Plan> = {
                 customerLoyalty: true,
                 inventoryAlerts: true,
                 salesForecasting: true,
+                emailMarketing: true,
             },
         },
     },
