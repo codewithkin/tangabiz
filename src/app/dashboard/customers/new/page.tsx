@@ -43,11 +43,11 @@ export default function NewCustomerPage() {
             try {
                 const res = await fetch("/api/billing/usage");
                 const data = await res.json();
-                
+
                 if (data.limits && data.usage) {
                     const maxCustomers = data.limits.maxCustomers;
                     const currentCustomers = data.usage.customers;
-                    
+
                     // -1 means unlimited
                     if (maxCustomers !== -1 && currentCustomers >= maxCustomers) {
                         setLimitError({
@@ -63,7 +63,7 @@ export default function NewCustomerPage() {
                 console.error("Failed to check limits:", error);
             }
         };
-        
+
         checkLimits();
     }, []);
 
@@ -80,13 +80,13 @@ export default function NewCustomerPage() {
 
             if (!res.ok) {
                 const error = await res.json();
-                
+
                 // Check if it's a plan limit error
                 if (res.status === 403 && error.limitType) {
                     setLimitError(error as PlanLimitError);
                     return;
                 }
-                
+
                 throw new Error(error.error || "Failed to create customer");
             }
 

@@ -68,11 +68,11 @@ export default function NewProductPage() {
         try {
             const res = await fetch("/api/billing/usage");
             const data = await res.json();
-            
+
             if (data.limits && data.usage) {
                 const maxProducts = data.limits.maxProducts;
                 const currentProducts = data.usage.products;
-                
+
                 // -1 means unlimited
                 if (maxProducts !== -1 && currentProducts >= maxProducts) {
                     setLimitError({
@@ -158,13 +158,13 @@ export default function NewProductPage() {
 
             if (!res.ok) {
                 const error = await res.json();
-                
+
                 // Check if it's a plan limit error
                 if (res.status === 403 && error.limitType) {
                     setLimitError(error as PlanLimitError);
                     return;
                 }
-                
+
                 throw new Error(error.error || "Failed to create product");
             }
 

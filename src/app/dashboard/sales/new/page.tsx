@@ -28,7 +28,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Plus, Trash2, Loader2, Search } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Loader2, Search, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 interface Product {
@@ -53,6 +53,14 @@ interface CartItem {
     total: number;
 }
 
+interface PlanLimitError {
+    error: string;
+    message: string;
+    limitType: string;
+    current: number;
+    limit: number;
+}
+
 export default function NewSalePage() {
     const router = useRouter();
     const [loading, setLoading] = React.useState(false);
@@ -65,11 +73,39 @@ export default function NewSalePage() {
     const [discount, setDiscount] = React.useState("0");
     const [tax, setTax] = React.useState("0");
     const [notes, setNotes] = React.useState("");
+    const [limitError, setLimitError] = React.useState<PlanLimitError | null>(null);
 
     React.useEffect(() => {
         fetchProducts();
         fetchCustomers();
+        checkLimits();
     }, []);
+
+    // Check plan limits on mount
+    const checkLimits = async () => {
+        try {
+            const res = await fetch("/api/billing/usage");
+            const data = await res.json();
+
+            if (data.limits && data.usage) {
+                const maxMonthlySales = data.limits.maxMonthlySales;
+                const currentMonthlySales = data.usage.monthlySales;
+
+                // -1 means unlimited
+                if (maxMonthlySales !== -1 && currentMonthlySales >= maxMonthlySales) {
+                    setLimitError({
+                        error: "Plan limit reached",
+                        message: `You've reached your plan's limit of ${maxMonthlySales} sales this month. Please upgrade your plan to continue selling.`,
+                        limitType: "monthlySales",
+                        current: currentMonthlySales,
+                        limit: maxMonthlySales,
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Failed to check limits:", error);
+        }
+    };
 
     const fetchProducts = async (search?: string) => {
         try {
@@ -191,6 +227,13 @@ export default function NewSalePage() {
 
             if (!res.ok) {
                 const error = await res.json();
+
+                // Check if it's a plan limit error
+                if (res.status === 403 && error.limitType) {
+                    setLimitError(error as PlanLimitError);
+                    return;
+                }
+
                 throw new Error(error.error || "Failed to create sale");
             }
 
@@ -216,6 +259,27 @@ export default function NewSalePage() {
                     <p className="text-muted-foreground">Create a new transaction</p>
                 </div>
             </div>
+
+            {/* Plan Limit Warning */}
+            {limitError && (
+                <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="flex items-start gap-4 pt-6">
+                        <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                        <div className="flex-1">
+                            <h3 className="font-medium text-amber-900">Monthly Sales Limit Reached</h3>
+                            <p className="text-sm text-amber-700 mt-1">{limitError.message}</p>
+                            <p className="text-sm text-amber-600 mt-2">
+                                Current: {limitError.current} / {limitError.limit} sales this month
+                            </p>
+                            <Link href="/dashboard/billing">
+                                <Button className="mt-3 bg-amber-600 hover:bg-amber-700" size="sm">
+                                    Upgrade Plan
+                                </Button>
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <form onSubmit={handleSubmit}>
                 <div className="grid gap-6 lg:grid-cols-3">
@@ -425,13 +489,15 @@ export default function NewSalePage() {
                                 <Button
                                     type="submit"
                                     className="w-full bg-green-600 hover:bg-green-700"
-                                    disabled={loading || cart.length === 0}
+                                    disabled={loading || cart.length === 0 || !!limitError}
                                 >
                                     {loading ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                             Processing...
                                         </>
+                                    ) : limitError ? (
+                                        "Limit Reached"
                                     ) : (
                                         `Complete Sale • ${formatCurrency(total)}`
                                     )}

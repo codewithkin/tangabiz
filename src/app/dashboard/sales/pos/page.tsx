@@ -32,6 +32,7 @@ import {
     Smartphone,
     Check,
     Package,
+    AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +62,14 @@ interface CartItem {
     stock: number;
 }
 
+interface PlanLimitError {
+    error: string;
+    message: string;
+    limitType: string;
+    current: number;
+    limit: number;
+}
+
 export default function POSPage() {
     const router = useRouter();
     const [loading, setLoading] = React.useState(false);
@@ -73,11 +82,39 @@ export default function POSPage() {
     const [paymentMethod, setPaymentMethod] = React.useState("cash");
     const [showSuccess, setShowSuccess] = React.useState(false);
     const [lastReceipt, setLastReceipt] = React.useState<string>("");
+    const [limitError, setLimitError] = React.useState<PlanLimitError | null>(null);
 
     React.useEffect(() => {
         fetchProducts();
         fetchCustomers();
+        checkLimits();
     }, []);
+
+    // Check plan limits on mount
+    const checkLimits = async () => {
+        try {
+            const res = await fetch("/api/billing/usage");
+            const data = await res.json();
+
+            if (data.limits && data.usage) {
+                const maxMonthlySales = data.limits.maxMonthlySales;
+                const currentMonthlySales = data.usage.monthlySales;
+
+                // -1 means unlimited
+                if (maxMonthlySales !== -1 && currentMonthlySales >= maxMonthlySales) {
+                    setLimitError({
+                        error: "Plan limit reached",
+                        message: `You've reached your plan's limit of ${maxMonthlySales} sales this month. Please upgrade your plan to continue selling.`,
+                        limitType: "monthlySales",
+                        current: currentMonthlySales,
+                        limit: maxMonthlySales,
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Failed to check limits:", error);
+        }
+    };
 
     const fetchProducts = async (search?: string) => {
         setLoading(true);
@@ -200,6 +237,13 @@ export default function POSPage() {
 
             if (!res.ok) {
                 const error = await res.json();
+                
+                // Check if it's a plan limit error
+                if (res.status === 403 && error.limitType) {
+                    setLimitError(error as PlanLimitError);
+                    return;
+                }
+                
                 throw new Error(error.error || "Failed to complete sale");
             }
 
@@ -249,6 +293,27 @@ export default function POSPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Plan Limit Warning */}
+            {limitError && (
+                <Card className="border-amber-200 bg-amber-50 mb-4">
+                    <CardContent className="flex items-start gap-4 pt-6">
+                        <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                        <div className="flex-1">
+                            <h3 className="font-medium text-amber-900">Monthly Sales Limit Reached</h3>
+                            <p className="text-sm text-amber-700 mt-1">{limitError.message}</p>
+                            <p className="text-sm text-amber-600 mt-2">
+                                Current: {limitError.current} / {limitError.limit} sales this month
+                            </p>
+                            <Link href="/dashboard/billing">
+                                <Button className="mt-3 bg-amber-600 hover:bg-amber-700" size="sm">
+                                    Upgrade Plan
+                                </Button>
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Success Message */}
             {showSuccess && (
@@ -474,12 +539,17 @@ export default function POSPage() {
                         <Button
                             className="w-full mt-4 bg-green-600 hover:bg-green-700 h-12 text-lg"
                             onClick={handleSubmit}
-                            disabled={cart.length === 0 || submitting}
+                            disabled={cart.length === 0 || submitting || !!limitError}
                         >
                             {submitting ? (
                                 <>
                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                     Processing...
+                                </>
+                            ) : limitError ? (
+                                <>
+                                    <AlertTriangle className="mr-2 h-5 w-5" />
+                                    Limit Reached
                                 </>
                             ) : (
                                 <>
