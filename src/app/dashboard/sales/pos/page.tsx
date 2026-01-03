@@ -361,41 +361,51 @@ export default function POSPage() {
                             </div>
                         ) : (
                             <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                                {products.map((product) => (
-                                    <button
-                                        key={product.id}
-                                        onClick={() => addToCart(product)}
-                                        disabled={product.stock <= 0}
-                                        className={`p-3 rounded-lg border text-left transition-all ${product.stock <= 0
-                                            ? "opacity-50 cursor-not-allowed bg-gray-50"
-                                            : "hover:border-green-500 hover:shadow-md cursor-pointer"
-                                            }`}
-                                    >
-                                        {product.image ? (
-                                            <img
-                                                src={product.image}
-                                                alt={product.name}
-                                                className="w-full h-20 object-cover rounded mb-2"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-20 bg-gray-100 rounded mb-2 flex items-center justify-center">
-                                                <Package className="h-8 w-8 text-gray-400" />
+                                {products.map((product) => {
+                                    const inCart = cart.find((item) => item.productId === product.id);
+                                    return (
+                                        <button
+                                            key={product.id}
+                                            onClick={() => addToCart(product)}
+                                            disabled={product.stock <= 0}
+                                            className={`p-3 rounded-lg border text-left transition-all relative ${product.stock <= 0
+                                                ? "opacity-50 cursor-not-allowed bg-gray-50"
+                                                : inCart
+                                                    ? "border-green-500 bg-green-50"
+                                                    : "hover:border-green-500 hover:shadow-md cursor-pointer"
+                                                }`}
+                                        >
+                                            {inCart && (
+                                                <div className="absolute -top-2 -right-2 bg-green-600 rounded-full p-1">
+                                                    <Check className="h-3 w-3 text-white" />
+                                                </div>
+                                            )}
+                                            {product.image ? (
+                                                <img
+                                                    src={product.image}
+                                                    alt={product.name}
+                                                    className="w-full h-20 object-cover rounded mb-2"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-20 bg-gray-100 rounded mb-2 flex items-center justify-center">
+                                                    <Package className="h-8 w-8 text-gray-400" />
+                                                </div>
+                                            )}
+                                            <p className="font-medium text-sm truncate">{product.name}</p>
+                                            <div className="flex items-center justify-between mt-1">
+                                                <p className="text-green-600 font-bold text-sm">
+                                                    {formatCurrency(product.price)}
+                                                </p>
+                                                <Badge
+                                                    variant={product.stock > 5 ? "outline" : "destructive"}
+                                                    className="text-xs"
+                                                >
+                                                    {product.stock}
+                                                </Badge>
                                             </div>
-                                        )}
-                                        <p className="font-medium text-sm truncate">{product.name}</p>
-                                        <div className="flex items-center justify-between mt-1">
-                                            <p className="text-green-600 font-bold text-sm">
-                                                {formatCurrency(product.price)}
-                                            </p>
-                                            <Badge
-                                                variant={product.stock > 5 ? "outline" : "destructive"}
-                                                className="text-xs"
-                                            >
-                                                {product.stock}
-                                            </Badge>
-                                        </div>
-                                    </button>
-                                ))}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         )}
                     </CardContent>
@@ -428,7 +438,7 @@ export default function POSPage() {
                     </CardHeader>
                     <CardContent className="flex-1 flex flex-col overflow-hidden">
                         {/* Cart Items */}
-                        <div className="flex-1 overflow-auto space-y-2 mb-4">
+                        <div className="flex-1 overflow-auto space-y-3 mb-4 min-h-0">
                             {cart.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-center py-8">
                                     <ShoppingCart className="h-12 w-12 text-muted-foreground mb-4" />
@@ -441,49 +451,54 @@ export default function POSPage() {
                                 cart.map((item) => (
                                     <div
                                         key={item.productId}
-                                        className="flex items-center gap-2 p-2 rounded-lg border"
+                                        className="p-3 rounded-lg border bg-white"
                                     >
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-sm truncate">
-                                                {item.name}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {formatCurrency(item.unitPrice)} each
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm">
+                                                    {item.name}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {formatCurrency(item.unitPrice)} each
+                                                </p>
+                                            </div>
                                             <Button
-                                                variant="outline"
+                                                variant="ghost"
                                                 size="icon"
-                                                className="h-7 w-7"
-                                                onClick={() => updateQuantity(item.productId, -1)}
+                                                className="h-7 w-7 text-red-500 -mt-1 -mr-1"
+                                                onClick={() => removeFromCart(item.productId)}
                                             >
-                                                <Minus className="h-3 w-3" />
-                                            </Button>
-                                            <span className="w-8 text-center font-medium">
-                                                {item.quantity}
-                                            </span>
-                                            <Button
-                                                variant="outline"
-                                                size="icon"
-                                                className="h-7 w-7"
-                                                onClick={() => updateQuantity(item.productId, 1)}
-                                                disabled={item.quantity >= item.stock}
-                                            >
-                                                <Plus className="h-3 w-3" />
+                                                <Trash2 className="h-3 w-3" />
                                             </Button>
                                         </div>
-                                        <p className="font-medium text-sm w-20 text-right">
-                                            {formatCurrency(item.unitPrice * item.quantity)}
-                                        </p>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 text-red-500"
-                                            onClick={() => removeFromCart(item.productId)}
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </Button>
+
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 hover:bg-white"
+                                                    onClick={() => updateQuantity(item.productId, -1)}
+                                                >
+                                                    <Minus className="h-3 w-3" />
+                                                </Button>
+                                                <span className="w-10 text-center font-medium text-sm">
+                                                    {item.quantity}
+                                                </span>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 hover:bg-white"
+                                                    onClick={() => updateQuantity(item.productId, 1)}
+                                                    disabled={item.quantity >= item.stock}
+                                                >
+                                                    <Plus className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                            <p className="font-bold text-base text-green-600">
+                                                {formatCurrency(item.unitPrice * item.quantity)}
+                                            </p>
+                                        </div>
                                     </div>
                                 ))
                             )}
