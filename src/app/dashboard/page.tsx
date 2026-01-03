@@ -31,10 +31,14 @@ export default function DashboardPage() {
         fetch("/api/dashboard/stats")
             .then(res => res.json())
             .then(data => {
-                setStats(data);
+                console.log("[Dashboard] Stats received:", data);
+                // API returns { role, stats, recentActivity }
+                // Flatten stats to root level for easier access
+                setStats({ ...data.stats, role: data.role, recentActivity: data.recentActivity });
                 setLoading(false);
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error("[Dashboard] Error fetching stats:", error);
                 setLoading(false);
             });
     }, [session, router]);

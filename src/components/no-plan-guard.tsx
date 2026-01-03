@@ -99,10 +99,16 @@ export function NoPlanGuard({ children }: { children: React.ReactNode }) {
             return;
         }
 
+        // Wait for orgPlanData to be loaded before checking
+        if (orgPlanData === null) {
+            console.log("[NoPlanGuard] Still loading org plan data, skipping check");
+            return;
+        }
+
         // Check plan from database
         const plan = orgPlanData?.plan;
         const planStartedAt = orgPlanData?.planStartedAt;
-        console.log("[NoPlanGuard] Checking plan:", { plan, planStartedAt, orgId: org.id });
+        console.log("[NoPlanGuard] Checking plan:", { plan, planStartedAt, orgId: org.id, orgPlanData });
 
         // If no plan, redirect to billing to select a plan
         if (!plan) {
