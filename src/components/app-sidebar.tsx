@@ -13,6 +13,8 @@ import {
     LogOut,
     Bell,
     CreditCard,
+    Building2,
+    Check,
 } from "lucide-react";
 
 import {
@@ -191,8 +193,33 @@ export function AppSidebar() {
     const router = useRouter();
     const { state } = useSidebar();
     const { data: session } = authClient.useSession();
-    const { data: org } = useActiveOrganization();
+    const { data: org, refetch: refetchOrg } = useActiveOrganization();
     const [orgPlanData, setOrgPlanData] = React.useState<{ plan: string | null; planStartedAt: string | null } | null>(null);
+    const [userOrganizations, setUserOrganizations] = React.useState<any[]>([]);
+    const [isLoadingOrgs, setIsLoadingOrgs] = React.useState(false);
+    const [isSwitchingOrg, setIsSwitchingOrg] = React.useState(false);
+
+    // Fetch user's organizations
+    React.useEffect(() => {
+        const fetchUserOrganizations = async () => {
+            if (!session?.user?.id) return;
+
+            setIsLoadingOrgs(true);
+            try {
+                const response = await fetch("/api/organizations");
+                if (response.ok) {
+                    const data = await response.json();
+                    setUserOrganizations(data.organizations || []);
+                }
+            } catch (error) {
+                console.error("Error fetching user organizations:", error);
+            } finally {
+                setIsLoadingOrgs(false);
+            }
+        };
+
+        fetchUserOrganizations();
+    }, [session?.user?.id]);
 
     // Fetch full organization data from database (including plan fields)
     React.useEffect(() => {
@@ -216,6 +243,23 @@ export function AppSidebar() {
         fetchOrgPlan();
     }, [org?.id]);
 
+    const handleSwitchOrganization = async (organizationId: string) => {
+        if (organizationId === org?.id) return;
+
+        setIsSwitchingOrg(true);
+        try {
+            await authClient.organization.setActive({
+                organizationId,
+            });
+            await refetchOrg();
+            router.refresh();
+        } catch (error) {
+            console.error("Error switching organization:", error);
+        } finally {
+            setIsSwitchingOrg(false);
+        }
+    };
+
     // Get organization data and member info
     const orgData = org as any;
     const members = orgData?.members || [];
@@ -234,25 +278,60 @@ export function AppSidebar() {
 
     return (
         <Sidebar collapsible="icon" variant="sidebar">
-            {/* Header with logo */}
+            {/* Header with logo and org switcher */}
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <a href="/dashboard" className="flex items-center gap-2">
-                                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-700 text-white font-bold text-sm">
-                                    {org?.name?.charAt(0)?.toUpperCase() || "T"}
-                                </div>
-                                <div className="flex flex-col gap-0.5 leading-none">
-                                    <span className="font-bold text-base text-foreground">
-                                        {org?.name || "Your Shop"}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {orgPlanData?.plan ? `${orgPlanData.plan.charAt(0).toUpperCase()}${orgPlanData.plan.slice(1)} Plan` : "Loading..."}
-                                    </span>
-                                </div>
-                            </a>
-                        </SidebarMenuButton>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <SidebarMenuButton size="lg" className="hover:bg-gray-300/50">
+                                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-linear-to-br from-green-600 to-green-700 text-white font-bold text-sm">
+                                        {org?.name?.charAt(0)?.toUpperCase() || "T"}
+                                    </div>
+                                    <div className="flex flex-col gap-0.5 leading-none">
+                                        <span className="font-bold text-base text-foreground">
+                                            {org?.name || "Your Shop"}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {orgPlanData?.plan ? `${orgPlanData.plan.charAt(0).toUpperCase()}${orgPlanData.plan.slice(1)} Plan` : "Loading..."}
+                                        </span>
+                                    </div>
+                                    <ChevronDown className="ml-auto h-4 w-4" />
+                                </SidebarMenuButton>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                side="bottom"
+                                align="start"
+                                className="w-[--radix-popper-anchor-width]"
+                            >
+                                {isLoadingOrgs ? (
+                                    <DropdownMenuItem disabled>
+                                        <span className="text-muted-foreground">Loading organizations...</span>
+                                    </DropdownMenuItem>
+                                ) : userOrganizations.length > 0 ? (
+                                    <>
+                                        {userOrganizations.map((userOrg) => (
+                                            <DropdownMenuItem
+                                                key={userOrg.id}
+                                                onClick={() => handleSwitchOrganization(userOrg.id)}
+                                                disabled={isSwitchingOrg}
+                                                className="cursor-pointer"
+                                            >
+                                                <Building2 className="h-4 w-4 mr-2" />
+                                                <span>{userOrg.name}</span>
+                                                {userOrg.id === org?.id && (
+                                                    <Check className="h-4 w-4 ml-auto text-green-600" />
+                                                )}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </>
+                                ) : (
+                                    <DropdownMenuItem disabled>
+                                        <span className="text-muted-foreground">No organizations found</span>
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
