@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserSubscription } from "@/lib/polar";
 import { NextRequest, NextResponse } from "next/server";
 
 // Map Polar product IDs to plan types
@@ -28,53 +29,13 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const body = await req.json();
-        const { customerSessionToken } = body;
-
-        if (!customerSessionToken) {
-            return NextResponse.json(
-                { error: "Missing customer session token" },
-                { status: 400 }
-            );
-        }
-
-        // Use server-side Polar API with access token to fetch subscriptions
-        // We'll list all subscriptions and find the ones for this user's email
+        // Use Polar SDK to fetch subscriptions
         const userEmail = session.user.email;
-
-        const polarResponse = await fetch(
-            "https://api.polar.sh/v1/subscriptions",
-            {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${process.env.POLAR_ACCESS_TOKEN || ""}`,
-                    "Content-Type": "application/json",
-                },
-            }
-        );
-
-        if (!polarResponse.ok) {
-            const errorData = await polarResponse.json().catch(() => ({}));
-            console.error("Polar API error:", errorData);
-            return NextResponse.json(
-                { error: "Failed to fetch subscription from Polar", details: errorData },
-                { status: 500 }
-            );
-        }
-
-        const subscriptionData = await polarResponse.json();
-        const subscriptions = subscriptionData.items || [];
-
-        // Find an active subscription for this user's email
-        const activeSubscription = subscriptions.find(
-            (sub: any) =>
-                (sub.status === "active" || sub.status === "trialing") &&
-                sub.customer?.email === userEmail
-        );
+        const activeSubscription = await getUserSubscription(userEmail);
 
         if (!activeSubscription) {
             return NextResponse.json(
-                { error: "No active subscription found for this user", subscriptions: subscriptions.length },
+                { error: "No active subscription found for this user" },
                 { status: 404 }
             );
         }
