@@ -269,10 +269,10 @@ export default function POSPage() {
             setCart([]);
             setSelectedCustomer("");
 
-            // Hide success message after 3 seconds
+            // Hide success message after 5 seconds
             setTimeout(() => {
                 setShowSuccess(false);
-            }, 3000);
+            }, 5000);
 
             // Refresh products to update stock
             fetchProducts();
@@ -333,14 +333,21 @@ export default function POSPage() {
 
             {/* Success Message */}
             {showSuccess && (
-                <div className="bg-green-100 border border-green-200 rounded-lg p-4 mb-4 flex items-center gap-3">
-                    <div className="bg-green-500 rounded-full p-1">
-                        <Check className="h-4 w-4 text-white" />
+                <div className="bg-green-100 border border-green-200 rounded-lg p-4 mb-4 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-green-500 rounded-full p-1">
+                            <Check className="h-4 w-4 text-white" />
+                        </div>
+                        <div>
+                            <p className="font-medium text-green-800">Sale Completed!</p>
+                            <p className="text-sm text-green-600">Receipt: {lastReceipt}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="font-medium text-green-800">Sale Completed!</p>
-                        <p className="text-sm text-green-600">Receipt: {lastReceipt}</p>
-                    </div>
+                    <Link href={`/dashboard/sales/receipt/${lastReceipt}`}>
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                            View Receipt
+                        </Button>
+                    </Link>
                 </div>
             )}
 
