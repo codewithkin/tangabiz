@@ -8,7 +8,6 @@ import { Loader2 } from "lucide-react";
 
 // Pages that don't require a plan
 const EXEMPT_PATHS = [
-    "/dashboard/select-plan",
     "/dashboard/billing/success",
     "/dashboard/billing",
     "/dashboard/settings",
@@ -43,9 +42,9 @@ export function NoPlanGuard({ children }: { children: React.ReactNode }) {
         const plan = orgData.plan as string | null;
         const planStartedAt = orgData.planStartedAt as string | null;
 
-        // If no plan and no trial, redirect to plan selection
+        // If no plan, redirect to billing to select a plan
         if (!plan) {
-            router.push("/dashboard/select-plan");
+            router.push("/dashboard/billing");
             return;
         }
 
