@@ -237,13 +237,13 @@ export default function POSPage() {
 
             if (!res.ok) {
                 const error = await res.json();
-                
+
                 // Check if it's a plan limit error
                 if (res.status === 403 && error.limitType) {
                     setLimitError(error as PlanLimitError);
                     return;
                 }
-                
+
                 throw new Error(error.error || "Failed to complete sale");
             }
 
