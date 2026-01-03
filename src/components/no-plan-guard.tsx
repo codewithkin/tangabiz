@@ -23,7 +23,7 @@ export function NoPlanGuard({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const { data: session, isPending: sessionPending } = useSession();
     const { data: org, isPending: orgPending } = useActiveOrganization();
-    
+
     const [orgPlanData, setOrgPlanData] = React.useState<OrgPlanData | null>(null);
     const [isLoadingPlan, setIsLoadingPlan] = React.useState(true);
 

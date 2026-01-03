@@ -192,6 +192,29 @@ export function AppSidebar() {
     const { state } = useSidebar();
     const { data: session } = authClient.useSession();
     const { data: org } = useActiveOrganization();
+    const [orgPlanData, setOrgPlanData] = React.useState<{ plan: string | null; planStartedAt: string | null } | null>(null);
+
+    // Fetch full organization data from database (including plan fields)
+    React.useEffect(() => {
+        const fetchOrgPlan = async () => {
+            if (!org?.id) return;
+
+            try {
+                const response = await fetch(`/api/organizations/${org.id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setOrgPlanData({
+                        plan: data.plan,
+                        planStartedAt: data.planStartedAt,
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching org plan data:", error);
+            }
+        };
+
+        fetchOrgPlan();
+    }, [org?.id]);
 
     // Get organization data and member info
     const orgData = org as any;
@@ -225,7 +248,7 @@ export function AppSidebar() {
                                         {org?.name || "Your Shop"}
                                     </span>
                                     <span className="text-xs text-muted-foreground">
-                                        Smart POS
+                                        {orgPlanData?.plan ? `${orgPlanData.plan.charAt(0).toUpperCase()}${orgPlanData.plan.slice(1)} Plan` : "Loading..."}
                                     </span>
                                 </div>
                             </a>
