@@ -27,7 +27,7 @@ export const auth = betterAuth({
     }),
     organization({
       async sendInvitationEmail(data) {
-        const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+        const baseUrl = process.env.BETTER_AUTH_URL || "https://tangabiz.store";
         const inviteLink = `${baseUrl}/accept-invitation/${data.id}`;
         await sendInviteEmail({
           email: data.email,
