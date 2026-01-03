@@ -471,185 +471,187 @@ export default function POSPage() {
                                 </p>
                             </div>
                         ) : (
-                            cart.map((item) => (
-                                <div
-                                    key={item.productId}
-                                    className="p-3 rounded-lg border bg-white"
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-sm">
-                                                {item.name}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {formatCurrency(item.unitPrice)} each
-                                            </p>
+                            <div className="space-y-3">
+                                {cart.map((item) => (
+                                    <div
+                                        key={item.productId}
+                                        className="p-3 rounded-lg border bg-white"
+                                    >
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm">
+                                                    {item.name}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {formatCurrency(item.unitPrice)} each
+                                                </p>
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-red-500 -mt-1 -mr-1"
+                                                onClick={() => removeFromCart(item.productId)}
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </Button>
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 text-red-500 -mt-1 -mr-1"
-                                            onClick={() => removeFromCart(item.productId)}
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                    </div>
 
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 hover:bg-white"
-                                                onClick={() => updateQuantity(item.productId, -1)}
-                                            >
-                                                <Minus className="h-3 w-3" />
-                                            </Button>
-                                            <span className="w-10 text-center font-medium text-sm">
-                                                {item.quantity}
-                                            </span>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 hover:bg-white"
-                                                onClick={() => updateQuantity(item.productId, 1)}
-                                                disabled={item.quantity >= item.stock}
-                                            >
-                                                <Plus className="h-3 w-3" />
-                                            </Button>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 hover:bg-white"
+                                                    onClick={() => updateQuantity(item.productId, -1)}
+                                                >
+                                                    <Minus className="h-3 w-3" />
+                                                </Button>
+                                                <span className="w-10 text-center font-medium text-sm">
+                                                    {item.quantity}
+                                                </span>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 hover:bg-white"
+                                                    onClick={() => updateQuantity(item.productId, 1)}
+                                                    disabled={item.quantity >= item.stock}
+                                                >
+                                                    <Plus className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                            <p className="font-bold text-base text-green-600">
+                                                {formatCurrency(item.unitPrice * item.quantity)}
+                                            </p>
                                         </div>
-                                        <p className="font-bold text-base text-green-600">
-                                            {formatCurrency(item.unitPrice * item.quantity)}
-                                        </p>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                            </div>
                         )}
 
                         {/* Customer Selection */}
-                        <div className="space-y-3 border-t pt-3">
-                            <div className="space-y-2">
-                                <Label className="flex items-center gap-2">
-                                    <User className="h-4 w-4 text-muted-foreground" />
-                                    Customer
-                                </Label>
-                                <Popover open={customerSearchOpen} onOpenChange={setCustomerSearchOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            aria-expanded={customerSearchOpen}
-                                            className="w-full justify-between"
-                                        >
-                                            {selectedCustomer && selectedCustomer !== "walk-in"
-                                                ? customers.find((c) => c.id === selectedCustomer)?.name
-                                                : "Walk-in Customer"}
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-full p-0" align="start">
-                                        <Command>
-                                            <CommandInput
-                                                placeholder="Search customers..."
-                                                value={customerSearch}
-                                                onValueChange={setCustomerSearch}
-                                            />
-                                            <CommandList>
-                                                <CommandEmpty>No customer found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    <CommandItem
-                                                        value="walk-in"
-                                                        onSelect={() => {
-                                                            setSelectedCustomer("walk-in");
-                                                            setCustomerSearchOpen(false);
-                                                            setCustomerSearch("");
-                                                        }}
-                                                    >
-                                                        <Check
-                                                            className={`mr-2 h-4 w-4 ${selectedCustomer === "walk-in" ? "opacity-100" : "opacity-0"
-                                                                }`}
-                                                        />
-                                                        Walk-in Customer
-                                                    </CommandItem>
-                                                    {customers.map((customer) => (
-                                                        <CommandItem
-                                                            key={customer.id}
-                                                            value={customer.name}
-                                                            onSelect={() => {
-                                                                setSelectedCustomer(customer.id);
-                                                                setCustomerSearchOpen(false);
-                                                                setCustomerSearch("");
-                                                            }}
-                                                        >
-                                                            <Check
-                                                                className={`mr-2 h-4 w-4 ${selectedCustomer === customer.id ? "opacity-100" : "opacity-0"
-                                                                    }`}
-                                                            />
-                                                            <div className="flex-1">
-                                                                <div className="font-medium">{customer.name}</div>
-                                                                {customer.email && (
-                                                                    <div className="text-xs text-muted-foreground">
-                                                                        {customer.email}
+                                <div className="space-y-3 border-t pt-3">
+                                    <div className="space-y-2">
+                                        <Label className="flex items-center gap-2">
+                                            <User className="h-4 w-4 text-muted-foreground" />
+                                            Customer
+                                        </Label>
+                                        <Popover open={customerSearchOpen} onOpenChange={setCustomerSearchOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    role="combobox"
+                                                    aria-expanded={customerSearchOpen}
+                                                    className="w-full justify-between"
+                                                >
+                                                    {selectedCustomer && selectedCustomer !== "walk-in"
+                                                        ? customers.find((c) => c.id === selectedCustomer)?.name
+                                                        : "Walk-in Customer"}
+                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-full p-0" align="start">
+                                                <Command>
+                                                    <CommandInput
+                                                        placeholder="Search customers..."
+                                                        value={customerSearch}
+                                                        onValueChange={setCustomerSearch}
+                                                    />
+                                                    <CommandList>
+                                                        <CommandEmpty>No customer found.</CommandEmpty>
+                                                        <CommandGroup>
+                                                            <CommandItem
+                                                                value="walk-in"
+                                                                onSelect={() => {
+                                                                    setSelectedCustomer("walk-in");
+                                                                    setCustomerSearchOpen(false);
+                                                                    setCustomerSearch("");
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={`mr-2 h-4 w-4 ${selectedCustomer === "walk-in" ? "opacity-100" : "opacity-0"
+                                                                        }`}
+                                                                />
+                                                                Walk-in Customer
+                                                            </CommandItem>
+                                                            {customers.map((customer) => (
+                                                                <CommandItem
+                                                                    key={customer.id}
+                                                                    value={customer.name}
+                                                                    onSelect={() => {
+                                                                        setSelectedCustomer(customer.id);
+                                                                        setCustomerSearchOpen(false);
+                                                                        setCustomerSearch("");
+                                                                    }}
+                                                                >
+                                                                    <Check
+                                                                        className={`mr-2 h-4 w-4 ${selectedCustomer === customer.id ? "opacity-100" : "opacity-0"
+                                                                            }`}
+                                                                    />
+                                                                    <div className="flex-1">
+                                                                        <div className="font-medium">{customer.name}</div>
+                                                                        {customer.email && (
+                                                                            <div className="text-xs text-muted-foreground">
+                                                                                {customer.email}
+                                                                            </div>
+                                                                        )}
                                                                     </div>
-                                                                )}
-                                                            </div>
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                                                                </CommandItem>
+                                                            ))}
+                                                        </CommandGroup>
+                                                    </CommandList>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
 
-                            {/* Payment Method */}
-                            <div className="space-y-2">
-                                <Label>Payment Method</Label>
-                                <div className="p-3 border rounded-lg bg-green-50">
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <Banknote className="h-4 w-4 text-green-600" />
-                                        <span className="font-medium">Cash Only</span>
+                                    {/* Payment Method */}
+                                    <div className="space-y-2">
+                                        <Label>Payment Method</Label>
+                                        <div className="p-3 border rounded-lg bg-green-50">
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <Banknote className="h-4 w-4 text-green-600" />
+                                                <span className="font-medium">Cash Only</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* Totals */}
-                        <div className="border-t pt-3 mt-3 space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Subtotal</span>
-                                <span>{formatCurrency(subtotal)}</span>
-                            </div>
-                            <div className="flex justify-between text-xl font-bold">
-                                <span>Total</span>
-                                <span className="text-green-600">{formatCurrency(total)}</span>
-                            </div>
-                        </div>
+                                {/* Totals */}
+                                <div className="border-t pt-3 mt-3 space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">Subtotal</span>
+                                        <span>{formatCurrency(subtotal)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xl font-bold">
+                                        <span>Total</span>
+                                        <span className="text-green-600">{formatCurrency(total)}</span>
+                                    </div>
+                                </div>
 
-                        {/* Complete Sale Button */}
-                        <Button
-                            className="w-full mt-4 bg-green-600 hover:bg-green-700 h-12 text-base"
-                            onClick={handleSubmit}
-                            disabled={cart.length === 0 || submitting || !!limitError}
-                        >
-                            {submitting ? (
-                                <>
-                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                    Processing...
-                                </>
-                            ) : limitError ? (
-                                <>
-                                    <AlertTriangle className="mr-2 h-5 w-5" />
-                                    Limit Reached
-                                </>
-                            ) : (
-                                <>
-                                    <Check className="mr-2 h-5 w-5" />
-                                    Complete Sale
-                                </>
-                            )}
-                        </Button>
-                    </CardContent>
+                                {/* Complete Sale Button */}
+                                <Button
+                                    className="w-full mt-4 bg-green-600 hover:bg-green-700 h-12 text-base"
+                                    onClick={handleSubmit}
+                                    disabled={cart.length === 0 || submitting || !!limitError}
+                                >
+                                    {submitting ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : limitError ? (
+                                        <>
+                                            <AlertTriangle className="mr-2 h-5 w-5" />
+                                            Limit Reached
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Check className="mr-2 h-5 w-5" />
+                                            Complete Sale
+                                        </>
+                                    )}
+                                </Button>
+                            </CardContent>
                 </Card>
             </div>
         </div >
