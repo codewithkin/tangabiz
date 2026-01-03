@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -59,6 +58,7 @@ import {
     ShoppingCart,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { NewCustomerDialog } from "@/components/customers/new-customer-dialog";
 
 interface Customer {
     id: string;
@@ -80,6 +80,7 @@ export default function CustomersPage() {
     const [deleteId, setDeleteId] = React.useState<string | null>(null);
     const [editCustomer, setEditCustomer] = React.useState<Customer | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+    const [isNewDialogOpen, setIsNewDialogOpen] = React.useState(false);
     const [isSaving, setIsSaving] = React.useState(false);
 
     const fetchCustomers = React.useCallback(async () => {
@@ -160,11 +161,12 @@ export default function CustomersPage() {
                         Manage your customer database
                     </p>
                 </div>
-                <Button asChild className="bg-green-600 hover:bg-green-700">
-                    <Link href="/dashboard/customers/new">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Customer
-                    </Link>
+                <Button
+                    onClick={() => setIsNewDialogOpen(true)}
+                    className="bg-green-600 hover:bg-green-700"
+                >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Customer
                 </Button>
             </div>
 
@@ -243,11 +245,12 @@ export default function CustomersPage() {
                             <p className="text-muted-foreground mb-4">
                                 Add your first customer to get started
                             </p>
-                            <Button asChild className="bg-green-600 hover:bg-green-700">
-                                <Link href="/dashboard/customers/new">
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Add Customer
-                                </Link>
+                            <Button
+                                onClick={() => setIsNewDialogOpen(true)}
+                                className="bg-green-600 hover:bg-green-700"
+                            >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Customer
                             </Button>
                         </div>
                     ) : (
@@ -449,6 +452,13 @@ export default function CustomersPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* New Customer Dialog */}
+            <NewCustomerDialog
+                open={isNewDialogOpen}
+                onOpenChange={setIsNewDialogOpen}
+                onSuccess={fetchCustomers}
+            />
         </div>
     );
 }
