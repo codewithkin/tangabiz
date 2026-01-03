@@ -265,9 +265,11 @@ export function AppSidebar() {
     const members = orgData?.members || [];
     const currentMember = members.find((m: any) => m.userId === session?.user?.id);
     const userRole = currentMember?.role || "member";
+    
+    console.log("[AppSidebar] User role:", userRole, "Member:", currentMember);
 
     const navigation =
-        userRole === "admin" ? adminNavigation :
+        userRole === "owner" || userRole === "admin" ? adminNavigation :
             userRole === "manager" ? managerNavigation :
                 staffNavigation;
 
