@@ -135,7 +135,8 @@ export default function EmailMarketingPage() {
             let htmlContent = "";
 
             if (emailEditorRef.current) {
-                const unlayer = emailEditorRef.current;
+                // biome-ignore lint/suspicious/noExplicitAny: react-email-editor types are incomplete
+                const unlayer = emailEditorRef.current as any;
                 await new Promise<void>((resolve) => {
                     unlayer.exportHtml((data: { html: string }) => {
                         htmlContent = data.html;
