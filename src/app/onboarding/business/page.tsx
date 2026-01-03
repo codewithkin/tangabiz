@@ -84,8 +84,8 @@ function BusinessOnboardingContent() {
 
         try {
             const slug = shopName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-            const { data, error: createError } = await authClient.organization.create({ 
-                name: shopName, 
+            const { data, error: createError } = await authClient.organization.create({
+                name: shopName,
                 slug,
                 logo: logoUrl || undefined
             });
@@ -339,9 +339,8 @@ function BusinessOnboardingContent() {
                                             }
                                             disabled={uploadingLogo}
                                         />
-                                        <div className={`w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center transition-all hover:border-gray-400 hover:bg-gray-50 ${
-                                            uploadingLogo ? 'cursor-not-allowed' : 'cursor-pointer'
-                                        }`}>
+                                        <div className={`w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center transition-all hover:border-gray-400 hover:bg-gray-50 ${uploadingLogo ? 'cursor-not-allowed' : 'cursor-pointer'
+                                            }`}>
                                             {uploadingLogo ? (
                                                 <Loader2 className="w-6 h-6 text-gray-600 animate-spin" />
                                             ) : logoUrl ? (
