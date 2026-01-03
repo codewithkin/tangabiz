@@ -13,6 +13,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
     Check,
     Loader2,
@@ -63,13 +65,15 @@ export default function BillingPage() {
     const { data: org, isPending } = useActiveOrganization();
     const [usage, setUsage] = React.useState<UsageData | null>(null);
     const [loading, setLoading] = React.useState<string | null>(null);
+    const [isYearly, setIsYearly] = React.useState(false);
+    const [error, setError] = React.useState("");
 
     const orgData = org as any;
     const planId = orgData?.plan as PlanType | null;
     const planStartedAt = orgData?.planStartedAt as string | null;
     const currentPlan = planId ? getPlan(planId) : null;
-    const trialDaysRemaining = planStartedAt ? getTrialDaysRemaining(planStartedAt) : 0;
-    const isInTrial = planStartedAt ? isTrialActive(planStartedAt) : false;
+    const trialDaysRemaining = planStartedAt ? getTrialDaysRemaining(new Date(planStartedAt)) : 0;
+    const isInTrial = planStartedAt ? isTrialActive(new Date(planStartedAt)) : false;
     const allPlans = getAllPlans();
 
     React.useEffect(() => {
@@ -90,29 +94,60 @@ export default function BillingPage() {
         }
     }, [org]);
 
-    const handleUpgrade = async (plan: Plan) => {
-        setLoading(plan.id);
-        try {
-            await authClient.checkout({
-                slug: plan.id,
-            });
-        } catch (error) {
-            console.error("Checkout error:", error);
-            // Fallback to direct update for trial
-            try {
-                const res = await fetch("/api/billing/plan", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ plan: plan.id }),
-                });
+    const handleUpgrade = async (planToSelect: Plan) => {
+        setLoading(planToSelect.id);
+        setError("");
 
-                if (res.ok) {
-                    window.location.reload();
-                }
-            } catch (e) {
-                console.error("Plan update error:", e);
+        try {
+            // Save the selected plan to organization
+            const res = await fetch("/api/billing/select-plan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ planId: planToSelect.id }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                setError(data.error || "Failed to select plan. Please try again.");
+                setLoading(null);
+                return;
             }
-        } finally {
+
+            console.log("Selected plan saved, initiating checkout for:", planToSelect.id);
+
+            // Get productId from plan configuration
+            const plan = getPlan(planToSelect.id);
+
+            if (!plan) {
+                setError("Plan not found. Please try again.");
+                setLoading(null);
+                return;
+            }
+
+            // Use yearly or monthly product ID based on toggle
+            const productId = isYearly ? plan.yearlyPolarProductId : plan.polarProductId;
+
+            if (!productId) {
+                setError("No product configured for this plan. Contact support.");
+                setLoading(null);
+                return;
+            }
+
+            const checkoutResult = await authClient.checkout({
+                products: [productId],
+            });
+
+            console.log("Checkout result:", checkoutResult);
+
+            if (checkoutResult?.error) {
+                console.error("Checkout error:", checkoutResult.error);
+                setError(checkoutResult.error.message || "Failed to initiate checkout.");
+                setLoading(null);
+                return;
+            }
+        } catch (e) {
+            console.error("Select plan error:", e);
+            setError(`Failed to select plan: ${e instanceof Error ? e.message : "Unknown error"}`);
             setLoading(null);
         }
     };
@@ -149,12 +184,9 @@ export default function BillingPage() {
                             <div className="flex-1">
                                 <h3 className="font-semibold text-red-800">Trial Expired</h3>
                                 <p className="text-sm text-red-600">
-                                    Your {TRIAL_DURATION_DAYS}-day trial has ended. Please select a plan to continue using TangaBiz.
+                                    Your {TRIAL_DURATION_DAYS}-day trial has ended. Please select a plan below to continue using TangaBiz.
                                 </p>
                             </div>
-                            <Button onClick={() => router.push("/dashboard/select-plan")}>
-                                Select Plan
-                            </Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -299,12 +331,9 @@ export default function BillingPage() {
                     <CardContent className="py-8 text-center">
                         <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold mb-2">No Active Plan</h3>
-                        <p className="text-muted-foreground mb-6">
-                            Select a plan to start using all of TangaBiz's features.
+                        <p className="text-muted-foreground mb-2">
+                            Select a plan below to start using all of TangaBiz's features.
                         </p>
-                        <Button onClick={() => router.push("/dashboard/select-plan")} size="lg">
-                            Choose a Plan
-                        </Button>
                     </CardContent>
                 </Card>
             )}
@@ -312,10 +341,35 @@ export default function BillingPage() {
             {/* All Plans Comparison */}
             <Card>
                 <CardHeader>
-                    <CardTitle>All Plans</CardTitle>
-                    <CardDescription>Compare features across all plans</CardDescription>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>All Plans</CardTitle>
+                            <CardDescription>Select a plan to upgrade or change your subscription</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Label htmlFor="billing-toggle" className="text-sm font-medium">
+                                Monthly
+                            </Label>
+                            <Switch
+                                id="billing-toggle"
+                                checked={isYearly}
+                                onCheckedChange={setIsYearly}
+                            />
+                            <Label htmlFor="billing-toggle" className="text-sm font-medium">
+                                Yearly
+                                <Badge variant="secondary" className="ml-2 text-xs">
+                                    Save 20%
+                                </Badge>
+                            </Label>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
+                    {error && (
+                        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                            {error}
+                        </div>
+                    )}
                     <div className="grid gap-4 md:grid-cols-3">
                         {allPlans.map((plan) => {
                             const Icon = PLAN_ICONS[plan.id];
@@ -323,9 +377,20 @@ export default function BillingPage() {
                             const isUpgrade = !planId ||
                                 (planId === "starter" && (plan.id === "growth" || plan.id === "enterprise")) ||
                                 (planId === "growth" && plan.id === "enterprise");
+                            const displayPrice = isYearly ? plan.yearlyPrice : plan.price;
 
                             return (
-                                <Card key={plan.id} className={`relative ${isCurrent ? "border-green-500 border-2" : ""}`}>
+                                <Card
+                                    key={plan.id}
+                                    className={`relative transition-all cursor-pointer ${
+                                        isCurrent
+                                            ? "border-green-500 border-2"
+                                            : loading === plan.id
+                                            ? "border-green-400 border-2 opacity-70"
+                                            : "hover:border-green-300 hover:shadow-lg"
+                                    }`}
+                                    onClick={() => !isCurrent && loading === null && handleUpgrade(plan)}
+                                >
                                     {plan.popular && (
                                         <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-green-600">
                                             Popular
@@ -341,9 +406,14 @@ export default function BillingPage() {
                                         <Icon className={`h-8 w-8 mx-auto ${PLAN_COLORS[plan.id]}`} />
                                         <CardTitle>{plan.name}</CardTitle>
                                         <div className="mt-2">
-                                            <span className="text-3xl font-bold">${plan.price}</span>
-                                            <span className="text-muted-foreground">/mo</span>
+                                            <span className="text-3xl font-bold">${displayPrice}</span>
+                                            <span className="text-muted-foreground">/{isYearly ? "yr" : "mo"}</span>
                                         </div>
+                                        {isYearly && (
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                ${(displayPrice / 12).toFixed(2)}/month
+                                            </p>
+                                        )}
                                     </CardHeader>
 
                                     <CardContent className="space-y-4">
@@ -362,22 +432,22 @@ export default function BillingPage() {
                                             </div>
                                         </div>
 
-                                        <Button
-                                            className="w-full"
-                                            variant={isCurrent ? "outline" : "default"}
-                                            disabled={isCurrent || loading !== null}
-                                            onClick={() => handleUpgrade(plan)}
-                                        >
+                                        <div className="pt-2">
                                             {loading === plan.id ? (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                <div className="flex items-center justify-center py-2">
+                                                    <Loader2 className="h-5 w-5 animate-spin text-green-600" />
+                                                </div>
                                             ) : isCurrent ? (
-                                                "Current Plan"
-                                            ) : isUpgrade ? (
-                                                "Upgrade"
+                                                <div className="flex items-center justify-center py-2 text-sm font-medium text-green-600">
+                                                    <Check className="h-4 w-4 mr-2" />
+                                                    Current Plan
+                                                </div>
                                             ) : (
-                                                "Downgrade"
+                                                <div className="text-center text-sm font-medium text-muted-foreground py-2">
+                                                    Click to {isUpgrade ? "upgrade" : "change"}
+                                                </div>
                                             )}
-                                        </Button>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             );
