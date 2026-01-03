@@ -550,7 +550,7 @@ export default function POSPage() {
 
                         {/* Complete Sale Button */}
                         <Button
-                            className="w-full mt-4 bg-green-600 hover:bg-green-700 h-12 text-lg"
+                            className="w-full mt-4 bg-green-600 hover:bg-green-700 h-12 text-base"
                             onClick={handleSubmit}
                             disabled={cart.length === 0 || submitting || !!limitError}
                         >
