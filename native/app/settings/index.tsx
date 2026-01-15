@@ -122,8 +122,8 @@ export default function SettingsScreen() {
         <View className="flex-1 bg-gray-50">
             <Stack.Screen options={{ title: 'Settings' }} />
 
-            <ScrollView 
-                className="flex-1" 
+            <ScrollView
+                className="flex-1"
                 contentContainerStyle={{ paddingBottom: 100, ...(isLargeTablet && { maxWidth: 800, alignSelf: 'center', width: '100%' }) }}
             >
                 {/* Business Info */}

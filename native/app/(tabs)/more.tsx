@@ -97,7 +97,7 @@ export default function MoreScreen() {
                 {/* User Profile Card */}
                 <View className={`bg-green-500 ${isTablet ? 'px-6 py-8' : 'px-4 py-6'}`}>
                     <View className="flex-row items-center">
-                        <View 
+                        <View
                             className="bg-white/20 rounded-full items-center justify-center mr-4"
                             style={{ width: avatarSizes.large, height: avatarSizes.large }}
                         >

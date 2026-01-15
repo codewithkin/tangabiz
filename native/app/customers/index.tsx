@@ -101,7 +101,7 @@ export default function CustomersScreen() {
             style={numColumns > 1 ? { flex: 1 / numColumns, maxWidth: `${100 / numColumns - 2}%` } : undefined}
         >
             {/* Avatar */}
-            <View 
+            <View
                 className="bg-yellow-100 rounded-full items-center justify-center mr-4"
                 style={{ width: avatarSizes.medium, height: avatarSizes.medium }}
             >

@@ -249,7 +249,7 @@ export default function POSScreen() {
                 className={`bg-white rounded-xl ${isTablet ? 'p-4' : 'p-3'} mr-3 mb-3 ${isOutOfStock ? 'opacity-50' : ''}`}
                 style={{ width: productWidth }}
             >
-                <View 
+                <View
                     className="w-full bg-gray-100 rounded-lg items-center justify-center mb-2"
                     style={{ height: isTablet ? 100 : 80 }}
                 >
@@ -261,17 +261,17 @@ export default function POSScreen() {
                 </View>
                 <Text className={`text-gray-900 font-medium ${typography.body}`} numberOfLines={2}>
                     {item.name}
-                <Text className={`text-green-600 font-bold mt-1 ${typography.body}`}>
-                    {formatCurrency(item.price)}
-                </Text>
-                <Text className={`text-gray-400 ${typography.small} mt-1`}>
-                    Stock: {item.quantity}
-                </Text>
-                {inCart && (
-                    <View className={`absolute top-2 right-2 bg-green-500 ${isTablet ? 'w-7 h-7' : 'w-6 h-6'} rounded-full items-center justify-center`}>
-                        <Text className="text-white text-xs font-bold">{inCart.quantity}</Text>
-                    </View>
-                )}
+                    <Text className={`text-green-600 font-bold mt-1 ${typography.body}`}>
+                        {formatCurrency(item.price)}
+                    </Text>
+                    <Text className={`text-gray-400 ${typography.small} mt-1`}>
+                        Stock: {item.quantity}
+                    </Text>
+                    {inCart && (
+                        <View className={`absolute top-2 right-2 bg-green-500 ${isTablet ? 'w-7 h-7' : 'w-6 h-6'} rounded-full items-center justify-center`}>
+                            <Text className="text-white text-xs font-bold">{inCart.quantity}</Text>
+                        </View>
+                    )}
             </Pressable>
         );
     };
@@ -328,7 +328,7 @@ export default function POSScreen() {
                     headerRight: () => (
                         <View className="flex-row items-center mr-4">
                             {!isTablet && cart.length > 0 && (
-                                <Pressable 
+                                <Pressable
                                     onPress={() => setShowCart(true)}
                                     className="mr-3 relative"
                                 >
@@ -547,8 +547,8 @@ export default function POSScreen() {
                                         key={method.value}
                                         onPress={() => setPaymentMethod(method.value)}
                                         className={`flex-1 py-3 rounded-xl mr-2 items-center ${paymentMethod === method.value
-                                                ? 'bg-green-500'
-                                                : 'bg-gray-100'
+                                            ? 'bg-green-500'
+                                            : 'bg-gray-100'
                                             }`}
                                     >
                                         <MaterialCommunityIcons
@@ -617,8 +617,8 @@ export default function POSScreen() {
                                 onPress={submitTransaction}
                                 disabled={isSubmitting || (paymentMethod === 'CASH' && change < 0)}
                                 className={`py-4 rounded-xl items-center ${isSubmitting || (paymentMethod === 'CASH' && change < 0)
-                                        ? 'bg-gray-300'
-                                        : 'bg-green-500'
+                                    ? 'bg-gray-300'
+                                    : 'bg-green-500'
                                     }`}
                             >
                                 {isSubmitting ? (

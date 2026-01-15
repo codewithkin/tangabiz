@@ -147,8 +147,8 @@ export default function TransactionsScreen() {
                     <View className="items-end">
                         <Text
                             className={`${isTablet ? 'text-xl' : 'text-lg'} font-bold ${item.type === 'SALE' || item.type === 'INCOME'
-                                    ? 'text-green-600'
-                                    : 'text-red-600'
+                                ? 'text-green-600'
+                                : 'text-red-600'
                                 }`}
                         >
                             {item.type === 'SALE' || item.type === 'INCOME' ? '+' : '-'}
