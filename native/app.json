@@ -1,10 +1,13 @@
 {
   "expo": {
     "name": "Tangabiz",
-    "slug": "tangabiz",
+    "slug": "tangabiz-mobile",
     "version": "1.0.0",
     "scheme": "tangabiz",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -67,7 +70,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#22c55e"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tangabiz.app",
@@ -90,13 +95,21 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO",
         "android.permission.VIBRATE",
-        "android.permission.RECEIVE_BOOT_COMPLETED"
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
       ]
     },
     "extra": {
+      "router": {
+        "origin": false
+      },
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "21a1d84f-9122-43c5-8ccc-428b8cd4f719"
       }
-    }
+    },
+    "owner": "codewithkin"
   }
 }
