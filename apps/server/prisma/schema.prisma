@@ -35,6 +35,10 @@ model User {
   createdProducts     Product[]        @relation("ProductCreator")
   createdCustomers    Customer[]       @relation("CustomerCreator")
   
+  // Notifications
+  notifications               Notification[]
+  notificationPreferences     NotificationPreference?
+  
   @@map("users")
 }
 
@@ -115,6 +119,8 @@ model Business {
   customers    Customer[]
   transactions Transaction[]
   reports      Report[]
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
   
   @@map("businesses")
 }
@@ -333,4 +339,77 @@ model Report {
   
   @@index([businessId, type])
   @@map("reports")
+}
+
+// =====================================================
+// NOTIFICATIONS
+// =====================================================
+
+enum NotificationType {
+  LOW_STOCK          // Product below minimum quantity
+  NEW_SALE           // New transaction completed
+  LARGE_SALE         // Sale above threshold
+  NEW_CUSTOMER       // New customer registered
+  DAILY_SUMMARY      // Daily business summary
+  WEEKLY_REPORT      // Weekly report ready
+  PAYMENT_RECEIVED   // Payment confirmation
+  REFUND_PROCESSED   // Refund completed
+  GOAL_ACHIEVED      // Sales goal reached
+  SYSTEM             // System notifications
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+}
+
+model Notification {
+  id          String             @id @default(cuid())
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?              // Additional data (productId, transactionId, etc.)
+  isRead      Boolean            @default(false)
+  readAt      DateTime?
+  channels    NotificationChannel[] @default([IN_APP])
+  emailSent   Boolean            @default(false)
+  pushSent    Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  
+  // Relations
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessId  String
+  business    Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, isRead])
+  @@index([businessId, createdAt])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id                  String   @id @default(cuid())
+  lowStockEmail       Boolean  @default(true)
+  lowStockPush        Boolean  @default(true)
+  newSaleEmail        Boolean  @default(false)
+  newSalePush         Boolean  @default(true)
+  largeSaleEmail      Boolean  @default(true)
+  largeSalePush       Boolean  @default(true)
+  largeSaleThreshold  Decimal  @default(10000) @db.Decimal(12, 2)
+  newCustomerEmail    Boolean  @default(false)
+  newCustomerPush     Boolean  @default(true)
+  dailySummaryEmail   Boolean  @default(true)
+  weeklyReportEmail   Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  // Relations
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessId          String
+  business            Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, businessId])
+  @@map("notification_preferences")
 }

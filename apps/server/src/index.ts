@@ -12,6 +12,15 @@ import { customerRoutes } from "./routes/customers";
 import { transactionRoutes } from "./routes/transactions";
 import { reportRoutes } from "./routes/reports";
 import { uploadRoutes } from "./routes/upload";
+import { notificationRoutes } from "./routes/notifications";
+
+// Import WebSocket manager
+import {
+  registerConnection,
+  removeConnection,
+  getTotalConnectionCount,
+  type WebSocketData,
+} from "./lib/websocket";
 
 // Create Hono app
 const app = new Hono();
@@ -52,6 +61,7 @@ app.route("/api/customers", customerRoutes);
 app.route("/api/transactions", transactionRoutes);
 app.route("/api/reports", reportRoutes);
 app.route("/api/upload", uploadRoutes);
+app.route("/api/notifications", notificationRoutes);
 
 // 404 handler
 app.notFound((c) => {
@@ -80,6 +90,7 @@ console.log(`
 ║   All-in-one Business Management Platform                ║
 ║                                                          ║
 ║   Server running at http://localhost:${port}               ║
+║   WebSocket available at ws://localhost:${port}/ws         ║
 ║                                                          ║
 ╚══════════════════════════════════════════════════════════╝
 `);
@@ -87,4 +98,26 @@ console.log(`
 export default {
   port,
   fetch: app.fetch,
+  websocket: {
+    open(ws: any) {
+      registerConnection(ws);
+      ws.send(JSON.stringify({ type: "connected", timestamp: new Date().toISOString() }));
+    },
+    message(ws: any, message: string) {
+      try {
+        const data = JSON.parse(message);
+        if (data.type === "ping") {
+          ws.send(JSON.stringify({ type: "pong", timestamp: new Date().toISOString() }));
+        }
+      } catch (error) {
+        console.error("[WS] Failed to parse message:", error);
+      }
+    },
+    close(ws: any) {
+      removeConnection(ws);
+    },
+    error(ws: any, error: Error) {
+      console.error("[WS] Error:", error);
+    },
+  },
 };

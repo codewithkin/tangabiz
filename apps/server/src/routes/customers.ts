@@ -3,6 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { db } from "../lib/db";
 import { requireAuth, requireRole } from "../middleware/auth";
+import { notifyNewCustomer } from "../lib/notifications";
 
 export const customerRoutes = new Hono();
 
@@ -140,6 +141,16 @@ customerRoutes.post("/", requireAuth, zValidator("json", createCustomerSchema), 
       createdById: userId,
     },
   });
+
+  // Trigger new customer notification
+  notifyNewCustomer({
+    id: customer.id,
+    name: customer.name,
+    email: customer.email || undefined,
+    phone: customer.phone || undefined,
+    businessId: data.businessId,
+    createdById: userId,
+  }).catch(console.error);
 
   return c.json({ customer }, 201);
 });

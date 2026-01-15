@@ -1,15 +1,43 @@
 // More Screen - Settings, Customers, Reports, etc.
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Alert, useWindowDimensions } from 'react-native';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useFocusEffect } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useResponsive } from '@/lib/useResponsive';
+import { api } from '@/lib/api';
 
 export default function MoreScreen() {
     const { user, currentBusiness, businesses, signOut, setCurrentBusiness } = useAuthStore();
     const { resetOnboarding } = useOnboardingStore();
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+    // Responsive
+    const { width } = useWindowDimensions();
+    const { deviceType, iconSizes, typography, touchTargets, avatarSizes } = useResponsive();
+    const isTablet = deviceType === 'tablet' || deviceType === 'largeTablet';
+    const isLargeTablet = deviceType === 'largeTablet';
+
+    // Fetch unread notification count
+    useFocusEffect(
+        React.useCallback(() => {
+            const fetchUnreadCount = async () => {
+                if (!currentBusiness) return;
+                try {
+                    const res = await api.get('/api/notifications/count', {
+                        businessId: currentBusiness.id,
+                    });
+                    if (res.success && res.data) {
+                        setUnreadNotifications(res.data.count || 0);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch notification count:', error);
+                }
+            };
+            fetchUnreadCount();
+        }, [currentBusiness])
+    );
 
     // Responsive
     const { width } = useWindowDimensions();
@@ -168,6 +196,14 @@ export default function MoreScreen() {
                 <SectionHeader title="Management" />
                 <View className="bg-white">
                     <MenuItem
+                        icon="bell"
+                        label="Notifications"
+                        description="View business alerts and updates"
+                        onPress={() => router.push('/notifications')}
+                        color="#22c55e"
+                        badge={unreadNotifications > 0 ? String(unreadNotifications) : undefined}
+                    />
+                    <MenuItem
                         icon="account-group"
                         label="Customers"
                         description="Manage your customer database"
@@ -218,6 +254,13 @@ export default function MoreScreen() {
                         description="Update your personal info"
                         onPress={() => router.push('/settings/profile')}
                         color="#6366f1"
+                    />
+                    <MenuItem
+                        icon="bell-cog"
+                        label="Notification Settings"
+                        description="Configure alerts and emails"
+                        onPress={() => router.push('/notifications/preferences')}
+                        color="#f97316"
                     />
                     <MenuItem
                         icon="help-circle"

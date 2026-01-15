@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "../lib/db";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { nanoid } from "../utils/helpers";
+import { notifyNewSale, notifyRefund, notifyLowStock } from "../lib/notifications";
 
 export const transactionRoutes = new Hono();
 
@@ -195,6 +196,29 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
         })
       )
     );
+
+    // Trigger new sale notification
+    notifyNewSale({
+      id: transaction.id,
+      reference: transaction.reference,
+      total: Number(transaction.total),
+      businessId: data.businessId,
+      createdById: userId,
+      customerName: transaction.customer?.name,
+    }).catch(console.error);
+
+    // Check for low stock products after sale
+    const updatedProducts = await db.product.findMany({
+      where: { id: { in: data.items.map((i) => i.productId) } },
+      select: { id: true, name: true, quantity: true, minQuantity: true, businessId: true },
+    });
+
+    // Notify for any products that are now below minimum quantity
+    updatedProducts.forEach((product) => {
+      if (product.quantity <= product.minQuantity) {
+        notifyLowStock(product).catch(console.error);
+      }
+    });
   }
 
   // Update product quantities for refunds (add back)
@@ -209,6 +233,14 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
         })
       )
     );
+
+    // Trigger refund notification
+    notifyRefund({
+      id: transaction.id,
+      reference: transaction.reference,
+      total: Number(transaction.total),
+      businessId: data.businessId,
+    }).catch(console.error);
   }
 
   return c.json({ transaction }, 201);
