@@ -7,12 +7,12 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { db } from "../lib/db";
-import { authMiddleware } from "../middleware/auth";
+import { requireAuth } from "../middleware/auth";
 
 export const notificationRoutes = new Hono();
 
 // Apply auth middleware to all routes
-notificationRoutes.use("*", authMiddleware);
+notificationRoutes.use("*", requireAuth);
 
 // =====================================================
 // GET NOTIFICATIONS
@@ -23,14 +23,14 @@ notificationRoutes.use("*", authMiddleware);
  */
 notificationRoutes.get("/", async (c) => {
   try {
-    const user = c.get("user");
+    const userId = c.get("userId");
     const businessId = c.req.query("businessId");
     const unreadOnly = c.req.query("unreadOnly") === "true";
     const limit = parseInt(c.req.query("limit") || "50");
     const offset = parseInt(c.req.query("offset") || "0");
 
     const where: any = {
-      userId: user.id,
+      userId,
     };
 
     if (businessId) {
@@ -56,7 +56,7 @@ notificationRoutes.get("/", async (c) => {
       db.notification.count({ where }),
       db.notification.count({
         where: {
-          userId: user.id,
+          userId,
           businessId: businessId || undefined,
           isRead: false,
         },
@@ -83,11 +83,11 @@ notificationRoutes.get("/", async (c) => {
  */
 notificationRoutes.get("/count", async (c) => {
   try {
-    const user = c.get("user");
+    const userId = c.get("userId");
     const businessId = c.req.query("businessId");
 
     const where: any = {
-      userId: user.id,
+      userId,
       isRead: false,
     };
 
@@ -121,14 +121,14 @@ notificationRoutes.post(
   zValidator("json", markReadSchema),
   async (c) => {
     try {
-      const user = c.get("user");
+      const userId = c.get("userId");
       const { notificationIds, markAll } = c.req.valid("json");
       const businessId = c.req.query("businessId");
 
       if (markAll) {
         // Mark all notifications as read
         const where: any = {
-          userId: user.id,
+          userId,
           isRead: false,
         };
 
@@ -148,7 +148,7 @@ notificationRoutes.post(
         await db.notification.updateMany({
           where: {
             id: { in: notificationIds },
-            userId: user.id,
+            userId,
           },
           data: { isRead: true, readAt: new Date() },
         });
@@ -169,13 +169,13 @@ notificationRoutes.post(
  */
 notificationRoutes.patch("/:id/read", async (c) => {
   try {
-    const user = c.get("user");
+    const userId = c.get("userId");
     const notificationId = c.req.param("id");
 
     const notification = await db.notification.updateMany({
       where: {
         id: notificationId,
-        userId: user.id,
+        userId,
       },
       data: { isRead: true, readAt: new Date() },
     });
@@ -200,13 +200,13 @@ notificationRoutes.patch("/:id/read", async (c) => {
  */
 notificationRoutes.delete("/:id", async (c) => {
   try {
-    const user = c.get("user");
+    const userId = c.get("userId");
     const notificationId = c.req.param("id");
 
     const notification = await db.notification.deleteMany({
       where: {
         id: notificationId,
-        userId: user.id,
+        userId,
       },
     });
 
@@ -226,11 +226,11 @@ notificationRoutes.delete("/:id", async (c) => {
  */
 notificationRoutes.delete("/", async (c) => {
   try {
-    const user = c.get("user");
+    const userId = c.get("userId");
     const businessId = c.req.query("businessId");
 
     const where: any = {
-      userId: user.id,
+      userId,
       isRead: true,
     };
 
@@ -259,7 +259,7 @@ notificationRoutes.delete("/", async (c) => {
  */
 notificationRoutes.get("/preferences", async (c) => {
   try {
-    const user = c.get("user");
+    const userId = c.get("userId");
     const businessId = c.req.query("businessId");
 
     if (!businessId) {
@@ -267,14 +267,14 @@ notificationRoutes.get("/preferences", async (c) => {
     }
 
     let preferences = await db.notificationPreference.findUnique({
-      where: { userId_businessId: { userId: user.id, businessId } },
+      where: { userId_businessId: { userId, businessId } },
     });
 
     // Create default preferences if none exist
     if (!preferences) {
       preferences = await db.notificationPreference.create({
         data: {
-          userId: user.id,
+          userId,
           businessId,
         },
       });
@@ -309,7 +309,7 @@ notificationRoutes.put(
   zValidator("json", updatePreferencesSchema),
   async (c) => {
     try {
-      const user = c.get("user");
+      const userId = c.get("userId");
       const businessId = c.req.query("businessId");
       const updates = c.req.valid("json");
 
@@ -318,9 +318,9 @@ notificationRoutes.put(
       }
 
       const preferences = await db.notificationPreference.upsert({
-        where: { userId_businessId: { userId: user.id, businessId } },
+        where: { userId_businessId: { userId, businessId } },
         create: {
-          userId: user.id,
+          userId,
           businessId,
           ...updates,
         },

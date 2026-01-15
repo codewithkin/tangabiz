@@ -73,9 +73,7 @@ export default function NotificationPreferencesScreen() {
         setPreferences((prev) => prev ? { ...prev, [key]: value } : null);
 
         try {
-            await api.put('/api/notifications/preferences', { [key]: value }, {
-                businessId: currentBusiness.id,
-            });
+            await api.put(`/api/notifications/preferences?businessId=${currentBusiness.id}`, { [key]: value });
         } catch (error) {
             console.error('Failed to update preference:', error);
             // Revert on error
