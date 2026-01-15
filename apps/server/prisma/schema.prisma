@@ -1,0 +1,336 @@
+// Tangabiz - Business Management Platform
+// Prisma Schema for PostgreSQL with Prisma Accelerate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================================================
+// AUTHENTICATION & USER MANAGEMENT
+// =====================================================
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  emailVerified       Boolean   @default(false)
+  name                String
+  image               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  // Better Auth fields
+  sessions            Session[]
+  accounts            Account[]
+  
+  // Business relationship
+  businessMembers     BusinessMember[]
+  
+  // Activity tracking
+  createdTransactions Transaction[]    @relation("TransactionCreator")
+  createdProducts     Product[]        @relation("ProductCreator")
+  createdCustomers    Customer[]       @relation("CustomerCreator")
+  
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  expiresAt    DateTime
+  token        String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  ipAddress    String?
+  userAgent    String?
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@map("accounts")
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  
+  @@map("verifications")
+}
+
+// =====================================================
+// BUSINESS & ROLE MANAGEMENT
+// =====================================================
+
+enum Role {
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logo        String?
+  description String?
+  address     String?
+  phone       String?
+  email       String?
+  website     String?
+  currency    String   @default("USD")
+  timezone    String   @default("UTC")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  members      BusinessMember[]
+  products     Product[]
+  categories   Category[]
+  customers    Customer[]
+  transactions Transaction[]
+  reports      Report[]
+  
+  @@map("businesses")
+}
+
+model BusinessMember {
+  id         String   @id @default(cuid())
+  role       Role     @default(STAFF)
+  isActive   Boolean  @default(true)
+  joinedAt   DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  // Relations
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, businessId])
+  @@map("business_members")
+}
+
+// =====================================================
+// PRODUCT MANAGEMENT
+// =====================================================
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String
+  description String?
+  image       String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  products    Product[]
+  
+  @@unique([businessId, slug])
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String
+  description String?
+  sku         String?
+  barcode     String?
+  image       String?
+  images      String[] // Array of image URLs
+  price       Decimal  @db.Decimal(10, 2)
+  costPrice   Decimal? @db.Decimal(10, 2)
+  quantity    Int      @default(0)
+  minQuantity Int      @default(0) // Low stock threshold
+  unit        String   @default("piece")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  businessId   String
+  business     Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  categoryId   String?
+  category     Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdById  String
+  createdBy    User              @relation("ProductCreator", fields: [createdById], references: [id])
+  transactions TransactionItem[]
+  
+  @@unique([businessId, slug])
+  @@unique([businessId, sku])
+  @@map("products")
+}
+
+// =====================================================
+// CUSTOMER MANAGEMENT
+// =====================================================
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  city        String?
+  state       String?
+  country     String?
+  postalCode  String?
+  notes       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  businessId   String
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdById  String
+  createdBy    User          @relation("CustomerCreator", fields: [createdById], references: [id])
+  transactions Transaction[]
+  
+  @@map("customers")
+}
+
+// =====================================================
+// TRANSACTION & SALES MANAGEMENT
+// =====================================================
+
+enum TransactionType {
+  SALE
+  REFUND
+  EXPENSE
+  INCOME
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  MOBILE_MONEY
+  OTHER
+}
+
+model Transaction {
+  id            String            @id @default(cuid())
+  reference     String            @unique // Auto-generated reference number
+  type          TransactionType   @default(SALE)
+  status        TransactionStatus @default(COMPLETED)
+  paymentMethod PaymentMethod     @default(CASH)
+  subtotal      Decimal           @db.Decimal(12, 2)
+  discount      Decimal           @default(0) @db.Decimal(12, 2)
+  total         Decimal           @db.Decimal(12, 2)
+  amountPaid    Decimal           @db.Decimal(12, 2)
+  change        Decimal           @default(0) @db.Decimal(12, 2)
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  
+  // Relations
+  businessId   String
+  business     Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerId   String?
+  customer     Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  createdById  String
+  createdBy    User              @relation("TransactionCreator", fields: [createdById], references: [id])
+  items        TransactionItem[]
+  
+  @@index([businessId, createdAt])
+  @@index([businessId, type])
+  @@map("transactions")
+}
+
+model TransactionItem {
+  id            String   @id @default(cuid())
+  quantity      Int
+  unitPrice     Decimal  @db.Decimal(10, 2)
+  discount      Decimal  @default(0) @db.Decimal(10, 2)
+  total         Decimal  @db.Decimal(12, 2)
+  productName   String   // Snapshot of product name at time of transaction
+  productSku    String?  // Snapshot of SKU
+  createdAt     DateTime @default(now())
+  
+  // Relations
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  productId     String?
+  product       Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+  
+  @@map("transaction_items")
+}
+
+// =====================================================
+// REPORTS
+// =====================================================
+
+enum ReportType {
+  SALES
+  INVENTORY
+  CUSTOMERS
+  TRANSACTIONS
+  CUSTOM
+}
+
+enum ReportPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  CUSTOM
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  name        String
+  type        ReportType
+  period      ReportPeriod
+  startDate   DateTime
+  endDate     DateTime
+  fileUrl     String?      // URL to generated PDF
+  fileSize    Int?
+  parameters  Json?        // Store report parameters/filters
+  createdAt   DateTime     @default(now())
+  
+  // Relations
+  businessId  String
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  @@index([businessId, type])
+  @@map("reports")
+}
