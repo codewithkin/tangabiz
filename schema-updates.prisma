@@ -1,0 +1,138 @@
+// =====================================================
+// CVT BILLING INTEGRATION - Add these models/fields
+// =====================================================
+
+// Add to existing Business model:
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logo        String?
+  description String?
+  address     String?
+  phone       String?
+  email       String?
+  website     String?
+  currency    String   @default("USD")
+  timezone    String   @default("UTC")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // CVT Integration fields - ADD THESE
+  cvtCustomerId       String?  @unique // CVT customer/client ID
+  cvtApiKey           String?  @unique // Encrypted CVT API key
+  cvtApiKeyHash       String?  // Hash for verification
+  cvtSubscriptionId   String?  // CVT subscription ID
+  cvtSubscriptionStatus String? // active, canceled, past_due, etc.
+  billingEmail        String?  // Email for billing notifications
+  subscriptionPlan    String?  @default("basic") // basic, pro, enterprise
+  subscriptionEndsAt  DateTime? // When subscription expires
+  trialEndsAt         DateTime? // For trial period tracking
+  lastBilledAt        DateTime? // Last successful charge
+  
+  // Relations
+  members      BusinessMember[]
+  products     Product[]
+  categories   Category[]
+  customers    Customer[]
+  transactions Transaction[]
+  reports      Report[]
+  apiKeys      ApiKey[] // NEW: Business can have multiple API keys
+  
+  @@map("businesses")
+}
+
+// NEW: API Key model for business authentication
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String    // e.g., "Production", "Development", "Mobile App"
+  keyPrefix   String    // First 8 chars for identification (e.g., "tb_live_")
+  keyHash     String    // Hashed full key for verification
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  isActive    Boolean   @default(true)
+  permissions Json?     // Scoped permissions if needed
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  @@unique([businessId, keyPrefix])
+  @@index([keyHash])
+  @@map("api_keys")
+}
+
+// NEW: Billing event tracking
+model BillingEvent {
+  id              String   @id @default(cuid())
+  type            String   // charge_succeeded, charge_failed, subscription_updated, etc.
+  amount          Decimal? @db.Decimal(10, 2)
+  currency        String   @default("USD")
+  status          String   // succeeded, failed, pending
+  cvtEventId      String?  @unique // CVT's event ID
+  cvtCustomerId   String   // Reference to CVT customer
+  metadata        Json?    // Additional event data
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  @@index([businessId, createdAt])
+  @@index([cvtEventId])
+  @@map("billing_events")
+}
+
+// Update User model to add API key creation tracking
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  emailVerified       Boolean   @default(false)
+  name                String
+  image               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  // Better Auth fields
+  sessions            Session[]
+  accounts            Account[]
+  
+  // Business relationship
+  businessMembers     BusinessMember[]
+  
+  // Activity tracking
+  createdTransactions Transaction[]    @relation("TransactionCreator")
+  createdProducts     Product[]        @relation("ProductCreator")
+  createdCustomers    Customer[]       @relation("CustomerCreator")
+  createdApiKeys      ApiKey[]         @relation("ApiKeyCreator") // NEW
+  
+  @@map("users")
+}
+
+// Update ApiKey model to track creator
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String
+  keyPrefix   String
+  keyHash     String
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  isActive    Boolean   @default(true)
+  permissions Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdById String?
+  createdBy   User?     @relation("ApiKeyCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  
+  @@unique([businessId, keyPrefix])
+  @@index([keyHash])
+  @@map("api_keys")
+}
