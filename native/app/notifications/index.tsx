@@ -167,10 +167,8 @@ export default function NotificationsScreen() {
         if (!currentBusiness) return;
 
         try {
-            await api.post('/api/notifications/mark-read', {
+            await api.post(`/api/notifications/mark-read?businessId=${currentBusiness.id}`, {
                 markAll: true,
-            }, {
-                businessId: currentBusiness.id,
             });
             setNotifications((prev) =>
                 prev.map((n) => ({ ...n, isRead: true, readAt: new Date().toISOString() }))

@@ -39,12 +39,6 @@ export default function MoreScreen() {
         }, [currentBusiness])
     );
 
-    // Responsive
-    const { width } = useWindowDimensions();
-    const { deviceType, iconSizes, typography, touchTargets, avatarSizes } = useResponsive();
-    const isTablet = deviceType === 'tablet' || deviceType === 'largeTablet';
-    const isLargeTablet = deviceType === 'largeTablet';
-
     const handleSignOut = () => {
         Alert.alert(
             'Sign Out',
