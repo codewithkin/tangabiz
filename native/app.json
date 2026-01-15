@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Tangabiz",
+    "slug": "tangabiz",
+    "version": "1.0.0",
+
+    "scheme": "tangabiz",
+    "platforms": ["ios", "android"],
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true,
+
+      "tsconfigPaths": true
+    },
+
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+
+    "userInterfaceStyle": "light",
+
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#22c55e"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tangabiz.app"
+    },
+    "android": {
+      "package": "com.tangabiz.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#22c55e"
+      }
+    }
+  }
+}
