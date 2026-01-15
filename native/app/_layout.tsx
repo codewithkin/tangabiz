@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import Toast from 'react-native-toast-message';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { PortalHost } from '@rn-primitives/portal';
 import { useAuthStore } from '@/store/auth';
 
 export default function Layout() {
@@ -15,7 +17,7 @@ export default function Layout() {
   }, []);
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -31,7 +33,8 @@ export default function Layout() {
           },
         }}
       />
+      <PortalHost />
       <Toast />
-    </>
+    </GestureHandlerRootView>
   );
 }
