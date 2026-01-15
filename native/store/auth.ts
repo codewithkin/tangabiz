@@ -1,6 +1,26 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
+import { MMKV } from 'react-native-mmkv';
+
+// Initialize MMKV storage
+export const storage = new MMKV({
+  id: 'tangabiz-storage',
+  encryptionKey: 'tangabiz-secure-key',
+});
+
+// Create Zustand-compatible storage adapter
+const mmkvStorage: StateStorage = {
+  setItem: (name, value) => {
+    storage.set(name, value);
+  },
+  getItem: (name) => {
+    const value = storage.getString(name);
+    return value ?? null;
+  },
+  removeItem: (name) => {
+    storage.delete(name);
+  },
+};
 
 // API Configuration
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
@@ -182,7 +202,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'tangabiz-auth',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
       partialize: (state) => ({
         user: state.user,
         token: state.token,

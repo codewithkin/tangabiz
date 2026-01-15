@@ -3,6 +3,7 @@ import '../global.css';
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import Toast from 'react-native-toast-message';
 import { useAuthStore } from '@/store/auth';
 
 export default function Layout() {
@@ -30,6 +31,7 @@ export default function Layout() {
           },
         }}
       />
+      <Toast />
     </>
   );
 }
