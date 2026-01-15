@@ -31,6 +31,8 @@ export interface User {
   email: string;
   name: string;
   image?: string;
+  phone?: string;
+  createdAt?: string;
 }
 
 export interface Business {
@@ -39,6 +41,13 @@ export interface Business {
   slug: string;
   logo?: string;
   role: 'ADMIN' | 'MANAGER' | 'STAFF';
+  type?: string;
+  currency?: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  email?: string;
+  taxId?: string;
 }
 
 export interface Service {
@@ -66,6 +75,8 @@ interface AuthState {
   signOut: () => Promise<void>;
   verifySession: () => Promise<boolean>;
   setCurrentBusiness: (business: Business) => void;
+  setUser: (user: User) => void;
+  setBusiness: (business: Business) => void;
   clearError: () => void;
 }
 
@@ -193,6 +204,23 @@ export const useAuthStore = create<AuthState>()(
       // Set current business
       setCurrentBusiness: (business: Business) => {
         set({ currentBusiness: business });
+      },
+
+      // Update user data
+      setUser: (user: User) => {
+        set({ user });
+      },
+
+      // Update business data
+      setBusiness: (business: Business) => {
+        const { businesses, currentBusiness } = get();
+        const updatedBusinesses = businesses.map(b => 
+          b.id === business.id ? business : b
+        );
+        set({ 
+          businesses: updatedBusinesses,
+          currentBusiness: currentBusiness?.id === business.id ? business : currentBusiness,
+        });
       },
 
       // Clear error
