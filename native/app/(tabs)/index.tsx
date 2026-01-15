@@ -15,6 +15,8 @@ import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 import { useResponsive } from '@/lib/useResponsive';
+import { usePermissions, getRoleBadgeStyle } from '@/lib/permissions';
+import { PermissionGuard, ManagerAndAbove } from '@/components/PermissionGuard';
 
 interface DashboardStats {
     todaySales: number;
@@ -40,6 +42,8 @@ export default function HomeScreen() {
     const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const { hasPermission, role } = usePermissions();
+    const roleBadgeStyle = getRoleBadgeStyle(role);
 
     const fetchDashboardData = useCallback(async () => {
         if (!currentBusiness) return;
@@ -178,8 +182,8 @@ export default function HomeScreen() {
                             {currentBusiness.name}
                         </Text>
                         <View className="flex-row items-center mt-2">
-                            <View className={`bg-green-400 ${isTablet ? 'px-3 py-2' : 'px-2 py-1'} rounded`}>
-                                <Text className={`text-white ${typography.small} font-medium`}>
+                            <View className={`${roleBadgeStyle.bg} ${isTablet ? 'px-3 py-2' : 'px-2 py-1'} rounded`}>
+                                <Text className={`${roleBadgeStyle.text} ${typography.small} font-medium`}>
                                     {currentBusiness.role}
                                 </Text>
                             </View>
@@ -188,14 +192,23 @@ export default function HomeScreen() {
                 )}
             </View>
 
-            {/* Stats Row */}
+            {/* Stats Row - Only show sales figures to users with view_revenue permission */}
             <View className={`flex-row ${isTablet ? 'px-8' : 'px-5'} -mt-4`}>
-                <StatCard
-                    title="Today's Sales"
-                    value={formatCurrency(stats?.todaySales || 0)}
-                    icon="cash"
-                    color="#22c55e"
-                />
+                {hasPermission('view_revenue') ? (
+                    <StatCard
+                        title="Today's Sales"
+                        value={formatCurrency(stats?.todaySales || 0)}
+                        icon="cash"
+                        color="#22c55e"
+                    />
+                ) : (
+                    <StatCard
+                        title="Your Sales"
+                        value={stats?.todayTransactions || 0}
+                        icon="cart-check"
+                        color="#22c55e"
+                    />
+                )}
                 <StatCard
                     title="Transactions"
                     value={stats?.todayTransactions || 0}
@@ -214,39 +227,45 @@ export default function HomeScreen() {
                         color="#22c55e"
                         onPress={() => router.push('/(tabs)/pos')}
                     />
-                    <QuickAction
-                        icon="plus-circle"
-                        label="Add Product"
-                        color="#3b82f6"
-                        onPress={() => router.push('/products/create')}
-                    />
-                    <QuickAction
-                        icon="account-plus"
-                        label="Add Customer"
-                        color="#eab308"
-                        onPress={() => router.push('/customers/create')}
-                    />
-                    <QuickAction
-                        icon="chart-bar"
-                        label="Reports"
-                        color="#8b5cf6"
-                        onPress={() => router.push('/reports')}
-                    />
-                    {isTablet && (
-                        <>
-                            <QuickAction
-                                icon="cog"
-                                label="Settings"
-                                color="#6b7280"
-                                onPress={() => router.push('/settings')}
-                            />
-                            <QuickAction
-                                icon="folder"
-                                label="Categories"
-                                color="#14b8a6"
-                                onPress={() => router.push('/categories')}
-                            />
-                        </>
+                    {hasPermission('create_products') && (
+                        <QuickAction
+                            icon="plus-circle"
+                            label="Add Product"
+                            color="#3b82f6"
+                            onPress={() => router.push('/products/create')}
+                        />
+                    )}
+                    {hasPermission('create_customers') && (
+                        <QuickAction
+                            icon="account-plus"
+                            label="Add Customer"
+                            color="#eab308"
+                            onPress={() => router.push('/customers/create')}
+                        />
+                    )}
+                    {hasPermission('view_reports') && (
+                        <QuickAction
+                            icon="chart-bar"
+                            label="Reports"
+                            color="#8b5cf6"
+                            onPress={() => router.push('/reports')}
+                        />
+                    )}
+                    {isTablet && hasPermission('edit_business_settings') && (
+                        <QuickAction
+                            icon="cog"
+                            label="Settings"
+                            color="#6b7280"
+                            onPress={() => router.push('/settings')}
+                        />
+                    )}
+                    {isTablet && hasPermission('create_categories') && (
+                        <QuickAction
+                            icon="folder"
+                            label="Categories"
+                            color="#14b8a6"
+                            onPress={() => router.push('/categories')}
+                        />
                     )}
                 </View>
             </View>

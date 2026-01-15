@@ -7,11 +7,15 @@ import { useAuthStore } from '@/store/auth';
 import { useOnboardingStore } from '@/store/onboarding';
 import { useResponsive } from '@/lib/useResponsive';
 import { api } from '@/lib/api';
+import { usePermissions, getRoleBadgeStyle } from '@/lib/permissions';
+import { PermissionGuard, AdminOnly, ManagerAndAbove } from '@/components/PermissionGuard';
 
 export default function MoreScreen() {
     const { user, currentBusiness, businesses, signOut, setCurrentBusiness } = useAuthStore();
     const { resetOnboarding } = useOnboardingStore();
     const [unreadNotifications, setUnreadNotifications] = useState(0);
+    const { hasPermission, isAdmin, isAdminOrManager, role } = usePermissions();
+    const roleBadgeStyle = getRoleBadgeStyle(role);
 
     // Responsive
     const { width } = useWindowDimensions();
@@ -167,8 +171,8 @@ export default function MoreScreen() {
                                     {currentBusiness.name}
                                 </Text>
                                 <View className="flex-row items-center mt-1">
-                                    <View className={`bg-green-100 ${isTablet ? 'px-3 py-1' : 'px-2 py-0.5'} rounded`}>
-                                        <Text className={`text-green-700 ${typography.small} font-medium`}>
+                                    <View className={`${roleBadgeStyle.bg} ${isTablet ? 'px-3 py-1' : 'px-2 py-0.5'} rounded`}>
+                                        <Text className={`${roleBadgeStyle.text} ${typography.small} font-medium`}>
                                             {currentBusiness.role}
                                         </Text>
                                     </View>
@@ -204,40 +208,50 @@ export default function MoreScreen() {
                         onPress={() => router.push('/customers')}
                         color="#eab308"
                     />
-                    <MenuItem
-                        icon="tag-multiple"
-                        label="Categories"
-                        description="Organize products by category"
-                        onPress={() => router.push('/categories')}
-                        color="#3b82f6"
-                    />
-                    <MenuItem
-                        icon="chart-bar"
-                        label="Reports"
-                        description="View sales and inventory reports"
-                        onPress={() => router.push('/reports')}
-                        color="#8b5cf6"
-                    />
+                    <PermissionGuard permissions={['create_categories', 'edit_categories']}>
+                        <MenuItem
+                            icon="tag-multiple"
+                            label="Categories"
+                            description="Organize products by category"
+                            onPress={() => router.push('/categories')}
+                            color="#3b82f6"
+                        />
+                    </PermissionGuard>
+                    <PermissionGuard permissions="view_reports">
+                        <MenuItem
+                            icon="chart-bar"
+                            label="Reports"
+                            description={hasPermission('view_financial_reports') ? "View sales, inventory & financial reports" : "View sales and inventory reports"}
+                            onPress={() => router.push('/reports')}
+                            color="#8b5cf6"
+                        />
+                    </PermissionGuard>
                 </View>
 
-                {/* Business */}
-                <SectionHeader title="Business" />
-                <View className="bg-white">
-                    <MenuItem
-                        icon="store-cog"
-                        label="Business Settings"
-                        description="Manage business details"
-                        onPress={() => router.push('/settings/business')}
-                        color="#22c55e"
-                    />
-                    <MenuItem
-                        icon="account-multiple"
-                        label="Team Members"
-                        description="Manage staff access"
-                        onPress={() => router.push('/settings/team')}
-                        color="#06b6d4"
-                    />
-                </View>
+                {/* Business - Only for Admins and Managers */}
+                <ManagerAndAbove>
+                    <SectionHeader title="Business" />
+                    <View className="bg-white">
+                        <PermissionGuard permissions="edit_business_settings">
+                            <MenuItem
+                                icon="store-cog"
+                                label="Business Settings"
+                                description="Manage business details"
+                                onPress={() => router.push('/settings/business')}
+                                color="#22c55e"
+                            />
+                        </PermissionGuard>
+                        <PermissionGuard permissions="manage_team">
+                            <MenuItem
+                                icon="account-multiple"
+                                label="Team Members"
+                                description={hasPermission('change_roles') ? "Manage staff access and roles" : "View team members"}
+                                onPress={() => router.push('/settings/team')}
+                                color="#06b6d4"
+                            />
+                        </PermissionGuard>
+                    </View>
+                </ManagerAndAbove>
 
                 {/* Account */}
                 <SectionHeader title="Account" />
@@ -249,13 +263,15 @@ export default function MoreScreen() {
                         onPress={() => router.push('/settings/profile')}
                         color="#6366f1"
                     />
-                    <MenuItem
-                        icon="bell-cog"
-                        label="Notification Settings"
-                        description="Configure alerts and emails"
-                        onPress={() => router.push('/notifications/preferences')}
-                        color="#f97316"
-                    />
+                    <PermissionGuard permissions="manage_notification_settings">
+                        <MenuItem
+                            icon="bell-cog"
+                            label="Notification Settings"
+                            description="Configure alerts and emails"
+                            onPress={() => router.push('/notifications/preferences')}
+                            color="#f97316"
+                        />
+                    </PermissionGuard>
                     <MenuItem
                         icon="help-circle"
                         label="Help & Support"

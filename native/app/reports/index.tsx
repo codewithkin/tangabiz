@@ -19,6 +19,8 @@ import * as IntentLauncher from 'expo-intent-launcher';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { usePermissions } from '@/lib/permissions';
+import { PermissionGuard, ManagerAndAbove } from '@/components/PermissionGuard';
 
 type DateRange = 'today' | 'week' | 'month' | 'year';
 type ReportType = 'SALES' | 'INVENTORY' | 'CUSTOMERS';
@@ -61,6 +63,7 @@ export default function ReportsScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+    const { hasPermission } = usePermissions();
 
     // Responsive helpers
     const isTablet = width >= BREAKPOINTS.tablet;
@@ -272,7 +275,7 @@ export default function ReportsScreen() {
             <Stack.Screen
                 options={{
                     title: 'Reports',
-                    headerRight: () => (
+                    headerRight: () => hasPermission('export_reports') ? (
                         <Pressable
                             onPress={showReportTypeSelector}
                             disabled={isGeneratingPdf}
@@ -284,7 +287,7 @@ export default function ReportsScreen() {
                                 <MaterialCommunityIcons name="file-pdf-box" size={26} color="#fff" />
                             )}
                         </Pressable>
-                    ),
+                    ) : null,
                 }}
             />
 
@@ -321,97 +324,113 @@ export default function ReportsScreen() {
 
                 {/* Summary Cards - Responsive Grid */}
                 <View className={`flex-row flex-wrap ${isTablet ? 'px-4' : 'px-2'} mt-4`}>
+                    {/* Total Sales - visible to users with view_revenue permission */}
+                    {hasPermission('view_revenue') && (
+                        <View className={`${isLargeTablet ? 'w-1/4' : isTablet ? 'w-1/4' : 'w-1/2'} p-2`}>
+                            <View className={`bg-white rounded-xl ${cardPadding}`}>
+                                <View className="flex-row items-center justify-between">
+                                    <Text className={`text-gray-500 ${subtitleSize}`}>Total Sales</Text>
+                                    <View className={`${isTablet ? 'w-10 h-10' : 'w-8 h-8'} bg-green-100 rounded-full items-center justify-center`}>
+                                        <MaterialCommunityIcons name="trending-up" size={isTablet ? 20 : 16} color="#22c55e" />
+                                    </View>
+                                </View>
+                                <Text className={`text-gray-900 ${titleSize} font-bold mt-2`}>
+                                    {formatCurrency(reportData?.totalSales || 0)}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Refunds - visible to managers and above */}
+                    {hasPermission('process_refunds') && (
+                        <View className={`${isLargeTablet ? 'w-1/4' : isTablet ? 'w-1/4' : 'w-1/2'} p-2`}>
+                            <View className={`bg-white rounded-xl ${cardPadding}`}>
+                                <View className="flex-row items-center justify-between">
+                                    <Text className={`text-gray-500 ${subtitleSize}`}>Refunds</Text>
+                                    <View className={`${isTablet ? 'w-10 h-10' : 'w-8 h-8'} bg-red-100 rounded-full items-center justify-center`}>
+                                        <MaterialCommunityIcons name="trending-down" size={isTablet ? 20 : 16} color="#ef4444" />
+                                    </View>
+                                </View>
+                                <Text className={`text-red-600 ${titleSize} font-bold mt-2`}>
+                                    {formatCurrency(reportData?.totalRefunds || 0)}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Net Revenue - visible to managers and above */}
+                    {hasPermission('view_revenue') && (
+                        <View className={`${isLargeTablet ? 'w-1/4' : isTablet ? 'w-1/4' : 'w-1/2'} p-2`}>
+                            <View className={`bg-white rounded-xl ${cardPadding}`}>
+                                <View className="flex-row items-center justify-between">
+                                    <Text className={`text-gray-500 ${subtitleSize}`}>Net Revenue</Text>
+                                    <View className={`${isTablet ? 'w-10 h-10' : 'w-8 h-8'} bg-blue-100 rounded-full items-center justify-center`}>
+                                        <MaterialCommunityIcons name="cash" size={isTablet ? 20 : 16} color="#3b82f6" />
+                                    </View>
+                                </View>
+                                <Text className={`text-blue-600 ${titleSize} font-bold mt-2`}>
+                                    {formatCurrency(reportData?.netRevenue || 0)}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Transactions Count - always visible */}
                     <View className={`${isLargeTablet ? 'w-1/4' : isTablet ? 'w-1/4' : 'w-1/2'} p-2`}>
                         <View className={`bg-white rounded-xl ${cardPadding}`}>
                             <View className="flex-row items-center justify-between">
-                                <Text className={`text-gray-500 ${subtitleSize}`}>Total Sales</Text>
-                                <View className={`${isTablet ? 'w-10 h-10' : 'w-8 h-8'} bg-green-100 rounded-full items-center justify-center`}>
-                                    <MaterialCommunityIcons name="trending-up" size={isTablet ? 20 : 16} color="#22c55e" />
+                                <Text className={`text-gray-500 ${subtitleSize}`}>Transactions</Text>
+                                <View className={`${isTablet ? 'w-10 h-10' : 'w-8 h-8'} bg-purple-100 rounded-full items-center justify-center`}>
+                                    <MaterialCommunityIcons name="receipt" size={isTablet ? 20 : 16} color="#8b5cf6" />
                                 </View>
                             </View>
-                            <Text className={`text-gray-900 ${titleSize} font-bold mt-2`}>
-                                {formatCurrency(reportData?.totalSales || 0)}
+                            <Text className={`text-purple-600 ${titleSize} font-bold mt-2`}>
+                                {reportData?.transactionCount || 0}
                             </Text>
                         </View>
                     </View>
 
-                    <View className={`${isLargeTablet ? 'w-1/4' : isTablet ? 'w-1/4' : 'w-1/2'} p-2`}>
-                        <View className={`bg-white rounded-xl ${cardPadding}`}>
-                            <View className="flex-row items-center justify-between">
-                                <Text className={`text-gray-500 ${subtitleSize}`}>Refunds</Text>
-                                <View className={`${isTablet ? 'w-10 h-10' : 'w-8 h-8'} bg-red-100 rounded-full items-center justify-center`}>
-                                    <MaterialCommunityIcons name="trending-down" size={isTablet ? 20 : 16} color="#ef4444" />
+                    {/* Avg Order - visible to managers and above */}
+                    {hasPermission('view_revenue') && (
+                        <View className={`${isLargeTablet ? 'w-1/4' : isTablet ? 'w-1/4' : 'w-1/2'} p-2`}>
+                            <View className={`bg-white rounded-xl ${cardPadding}`}>
+                                <View className="flex-row items-center justify-between">
+                                    <Text className={`text-gray-500 ${subtitleSize}`}>Avg. Order</Text>
+                                    <View className={`${isTablet ? 'w-10 h-10' : 'w-8 h-8'} bg-yellow-100 rounded-full items-center justify-center`}>
+                                        <MaterialCommunityIcons name="chart-line" size={isTablet ? 20 : 16} color="#eab308" />
+                                    </View>
                                 </View>
+                                <Text className={`text-yellow-600 ${titleSize} font-bold mt-2`}>
+                                    {formatCurrency(reportData?.averageOrderValue || 0)}
+                                </Text>
                             </View>
-                            <Text className={`text-red-600 ${titleSize} font-bold mt-2`}>
-                                {formatCurrency(reportData?.totalRefunds || 0)}
-                            </Text>
                         </View>
-                    </View>
-
-                    <View className={`${isLargeTablet ? 'w-1/4' : isTablet ? 'w-1/4' : 'w-1/2'} p-2`}>
-                        <View className={`bg-white rounded-xl ${cardPadding}`}>
-                            <View className="flex-row items-center justify-between">
-                                <Text className={`text-gray-500 ${subtitleSize}`}>Net Revenue</Text>
-                                <View className={`${isTablet ? 'w-10 h-10' : 'w-8 h-8'} bg-blue-100 rounded-full items-center justify-center`}>
-                                    <MaterialCommunityIcons name="cash" size={isTablet ? 20 : 16} color="#3b82f6" />
-                                </View>
-                            </View>
-                            <Text className={`text-blue-600 ${titleSize} font-bold mt-2`}>
-                                {formatCurrency(reportData?.netRevenue || 0)}
-                            </Text>
-                        </View>
-                    </View>
-
-                    <View className={`${isLargeTablet ? 'w-1/4' : isTablet ? 'w-1/4' : 'w-1/2'} p-2`}>
-                        <View className={`bg-white rounded-xl ${cardPadding}`}>
-                            <View className="flex-row items-center justify-between">
-                                <Text className={`text-gray-500 ${subtitleSize}`}>Avg. Order</Text>
-                                <View className={`${isTablet ? 'w-10 h-10' : 'w-8 h-8'} bg-yellow-100 rounded-full items-center justify-center`}>
-                                    <MaterialCommunityIcons name="chart-line" size={isTablet ? 20 : 16} color="#eab308" />
-                                </View>
-                            </View>
-                            <Text className={`text-yellow-600 ${titleSize} font-bold mt-2`}>
-                                {formatCurrency(reportData?.averageOrderValue || 0)}
-                            </Text>
-                        </View>
-                    </View>
+                    )}
                 </View>
 
                 {/* Responsive Layout for Charts and Lists */}
                 <View className={`${isTablet ? 'flex-row flex-wrap' : ''}`}>
                     {/* Left Column - Charts */}
                     <View className={`${isTablet ? 'w-1/2' : 'w-full'}`}>
-                        {/* Transactions Count */}
-                        <View className={`bg-white mt-4 rounded-xl ${cardPadding} flex-row items-center ${isTablet ? 'mx-6' : 'mx-4'}`}>
-                            <View className={`${isTablet ? 'w-14 h-14' : 'w-12 h-12'} bg-purple-100 rounded-full items-center justify-center`}>
-                                <MaterialCommunityIcons name="receipt" size={isTablet ? 28 : 24} color="#8b5cf6" />
+                        {/* Sales Chart - Only for users with view_revenue */}
+                        {hasPermission('view_revenue') && (
+                            <View className={`bg-white mt-4 rounded-xl ${cardPadding} ${isTablet ? 'mx-6' : 'mx-4'}`}>
+                                <Text className={`text-gray-900 font-semibold mb-4 ${isTablet ? 'text-lg' : ''}`}>Sales Trend</Text>
+                                <View className={`flex-row items-end justify-between ${isTablet ? 'h-40' : 'h-32'}`}>
+                                    {reportData?.dailySales.map((day, index) => (
+                                        <View key={index} className="items-center flex-1">
+                                            <View
+                                                className={`bg-green-500 rounded-t-sm ${isTablet ? 'w-8' : 'w-6'}`}
+                                                style={{
+                                                    height: Math.max((day.amount / maxDailySale) * (isTablet ? 130 : 100), 4),
+                                                }}
+                                            />
+                                            <Text className={`text-gray-500 mt-2 ${isTablet ? 'text-sm' : 'text-xs'}`}>{day.date}</Text>
+                                        </View>
+                                    ))}
+                                </View>
                             </View>
-                            <View className="flex-1 ml-4">
-                                <Text className={`text-gray-500 ${subtitleSize}`}>Total Transactions</Text>
-                                <Text className={`text-gray-900 ${isTablet ? 'text-3xl' : 'text-2xl'} font-bold`}>
-                                    {reportData?.transactionCount || 0}
-                                </Text>
-                            </View>
-                        </View>
-
-                        {/* Sales Chart */}
-                        <View className={`bg-white mt-4 rounded-xl ${cardPadding} ${isTablet ? 'mx-6' : 'mx-4'}`}>
-                            <Text className={`text-gray-900 font-semibold mb-4 ${isTablet ? 'text-lg' : ''}`}>Sales Trend</Text>
-                            <View className={`flex-row items-end justify-between ${isTablet ? 'h-40' : 'h-32'}`}>
-                                {reportData?.dailySales.map((day, index) => (
-                                    <View key={index} className="items-center flex-1">
-                                        <View
-                                            className={`bg-green-500 rounded-t-sm ${isTablet ? 'w-8' : 'w-6'}`}
-                                            style={{
-                                                height: Math.max((day.amount / maxDailySale) * (isTablet ? 130 : 100), 4),
-                                            }}
-                                        />
-                                        <Text className={`text-gray-500 mt-2 ${isTablet ? 'text-sm' : 'text-xs'}`}>{day.date}</Text>
-                                    </View>
-                                ))}
-                            </View>
-                        </View>
+                        )}
                     </View>
 
                     {/* Right Column - Lists */}

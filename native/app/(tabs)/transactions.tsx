@@ -15,6 +15,7 @@ import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
 import { useResponsive } from '@/lib/useResponsive';
+import { usePermissions } from '@/lib/permissions';
 
 interface Transaction {
     id: string;
@@ -36,6 +37,7 @@ export default function TransactionsScreen() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [filter, setFilter] = useState<'all' | 'SALE' | 'REFUND'>('all');
+    const { hasPermission } = usePermissions();
 
     // Responsive
     const { width } = useWindowDimensions();

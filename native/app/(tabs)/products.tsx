@@ -17,11 +17,13 @@ import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import { useResponsive } from '@/lib/useResponsive';
+import { usePermissions } from '@/lib/permissions';
 
 interface Product {
     id: string;
     name: string;
     price: number;
+    costPrice?: number;
     quantity: number;
     minQuantity: number;
     sku?: string;
@@ -38,6 +40,7 @@ export default function ProductsScreen() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const { hasPermission } = usePermissions();
 
     // Responsive
     const { width } = useWindowDimensions();
@@ -160,12 +163,14 @@ export default function ProductsScreen() {
         <View className="flex-1 items-center justify-center py-20">
             <MaterialCommunityIcons name="package-variant" size={iconSizes.xlarge} color="#d1d5db" />
             <Text className={`text-gray-400 ${isTablet ? 'text-xl' : 'text-lg'} mt-4`}>No products found</Text>
-            <Pressable
-                onPress={() => router.push('/products/create')}
-                className={`mt-4 bg-green-500 ${isTablet ? 'px-8 py-4' : 'px-6 py-3'} rounded-xl`}
-            >
-                <Text className={`text-white font-semibold ${typography.body}`}>Add First Product</Text>
-            </Pressable>
+            {hasPermission('create_products') && (
+                <Pressable
+                    onPress={() => router.push('/products/create')}
+                    className={`mt-4 bg-green-500 ${isTablet ? 'px-8 py-4' : 'px-6 py-3'} rounded-xl`}
+                >
+                    <Text className={`text-white font-semibold ${typography.body}`}>Add First Product</Text>
+                </Pressable>
+            )}
         </View>
     );
 
@@ -174,14 +179,14 @@ export default function ProductsScreen() {
             <Stack.Screen
                 options={{
                     title: 'Products',
-                    headerRight: () => (
+                    headerRight: () => hasPermission('create_products') ? (
                         <Pressable
                             onPress={() => router.push('/products/create')}
                             className="mr-4"
                         >
                             <MaterialCommunityIcons name="plus" size={iconSizes.medium} color="#fff" />
                         </Pressable>
-                    ),
+                    ) : null,
                 }}
             />
 

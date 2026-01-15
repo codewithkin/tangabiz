@@ -88,3 +88,17 @@ export {
   statusColors,
   transactionTypeColors,
 } from './utils';
+
+// Permissions
+export {
+  hasPermission,
+  hasAnyPermission,
+  hasAllPermissions,
+  getPermissions,
+  usePermissions,
+  canAccess,
+  getRoleDisplayName,
+  getRoleColor,
+  getRoleBadgeStyle,
+} from './permissions';
+export type { Role, Permission } from './permissions';
