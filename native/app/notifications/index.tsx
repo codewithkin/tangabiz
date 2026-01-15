@@ -290,9 +290,8 @@ export default function NotificationsScreen() {
             <Pressable
                 onPress={() => handleNotificationPress(item)}
                 onLongPress={() => deleteNotification(item.id)}
-                className={`${cardPadding} mx-4 mb-3 bg-white rounded-xl flex-row items-start ${
-                    !item.isRead ? 'border-l-4 border-green-500' : ''
-                }`}
+                className={`${cardPadding} mx-4 mb-3 bg-white rounded-xl flex-row items-start ${!item.isRead ? 'border-l-4 border-green-500' : ''
+                    }`}
                 style={{ opacity: item.isRead ? 0.8 : 1 }}
             >
                 <View className={`${isTablet ? 'w-12 h-12' : 'w-10 h-10'} rounded-full items-center justify-center mr-3 ${style.bgColor}`}>
