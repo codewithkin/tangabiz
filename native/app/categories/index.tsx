@@ -10,11 +10,13 @@ import {
     ActivityIndicator,
     Alert,
     Modal,
+    useWindowDimensions,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
+import { useResponsive } from '@/lib/useResponsive';
 
 interface Category {
     id: string;
@@ -42,6 +44,13 @@ export default function CategoriesScreen() {
     const [formDescription, setFormDescription] = useState('');
     const [formColor, setFormColor] = useState(COLORS[0]);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Responsive
+    const { width } = useWindowDimensions();
+    const { deviceType, iconSizes, typography, touchTargets } = useResponsive();
+    const isTablet = deviceType === 'tablet' || deviceType === 'largeTablet';
+    const isLargeTablet = deviceType === 'largeTablet';
+    const numColumns = isLargeTablet ? 3 : isTablet ? 2 : 1;
 
     const fetchCategories = useCallback(async () => {
         if (!currentBusiness) return;
@@ -146,25 +155,26 @@ export default function CategoriesScreen() {
         <Pressable
             onPress={() => openEditModal(item)}
             onLongPress={() => handleDelete(item)}
-            className="bg-white mx-4 mb-3 rounded-xl p-4 flex-row items-center shadow-sm"
+            className={`bg-white ${numColumns > 1 ? 'mx-2' : 'mx-4'} mb-3 rounded-xl ${isTablet ? 'p-5' : 'p-4'} flex-row items-center shadow-sm`}
+            style={numColumns > 1 ? { flex: 1 / numColumns, maxWidth: `${100 / numColumns - 2}%` } : undefined}
         >
             {/* Color Indicator */}
             <View
-                className="w-12 h-12 rounded-full items-center justify-center mr-4"
+                className={`${isTablet ? 'w-14 h-14' : 'w-12 h-12'} rounded-full items-center justify-center mr-4`}
                 style={{ backgroundColor: item.color || COLORS[0] + '20' }}
             >
                 <MaterialCommunityIcons
                     name="folder"
-                    size={24}
+                    size={iconSizes.medium}
                     color={item.color || COLORS[0]}
                 />
             </View>
 
             {/* Category Info */}
             <View className="flex-1">
-                <Text className="text-gray-900 font-semibold text-base">{item.name}</Text>
+                <Text className={`text-gray-900 font-semibold ${isTablet ? 'text-lg' : 'text-base'}`}>{item.name}</Text>
                 {item.description && (
-                    <Text className="text-gray-500 text-sm mt-0.5" numberOfLines={1}>
+                    <Text className={`text-gray-500 ${typography.small} mt-0.5`} numberOfLines={1}>
                         {item.description}
                     </Text>
                 )}
@@ -172,8 +182,8 @@ export default function CategoriesScreen() {
 
             {/* Product Count */}
             <View className="items-end">
-                <Text className="text-gray-400 text-xs">Products</Text>
-                <Text className="text-gray-900 font-bold text-lg">
+                <Text className={`text-gray-400 ${typography.small}`}>Products</Text>
+                <Text className={`text-gray-900 font-bold ${isTablet ? 'text-xl' : 'text-lg'}`}>
                     {item._count?.products || 0}
                 </Text>
             </View>
@@ -182,13 +192,13 @@ export default function CategoriesScreen() {
 
     const ListEmpty = () => (
         <View className="flex-1 items-center justify-center py-20">
-            <MaterialCommunityIcons name="folder-open" size={64} color="#d1d5db" />
-            <Text className="text-gray-400 text-lg mt-4">No categories yet</Text>
+            <MaterialCommunityIcons name="folder-open" size={iconSizes.xlarge} color="#d1d5db" />
+            <Text className={`text-gray-400 ${isTablet ? 'text-xl' : 'text-lg'} mt-4`}>No categories yet</Text>
             <Pressable
                 onPress={openCreateModal}
-                className="mt-4 bg-green-500 px-6 py-3 rounded-xl"
+                className={`mt-4 bg-green-500 ${isTablet ? 'px-8 py-4' : 'px-6 py-3'} rounded-xl`}
             >
-                <Text className="text-white font-semibold">Create First Category</Text>
+                <Text className={`text-white font-semibold ${typography.body}`}>Create First Category</Text>
             </Pressable>
         </View>
     );
@@ -200,16 +210,16 @@ export default function CategoriesScreen() {
                     title: 'Categories',
                     headerRight: () => (
                         <Pressable onPress={openCreateModal} className="mr-4">
-                            <MaterialCommunityIcons name="plus" size={26} color="#fff" />
+                            <MaterialCommunityIcons name="plus" size={iconSizes.medium} color="#fff" />
                         </Pressable>
                     ),
                 }}
             />
 
             {/* Info Banner */}
-            <View className="bg-yellow-50 mx-4 mt-4 mb-2 p-3 rounded-xl flex-row items-center">
-                <MaterialCommunityIcons name="information" size={20} color="#eab308" />
-                <Text className="text-yellow-700 text-sm ml-2 flex-1">
+            <View className={`bg-yellow-50 ${isTablet ? 'mx-6' : 'mx-4'} mt-4 mb-2 ${isTablet ? 'p-4' : 'p-3'} rounded-xl flex-row items-center`} style={isLargeTablet ? { maxWidth: 600 } : undefined}>
+                <MaterialCommunityIcons name="information" size={iconSizes.small} color="#eab308" />
+                <Text className={`text-yellow-700 ${typography.small} ml-2 flex-1`}>
                     Long press a category to delete it
                 </Text>
             </View>
@@ -224,7 +234,9 @@ export default function CategoriesScreen() {
                     data={categories}
                     renderItem={renderCategory}
                     keyExtractor={(item) => item.id}
-                    contentContainerStyle={{ paddingTop: 12, paddingBottom: 100 }}
+                    numColumns={numColumns}
+                    key={numColumns}
+                    contentContainerStyle={{ paddingTop: 12, paddingBottom: 100, ...(isLargeTablet && { maxWidth: 1400, alignSelf: 'center', width: '100%' }) }}
                     refreshControl={
                         <RefreshControl
                             refreshing={isRefreshing}
@@ -240,9 +252,9 @@ export default function CategoriesScreen() {
             {/* FAB */}
             <Pressable
                 onPress={openCreateModal}
-                className="absolute bottom-6 right-6 w-14 h-14 bg-green-500 rounded-full items-center justify-center shadow-lg"
+                className={`absolute bottom-6 right-6 ${isTablet ? 'w-16 h-16' : 'w-14 h-14'} bg-green-500 rounded-full items-center justify-center shadow-lg`}
             >
-                <MaterialCommunityIcons name="plus" size={28} color="#fff" />
+                <MaterialCommunityIcons name="plus" size={iconSizes.medium} color="#fff" />
             </Pressable>
 
             {/* Create/Edit Modal */}

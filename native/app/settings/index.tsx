@@ -8,12 +8,14 @@ import {
     Switch,
     Alert,
     Linking,
+    useWindowDimensions,
 } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { useOnboardingStore } from '@/store/onboarding';
 import * as Application from 'expo-application';
+import { useResponsive } from '@/lib/useResponsive';
 
 export default function SettingsScreen() {
     const { signOut, currentBusiness } = useAuthStore();
@@ -21,6 +23,12 @@ export default function SettingsScreen() {
     const [notifications, setNotifications] = useState(true);
     const [darkMode, setDarkMode] = useState(false);
     const [biometrics, setBiometrics] = useState(false);
+
+    // Responsive
+    const { width } = useWindowDimensions();
+    const { deviceType, iconSizes, typography, touchTargets } = useResponsive();
+    const isTablet = deviceType === 'tablet' || deviceType === 'largeTablet';
+    const isLargeTablet = deviceType === 'largeTablet';
 
     const handleSignOut = () => {
         Alert.alert(
@@ -86,26 +94,26 @@ export default function SettingsScreen() {
     }) => (
         <Pressable
             onPress={onPress}
-            className="flex-row items-center py-4 border-b border-gray-100"
+            className={`flex-row items-center ${isTablet ? 'py-5' : 'py-4'} border-b border-gray-100`}
         >
-            <View className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${destructive ? 'bg-red-100' : 'bg-gray-100'
+            <View className={`${isTablet ? 'w-12 h-12' : 'w-10 h-10'} rounded-full items-center justify-center mr-3 ${destructive ? 'bg-red-100' : 'bg-gray-100'
                 }`}>
                 <MaterialCommunityIcons
                     name={icon as any}
-                    size={20}
+                    size={iconSizes.small}
                     color={destructive ? '#ef4444' : '#6b7280'}
                 />
             </View>
             <View className="flex-1">
-                <Text className={`font-medium ${destructive ? 'text-red-600' : 'text-gray-900'}`}>
+                <Text className={`font-medium ${typography.body} ${destructive ? 'text-red-600' : 'text-gray-900'}`}>
                     {title}
                 </Text>
                 {subtitle && (
-                    <Text className="text-gray-500 text-sm mt-0.5">{subtitle}</Text>
+                    <Text className={`text-gray-500 ${typography.small} mt-0.5`}>{subtitle}</Text>
                 )}
             </View>
             {rightElement || (
-                <MaterialCommunityIcons name="chevron-right" size={20} color="#9ca3af" />
+                <MaterialCommunityIcons name="chevron-right" size={iconSizes.small} color="#9ca3af" />
             )}
         </Pressable>
     );
@@ -114,33 +122,36 @@ export default function SettingsScreen() {
         <View className="flex-1 bg-gray-50">
             <Stack.Screen options={{ title: 'Settings' }} />
 
-            <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
+            <ScrollView 
+                className="flex-1" 
+                contentContainerStyle={{ paddingBottom: 100, ...(isLargeTablet && { maxWidth: 800, alignSelf: 'center', width: '100%' }) }}
+            >
                 {/* Business Info */}
-                <View className="bg-white mx-4 mt-4 rounded-xl p-4">
+                <View className={`bg-white ${isTablet ? 'mx-6' : 'mx-4'} mt-4 rounded-xl ${isTablet ? 'p-5' : 'p-4'}`}>
                     <View className="flex-row items-center">
-                        <View className="w-14 h-14 bg-green-100 rounded-full items-center justify-center">
-                            <MaterialCommunityIcons name="store" size={28} color="#22c55e" />
+                        <View className={`${isTablet ? 'w-16 h-16' : 'w-14 h-14'} bg-green-100 rounded-full items-center justify-center`}>
+                            <MaterialCommunityIcons name="store" size={iconSizes.medium} color="#22c55e" />
                         </View>
                         <View className="flex-1 ml-4">
-                            <Text className="text-gray-900 text-lg font-bold">
+                            <Text className={`text-gray-900 ${isTablet ? 'text-xl' : 'text-lg'} font-bold`}>
                                 {currentBusiness?.name || 'My Business'}
                             </Text>
-                            <Text className="text-gray-500 text-sm">
+                            <Text className={`text-gray-500 ${typography.small}`}>
                                 {currentBusiness?.type || 'RETAIL'}
                             </Text>
                         </View>
                         <Pressable
                             onPress={() => router.push('/settings/business')}
-                            className="bg-green-500 px-4 py-2 rounded-xl"
+                            className={`bg-green-500 ${isTablet ? 'px-5 py-3' : 'px-4 py-2'} rounded-xl`}
                         >
-                            <Text className="text-white font-medium">Edit</Text>
+                            <Text className={`text-white font-medium ${typography.body}`}>Edit</Text>
                         </Pressable>
                     </View>
                 </View>
 
                 {/* Account Settings */}
-                <View className="bg-white mx-4 mt-4 rounded-xl px-4">
-                    <Text className="text-gray-500 text-sm font-medium pt-4 pb-2">Account</Text>
+                <View className={`bg-white ${isTablet ? 'mx-6' : 'mx-4'} mt-4 rounded-xl ${isTablet ? 'px-5' : 'px-4'}`}>
+                    <Text className={`text-gray-500 ${typography.small} font-medium pt-4 pb-2`}>Account</Text>
 
                     <MenuItem
                         icon="account-circle"
@@ -171,8 +182,8 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* App Settings */}
-                <View className="bg-white mx-4 mt-4 rounded-xl px-4">
-                    <Text className="text-gray-500 text-sm font-medium pt-4 pb-2">App</Text>
+                <View className={`bg-white ${isTablet ? 'mx-6' : 'mx-4'} mt-4 rounded-xl ${isTablet ? 'px-5' : 'px-4'}`}>
+                    <Text className={`text-gray-500 ${typography.small} font-medium pt-4 pb-2`}>App</Text>
 
                     <MenuItem
                         icon="palette"
@@ -218,8 +229,8 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* Business Settings */}
-                <View className="bg-white mx-4 mt-4 rounded-xl px-4">
-                    <Text className="text-gray-500 text-sm font-medium pt-4 pb-2">Business</Text>
+                <View className={`bg-white ${isTablet ? 'mx-6' : 'mx-4'} mt-4 rounded-xl ${isTablet ? 'px-5' : 'px-4'}`}>
+                    <Text className={`text-gray-500 ${typography.small} font-medium pt-4 pb-2`}>Business</Text>
 
                     <MenuItem
                         icon="printer"
@@ -244,8 +255,8 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* Support */}
-                <View className="bg-white mx-4 mt-4 rounded-xl px-4">
-                    <Text className="text-gray-500 text-sm font-medium pt-4 pb-2">Support</Text>
+                <View className={`bg-white ${isTablet ? 'mx-6' : 'mx-4'} mt-4 rounded-xl ${isTablet ? 'px-5' : 'px-4'}`}>
+                    <Text className={`text-gray-500 ${typography.small} font-medium pt-4 pb-2`}>Support</Text>
 
                     <MenuItem
                         icon="help-circle"
@@ -267,8 +278,8 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* Legal */}
-                <View className="bg-white mx-4 mt-4 rounded-xl px-4">
-                    <Text className="text-gray-500 text-sm font-medium pt-4 pb-2">Legal</Text>
+                <View className={`bg-white ${isTablet ? 'mx-6' : 'mx-4'} mt-4 rounded-xl ${isTablet ? 'px-5' : 'px-4'}`}>
+                    <Text className={`text-gray-500 ${typography.small} font-medium pt-4 pb-2`}>Legal</Text>
 
                     <MenuItem
                         icon="file-document"
@@ -284,8 +295,8 @@ export default function SettingsScreen() {
                 </View>
 
                 {/* Danger Zone */}
-                <View className="bg-white mx-4 mt-4 rounded-xl px-4">
-                    <Text className="text-gray-500 text-sm font-medium pt-4 pb-2">Danger Zone</Text>
+                <View className={`bg-white ${isTablet ? 'mx-6' : 'mx-4'} mt-4 rounded-xl ${isTablet ? 'px-5' : 'px-4'}`}>
+                    <Text className={`text-gray-500 ${typography.small} font-medium pt-4 pb-2`}>Danger Zone</Text>
 
                     <MenuItem
                         icon="restart"
@@ -304,10 +315,10 @@ export default function SettingsScreen() {
 
                 {/* App Version */}
                 <View className="items-center mt-8 mb-4">
-                    <Text className="text-gray-400 text-sm">
+                    <Text className={`text-gray-400 ${typography.small}`}>
                         Tangabiz v{Application.nativeApplicationVersion || '1.0.0'}
                     </Text>
-                    <Text className="text-gray-300 text-xs mt-1">
+                    <Text className={`text-gray-300 ${typography.small} mt-1`}>
                         Build {Application.nativeBuildVersion || '1'}
                     </Text>
                 </View>

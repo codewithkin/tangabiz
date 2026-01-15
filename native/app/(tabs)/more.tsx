@@ -1,14 +1,21 @@
 // More Screen - Settings, Customers, Reports, etc.
 import React from 'react';
-import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, useWindowDimensions } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { useOnboardingStore } from '@/store/onboarding';
+import { useResponsive } from '@/lib/useResponsive';
 
 export default function MoreScreen() {
     const { user, currentBusiness, businesses, signOut, setCurrentBusiness } = useAuthStore();
     const { resetOnboarding } = useOnboardingStore();
+
+    // Responsive
+    const { width } = useWindowDimensions();
+    const { deviceType, iconSizes, typography, touchTargets, avatarSizes } = useResponsive();
+    const isTablet = deviceType === 'tablet' || deviceType === 'largeTablet';
+    const isLargeTablet = deviceType === 'largeTablet';
 
     const handleSignOut = () => {
         Alert.alert(
@@ -47,33 +54,33 @@ export default function MoreScreen() {
     }) => (
         <Pressable
             onPress={onPress}
-            className="flex-row items-center py-4 px-4 bg-white border-b border-gray-50"
+            className={`flex-row items-center ${isTablet ? 'py-5 px-5' : 'py-4 px-4'} bg-white border-b border-gray-50`}
         >
             <View
-                className="w-10 h-10 rounded-full items-center justify-center mr-4"
+                className={`${isTablet ? 'w-12 h-12' : 'w-10 h-10'} rounded-full items-center justify-center mr-4`}
                 style={{ backgroundColor: `${color}15` }}
             >
-                <MaterialCommunityIcons name={icon} size={22} color={color} />
+                <MaterialCommunityIcons name={icon} size={iconSizes.small} color={color} />
             </View>
             <View className="flex-1">
-                <Text className="text-gray-900 font-medium text-base">{label}</Text>
+                <Text className={`text-gray-900 font-medium ${isTablet ? 'text-lg' : 'text-base'}`}>{label}</Text>
                 {description && (
-                    <Text className="text-gray-500 text-sm mt-0.5">{description}</Text>
+                    <Text className={`text-gray-500 ${typography.small} mt-0.5`}>{description}</Text>
                 )}
             </View>
             {badge && (
-                <View className="bg-green-500 px-2 py-1 rounded-full mr-2">
-                    <Text className="text-white text-xs font-medium">{badge}</Text>
+                <View className={`bg-green-500 ${isTablet ? 'px-3 py-1.5' : 'px-2 py-1'} rounded-full mr-2`}>
+                    <Text className={`text-white ${typography.small} font-medium`}>{badge}</Text>
                 </View>
             )}
             {showArrow && (
-                <MaterialCommunityIcons name="chevron-right" size={22} color="#9ca3af" />
+                <MaterialCommunityIcons name="chevron-right" size={iconSizes.small} color="#9ca3af" />
             )}
         </Pressable>
     );
 
     const SectionHeader = ({ title }: { title: string }) => (
-        <Text className="text-gray-500 text-xs font-semibold uppercase tracking-wide px-4 py-2 bg-gray-50">
+        <Text className={`text-gray-500 ${typography.small} font-semibold uppercase tracking-wide ${isTablet ? 'px-5' : 'px-4'} py-2 bg-gray-50`}>
             {title}
         </Text>
     );
@@ -86,24 +93,27 @@ export default function MoreScreen() {
                 }}
             />
 
-            <ScrollView>
+            <ScrollView contentContainerStyle={isLargeTablet ? { maxWidth: 800, alignSelf: 'center', width: '100%' } : undefined}>
                 {/* User Profile Card */}
-                <View className="bg-green-500 px-4 py-6">
+                <View className={`bg-green-500 ${isTablet ? 'px-6 py-8' : 'px-4 py-6'}`}>
                     <View className="flex-row items-center">
-                        <View className="w-16 h-16 bg-white/20 rounded-full items-center justify-center mr-4">
-                            <Text className="text-white text-2xl font-bold">
+                        <View 
+                            className="bg-white/20 rounded-full items-center justify-center mr-4"
+                            style={{ width: avatarSizes.large, height: avatarSizes.large }}
+                        >
+                            <Text className={`text-white ${isTablet ? 'text-3xl' : 'text-2xl'} font-bold`}>
                                 {user?.name?.charAt(0) || 'U'}
                             </Text>
                         </View>
                         <View className="flex-1">
-                            <Text className="text-white text-xl font-bold">{user?.name || 'User'}</Text>
-                            <Text className="text-green-100">{user?.email}</Text>
+                            <Text className={`text-white ${isTablet ? 'text-2xl' : 'text-xl'} font-bold`}>{user?.name || 'User'}</Text>
+                            <Text className={`text-green-100 ${typography.body}`}>{user?.email}</Text>
                         </View>
                         <Pressable
                             onPress={() => router.push('/settings/profile')}
-                            className="w-10 h-10 bg-white/20 rounded-full items-center justify-center"
+                            className={`${isTablet ? 'w-12 h-12' : 'w-10 h-10'} bg-white/20 rounded-full items-center justify-center`}
                         >
-                            <MaterialCommunityIcons name="pencil" size={20} color="#fff" />
+                            <MaterialCommunityIcons name="pencil" size={iconSizes.small} color="#fff" />
                         </Pressable>
                     </View>
                 </View>
@@ -123,32 +133,32 @@ export default function MoreScreen() {
                                 );
                             }
                         }}
-                        className="bg-white mx-4 mt-4 rounded-xl p-4 shadow-sm"
+                        className={`bg-white ${isTablet ? 'mx-6' : 'mx-4'} mt-4 rounded-xl ${isTablet ? 'p-5' : 'p-4'} shadow-sm`}
                     >
                         <View className="flex-row items-center">
-                            <View className="w-12 h-12 bg-green-100 rounded-xl items-center justify-center mr-4">
-                                <MaterialCommunityIcons name="store" size={26} color="#22c55e" />
+                            <View className={`${isTablet ? 'w-14 h-14' : 'w-12 h-12'} bg-green-100 rounded-xl items-center justify-center mr-4`}>
+                                <MaterialCommunityIcons name="store" size={iconSizes.medium} color="#22c55e" />
                             </View>
                             <View className="flex-1">
-                                <Text className="text-gray-500 text-xs uppercase">Current Business</Text>
-                                <Text className="text-gray-900 font-semibold text-lg">
+                                <Text className={`text-gray-500 ${typography.small} uppercase`}>Current Business</Text>
+                                <Text className={`text-gray-900 font-semibold ${isTablet ? 'text-xl' : 'text-lg'}`}>
                                     {currentBusiness.name}
                                 </Text>
                                 <View className="flex-row items-center mt-1">
-                                    <View className="bg-green-100 px-2 py-0.5 rounded">
-                                        <Text className="text-green-700 text-xs font-medium">
+                                    <View className={`bg-green-100 ${isTablet ? 'px-3 py-1' : 'px-2 py-0.5'} rounded`}>
+                                        <Text className={`text-green-700 ${typography.small} font-medium`}>
                                             {currentBusiness.role}
                                         </Text>
                                     </View>
                                     {businesses.length > 1 && (
-                                        <Text className="text-gray-400 text-xs ml-2">
+                                        <Text className={`text-gray-400 ${typography.small} ml-2`}>
                                             {businesses.length} businesses
                                         </Text>
                                     )}
                                 </View>
                             </View>
                             {businesses.length > 1 && (
-                                <MaterialCommunityIcons name="swap-horizontal" size={24} color="#9ca3af" />
+                                <MaterialCommunityIcons name="swap-horizontal" size={iconSizes.medium} color="#9ca3af" />
                             )}
                         </View>
                     </Pressable>

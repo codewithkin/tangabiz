@@ -7,12 +7,14 @@ import {
     Pressable,
     RefreshControl,
     ActivityIndicator,
+    useWindowDimensions,
 } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
+import { useResponsive } from '@/lib/useResponsive';
 
 interface Transaction {
     id: string;
@@ -34,6 +36,13 @@ export default function TransactionsScreen() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [filter, setFilter] = useState<'all' | 'SALE' | 'REFUND'>('all');
+
+    // Responsive
+    const { width } = useWindowDimensions();
+    const { deviceType, iconSizes, typography, touchTargets } = useResponsive();
+    const isTablet = deviceType === 'tablet' || deviceType === 'largeTablet';
+    const isLargeTablet = deviceType === 'largeTablet';
+    const numColumns = isLargeTablet ? 2 : 1;
 
     const fetchTransactions = useCallback(async (pageNum = 1, refresh = false) => {
         if (!currentBusiness) return;
@@ -110,33 +119,34 @@ export default function TransactionsScreen() {
         return (
             <Pressable
                 onPress={() => router.push(`/transactions/${item.id}`)}
-                className="bg-white mx-4 mb-3 rounded-xl p-4 shadow-sm"
+                className={`bg-white ${numColumns > 1 ? 'mx-2' : 'mx-4'} mb-3 rounded-xl ${isTablet ? 'p-5' : 'p-4'} shadow-sm`}
+                style={numColumns > 1 ? { flex: 1 / numColumns, maxWidth: `${100 / numColumns - 2}%` } : undefined}
             >
                 <View className="flex-row items-center">
-                    <View className={`w-12 h-12 rounded-full items-center justify-center mr-3 ${typeInfo.bg}`}>
+                    <View className={`${isTablet ? 'w-14 h-14' : 'w-12 h-12'} rounded-full items-center justify-center mr-3 ${typeInfo.bg}`}>
                         <MaterialCommunityIcons
                             name={typeInfo.name as any}
-                            size={22}
+                            size={iconSizes.small}
                             color={typeInfo.color}
                         />
                     </View>
                     <View className="flex-1">
                         <View className="flex-row items-center">
-                            <Text className="text-gray-900 font-semibold">{item.reference}</Text>
-                            <View className={`ml-2 px-2 py-0.5 rounded ${getStatusColor(item.status)}`}>
-                                <Text className="text-xs font-medium">{item.status}</Text>
+                            <Text className={`text-gray-900 font-semibold ${typography.body}`}>{item.reference}</Text>
+                            <View className={`ml-2 ${isTablet ? 'px-3 py-1' : 'px-2 py-0.5'} rounded ${getStatusColor(item.status)}`}>
+                                <Text className={`${typography.small} font-medium`}>{item.status}</Text>
                             </View>
                         </View>
-                        <Text className="text-gray-500 text-sm mt-0.5">
+                        <Text className={`text-gray-500 ${typography.small} mt-0.5`}>
                             {item.customer?.name || 'Walk-in'} • {item._count?.items || 0} items
                         </Text>
-                        <Text className="text-gray-400 text-xs mt-1">
+                        <Text className={`text-gray-400 ${typography.small} mt-1`}>
                             {formatRelativeTime(item.createdAt)}
                         </Text>
                     </View>
                     <View className="items-end">
                         <Text
-                            className={`text-lg font-bold ${item.type === 'SALE' || item.type === 'INCOME'
+                            className={`${isTablet ? 'text-xl' : 'text-lg'} font-bold ${item.type === 'SALE' || item.type === 'INCOME'
                                     ? 'text-green-600'
                                     : 'text-red-600'
                                 }`}
@@ -144,7 +154,7 @@ export default function TransactionsScreen() {
                             {item.type === 'SALE' || item.type === 'INCOME' ? '+' : '-'}
                             {formatCurrency(item.total)}
                         </Text>
-                        <Text className="text-gray-400 text-xs capitalize">
+                        <Text className={`text-gray-400 ${typography.small} capitalize`}>
                             {item.paymentMethod.replace('_', ' ').toLowerCase()}
                         </Text>
                     </View>
@@ -156,11 +166,11 @@ export default function TransactionsScreen() {
     const FilterButton = ({ value, label }: { value: typeof filter; label: string }) => (
         <Pressable
             onPress={() => setFilter(value)}
-            className={`px-4 py-2 rounded-full mr-2 ${filter === value ? 'bg-green-500' : 'bg-white'
+            className={`${isTablet ? 'px-6 py-3' : 'px-4 py-2'} rounded-full mr-2 ${filter === value ? 'bg-green-500' : 'bg-white'
                 }`}
         >
             <Text
-                className={`font-medium ${filter === value ? 'text-white' : 'text-gray-600'
+                className={`font-medium ${typography.body} ${filter === value ? 'text-white' : 'text-gray-600'
                     }`}
             >
                 {label}
@@ -170,13 +180,13 @@ export default function TransactionsScreen() {
 
     const ListEmpty = () => (
         <View className="flex-1 items-center justify-center py-20">
-            <MaterialCommunityIcons name="receipt" size={64} color="#d1d5db" />
-            <Text className="text-gray-400 text-lg mt-4">No transactions found</Text>
+            <MaterialCommunityIcons name="receipt" size={iconSizes.xlarge} color="#d1d5db" />
+            <Text className={`text-gray-400 ${isTablet ? 'text-xl' : 'text-lg'} mt-4`}>No transactions found</Text>
             <Pressable
                 onPress={() => router.push('/(tabs)/pos')}
-                className="mt-4 bg-green-500 px-6 py-3 rounded-xl"
+                className={`mt-4 bg-green-500 ${isTablet ? 'px-8 py-4' : 'px-6 py-3'} rounded-xl`}
             >
-                <Text className="text-white font-semibold">Create First Sale</Text>
+                <Text className={`text-white font-semibold ${typography.body}`}>Create First Sale</Text>
             </Pressable>
         </View>
     );
@@ -190,7 +200,7 @@ export default function TransactionsScreen() {
             />
 
             {/* Filters */}
-            <View className="px-4 py-3 flex-row bg-gray-50">
+            <View className={`${isTablet ? 'px-6 py-4' : 'px-4 py-3'} flex-row bg-gray-50`}>
                 <FilterButton value="all" label="All" />
                 <FilterButton value="SALE" label="Sales" />
                 <FilterButton value="REFUND" label="Refunds" />
@@ -206,7 +216,9 @@ export default function TransactionsScreen() {
                     data={transactions}
                     renderItem={renderTransaction}
                     keyExtractor={(item) => item.id}
-                    contentContainerStyle={{ paddingTop: 4, paddingBottom: 100 }}
+                    numColumns={numColumns}
+                    key={numColumns}
+                    contentContainerStyle={{ paddingTop: 4, paddingBottom: 100, ...(isLargeTablet && { maxWidth: 1400, alignSelf: 'center', width: '100%' }) }}
                     refreshControl={
                         <RefreshControl
                             refreshing={isRefreshing}

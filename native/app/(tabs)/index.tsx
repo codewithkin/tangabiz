@@ -7,12 +7,14 @@ import {
     Pressable,
     RefreshControl,
     ActivityIndicator,
+    useWindowDimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
+import { useResponsive } from '@/lib/useResponsive';
 
 interface DashboardStats {
     todaySales: number;
@@ -77,6 +79,11 @@ export default function HomeScreen() {
         fetchDashboardData();
     }, [fetchDashboardData]);
 
+    const { width } = useWindowDimensions();
+    const { deviceType, iconSizes, typography, touchTargets } = useResponsive();
+    const isTablet = deviceType === 'tablet' || deviceType === 'largeTablet';
+    const isLargeTablet = deviceType === 'largeTablet';
+
     const QuickAction = ({
         icon,
         label,
@@ -91,14 +98,15 @@ export default function HomeScreen() {
         <Pressable
             onPress={onPress}
             className="items-center flex-1"
+            style={{ minWidth: isTablet ? 100 : 70 }}
         >
             <View
-                className="w-14 h-14 rounded-full items-center justify-center mb-2"
+                className={`${isLargeTablet ? 'w-20 h-20' : isTablet ? 'w-16 h-16' : 'w-14 h-14'} rounded-full items-center justify-center mb-2`}
                 style={{ backgroundColor: `${color}20` }}
             >
-                <MaterialCommunityIcons name={icon} size={26} color={color} />
+                <MaterialCommunityIcons name={icon} size={iconSizes.medium} color={color} />
             </View>
-            <Text className="text-xs text-gray-700 text-center font-medium">{label}</Text>
+            <Text className={`${typography.small} text-gray-700 text-center font-medium`}>{label}</Text>
         </Pressable>
     );
 
@@ -113,12 +121,12 @@ export default function HomeScreen() {
         icon: keyof typeof MaterialCommunityIcons.glyphMap;
         color: string;
     }) => (
-        <View className="bg-white rounded-xl p-4 flex-1 mr-3 shadow-sm">
+        <View className={`bg-white rounded-xl ${isTablet ? 'p-6' : 'p-4'} flex-1 mr-3 shadow-sm`}>
             <View className="flex-row items-center justify-between mb-2">
-                <MaterialCommunityIcons name={icon} size={24} color={color} />
+                <MaterialCommunityIcons name={icon} size={iconSizes.small} color={color} />
             </View>
-            <Text className="text-2xl font-bold text-gray-900">{value}</Text>
-            <Text className="text-xs text-gray-500 mt-1">{title}</Text>
+            <Text className={`${isLargeTablet ? 'text-3xl' : isTablet ? 'text-2xl' : 'text-2xl'} font-bold text-gray-900`}>{value}</Text>
+            <Text className={`${typography.small} text-gray-500 mt-1`}>{title}</Text>
         </View>
     );
 
@@ -141,36 +149,37 @@ export default function HomeScreen() {
                     tintColor="#22c55e"
                 />
             }
+            contentContainerStyle={isLargeTablet ? { maxWidth: 1200, alignSelf: 'center', width: '100%' } : undefined}
         >
             {/* Header */}
-            <View className="bg-green-500 px-5 pt-4 pb-8 rounded-b-3xl">
+            <View className={`bg-green-500 ${isTablet ? 'px-8 pt-6 pb-10' : 'px-5 pt-4 pb-8'} rounded-b-3xl`}>
                 <View className="flex-row items-center justify-between mb-4">
                     <View>
-                        <Text className="text-green-100 text-sm">Welcome back,</Text>
-                        <Text className="text-white text-xl font-bold">
+                        <Text className={`text-green-100 ${typography.small}`}>Welcome back,</Text>
+                        <Text className={`text-white ${isTablet ? 'text-2xl' : 'text-xl'} font-bold`}>
                             {user?.name || 'User'}
                         </Text>
                     </View>
                     <Pressable
                         onPress={() => router.push('/(tabs)/more')}
-                        className="w-10 h-10 bg-white/20 rounded-full items-center justify-center"
+                        className={`${isTablet ? 'w-12 h-12' : 'w-10 h-10'} bg-white/20 rounded-full items-center justify-center`}
                     >
-                        <MaterialCommunityIcons name="bell-outline" size={22} color="#fff" />
+                        <MaterialCommunityIcons name="bell-outline" size={iconSizes.small} color="#fff" />
                     </Pressable>
                 </View>
 
                 {/* Business Card */}
                 {currentBusiness && (
-                    <View className="bg-white/10 rounded-xl p-4">
-                        <Text className="text-green-100 text-xs uppercase tracking-wide">
+                    <View className={`bg-white/10 rounded-xl ${isTablet ? 'p-6' : 'p-4'}`}>
+                        <Text className={`text-green-100 ${typography.small} uppercase tracking-wide`}>
                             Current Business
                         </Text>
-                        <Text className="text-white text-lg font-semibold mt-1">
+                        <Text className={`text-white ${isTablet ? 'text-xl' : 'text-lg'} font-semibold mt-1`}>
                             {currentBusiness.name}
                         </Text>
                         <View className="flex-row items-center mt-2">
-                            <View className="bg-green-400 px-2 py-1 rounded">
-                                <Text className="text-white text-xs font-medium">
+                            <View className={`bg-green-400 ${isTablet ? 'px-3 py-2' : 'px-2 py-1'} rounded`}>
+                                <Text className={`text-white ${typography.small} font-medium`}>
                                     {currentBusiness.role}
                                 </Text>
                             </View>
@@ -180,7 +189,7 @@ export default function HomeScreen() {
             </View>
 
             {/* Stats Row */}
-            <View className="flex-row px-5 -mt-4">
+            <View className={`flex-row ${isTablet ? 'px-8' : 'px-5'} -mt-4`}>
                 <StatCard
                     title="Today's Sales"
                     value={formatCurrency(stats?.todaySales || 0)}
@@ -196,9 +205,9 @@ export default function HomeScreen() {
             </View>
 
             {/* Quick Actions */}
-            <View className="bg-white mx-5 mt-4 rounded-xl p-4 shadow-sm">
-                <Text className="text-gray-900 font-semibold mb-4">Quick Actions</Text>
-                <View className="flex-row justify-between">
+            <View className={`bg-white ${isTablet ? 'mx-8' : 'mx-5'} mt-4 rounded-xl ${isTablet ? 'p-6' : 'p-4'} shadow-sm`}>
+                <Text className={`text-gray-900 font-semibold ${isTablet ? 'mb-6 text-lg' : 'mb-4'}`}>Quick Actions</Text>
+                <View className={`flex-row ${isLargeTablet ? 'justify-start gap-8' : 'justify-between'}`}>
                     <QuickAction
                         icon="cart-plus"
                         label="New Sale"
@@ -223,28 +232,44 @@ export default function HomeScreen() {
                         color="#8b5cf6"
                         onPress={() => router.push('/reports')}
                     />
+                    {isTablet && (
+                        <>
+                            <QuickAction
+                                icon="cog"
+                                label="Settings"
+                                color="#6b7280"
+                                onPress={() => router.push('/settings')}
+                            />
+                            <QuickAction
+                                icon="folder"
+                                label="Categories"
+                                color="#14b8a6"
+                                onPress={() => router.push('/categories')}
+                            />
+                        </>
+                    )}
                 </View>
             </View>
 
             {/* Stats Overview */}
-            <View className="px-5 mt-4">
-                <Text className="text-gray-900 font-semibold mb-3">Overview</Text>
-                <View className="flex-row">
-                    <View className="bg-white rounded-xl p-4 flex-1 mr-2 shadow-sm">
+            <View className={`${isTablet ? 'px-8' : 'px-5'} mt-4`}>
+                <Text className={`text-gray-900 font-semibold mb-3 ${isTablet ? 'text-lg' : ''}`}>Overview</Text>
+                <View className={`${isLargeTablet ? 'flex-row flex-wrap' : 'flex-row'}`}>
+                    <View className={`bg-white rounded-xl ${isTablet ? 'p-6' : 'p-4'} flex-1 mr-2 shadow-sm ${isLargeTablet ? 'min-w-[200px]' : ''}`}>
                         <View className="flex-row items-center">
-                            <MaterialCommunityIcons name="package-variant" size={20} color="#3b82f6" />
-                            <Text className="text-gray-500 text-sm ml-2">Products</Text>
+                            <MaterialCommunityIcons name="package-variant" size={iconSizes.small} color="#3b82f6" />
+                            <Text className={`text-gray-500 ${typography.body} ml-2`}>Products</Text>
                         </View>
-                        <Text className="text-2xl font-bold text-gray-900 mt-2">
+                        <Text className={`${isLargeTablet ? 'text-3xl' : 'text-2xl'} font-bold text-gray-900 mt-2`}>
                             {stats?.totalProducts || 0}
                         </Text>
                     </View>
-                    <View className="bg-white rounded-xl p-4 flex-1 ml-2 shadow-sm">
+                    <View className={`bg-white rounded-xl ${isTablet ? 'p-6' : 'p-4'} flex-1 ml-2 shadow-sm ${isLargeTablet ? 'min-w-[200px]' : ''}`}>
                         <View className="flex-row items-center">
-                            <MaterialCommunityIcons name="account-group" size={20} color="#eab308" />
-                            <Text className="text-gray-500 text-sm ml-2">Customers</Text>
+                            <MaterialCommunityIcons name="account-group" size={iconSizes.small} color="#eab308" />
+                            <Text className={`text-gray-500 ${typography.body} ml-2`}>Customers</Text>
                         </View>
-                        <Text className="text-2xl font-bold text-gray-900 mt-2">
+                        <Text className={`${isLargeTablet ? 'text-3xl' : 'text-2xl'} font-bold text-gray-900 mt-2`}>
                             {stats?.totalCustomers || 0}
                         </Text>
                     </View>
@@ -252,23 +277,23 @@ export default function HomeScreen() {
             </View>
 
             {/* Recent Transactions */}
-            <View className="px-5 mt-4 mb-8">
+            <View className={`${isTablet ? 'px-8' : 'px-5'} mt-4 mb-8`}>
                 <View className="flex-row items-center justify-between mb-3">
-                    <Text className="text-gray-900 font-semibold">Recent Transactions</Text>
+                    <Text className={`text-gray-900 font-semibold ${isTablet ? 'text-lg' : ''}`}>Recent Transactions</Text>
                     <Pressable onPress={() => router.push('/(tabs)/transactions')}>
-                        <Text className="text-green-500 font-medium">View All</Text>
+                        <Text className={`text-green-500 font-medium ${typography.body}`}>View All</Text>
                     </Pressable>
                 </View>
 
                 {recentTransactions.length === 0 ? (
-                    <View className="bg-white rounded-xl p-8 items-center shadow-sm">
-                        <MaterialCommunityIcons name="receipt" size={48} color="#d1d5db" />
-                        <Text className="text-gray-400 mt-2">No transactions yet</Text>
+                    <View className={`bg-white rounded-xl ${isTablet ? 'p-12' : 'p-8'} items-center shadow-sm`}>
+                        <MaterialCommunityIcons name="receipt" size={isTablet ? 64 : 48} color="#d1d5db" />
+                        <Text className={`text-gray-400 mt-2 ${typography.body}`}>No transactions yet</Text>
                         <Pressable
                             onPress={() => router.push('/(tabs)/pos')}
-                            className="mt-4 bg-green-500 px-6 py-2 rounded-lg"
+                            className={`mt-4 bg-green-500 ${isTablet ? 'px-8 py-3' : 'px-6 py-2'} rounded-lg`}
                         >
-                            <Text className="text-white font-medium">Create First Sale</Text>
+                            <Text className={`text-white font-medium ${typography.body}`}>Create First Sale</Text>
                         </Pressable>
                     </View>
                 ) : (
@@ -277,29 +302,29 @@ export default function HomeScreen() {
                             <Pressable
                                 key={transaction.id}
                                 onPress={() => router.push(`/transactions/${transaction.id}`)}
-                                className={`flex-row items-center p-4 ${index < recentTransactions.length - 1 ? 'border-b border-gray-100' : ''
+                                className={`flex-row items-center ${isTablet ? 'p-5' : 'p-4'} ${index < recentTransactions.length - 1 ? 'border-b border-gray-100' : ''
                                     }`}
                             >
                                 <View
-                                    className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${transaction.type === 'SALE' ? 'bg-green-100' : 'bg-red-100'
+                                    className={`${isTablet ? 'w-12 h-12' : 'w-10 h-10'} rounded-full items-center justify-center mr-3 ${transaction.type === 'SALE' ? 'bg-green-100' : 'bg-red-100'
                                         }`}
                                 >
                                     <MaterialCommunityIcons
                                         name={transaction.type === 'SALE' ? 'arrow-up' : 'arrow-down'}
-                                        size={20}
+                                        size={iconSizes.small}
                                         color={transaction.type === 'SALE' ? '#22c55e' : '#ef4444'}
                                     />
                                 </View>
                                 <View className="flex-1">
-                                    <Text className="text-gray-900 font-medium">
+                                    <Text className={`text-gray-900 font-medium ${typography.body}`}>
                                         {transaction.reference}
                                     </Text>
-                                    <Text className="text-gray-500 text-xs">
+                                    <Text className={`text-gray-500 ${typography.small}`}>
                                         {transaction.customer?.name || 'Walk-in'} • {formatRelativeTime(transaction.createdAt)}
                                     </Text>
                                 </View>
                                 <Text
-                                    className={`font-semibold ${transaction.type === 'SALE' ? 'text-green-600' : 'text-red-600'
+                                    className={`font-semibold ${isTablet ? 'text-lg' : ''} ${transaction.type === 'SALE' ? 'text-green-600' : 'text-red-600'
                                         }`}
                                 >
                                     {transaction.type === 'SALE' ? '+' : '-'}

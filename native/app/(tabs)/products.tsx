@@ -9,12 +9,14 @@ import {
     RefreshControl,
     ActivityIndicator,
     Image,
+    useWindowDimensions,
 } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { useResponsive } from '@/lib/useResponsive';
 
 interface Product {
     id: string;
@@ -36,6 +38,13 @@ export default function ProductsScreen() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+
+    // Responsive
+    const { width } = useWindowDimensions();
+    const { deviceType, iconSizes, typography, touchTargets, gridColumns } = useResponsive();
+    const isTablet = deviceType === 'tablet' || deviceType === 'largeTablet';
+    const isLargeTablet = deviceType === 'largeTablet';
+    const numColumns = isLargeTablet ? 3 : isTablet ? 2 : 1;
 
     const fetchProducts = useCallback(async (pageNum = 1, refresh = false) => {
         if (!currentBusiness) return;
@@ -93,10 +102,11 @@ export default function ProductsScreen() {
         return (
             <Pressable
                 onPress={() => router.push(`/products/${item.id}`)}
-                className="bg-white mx-4 mb-3 rounded-xl p-4 flex-row items-center shadow-sm"
+                className={`bg-white ${numColumns > 1 ? 'mx-2 mb-4' : 'mx-4 mb-3'} rounded-xl ${isTablet ? 'p-5' : 'p-4'} flex-row items-center shadow-sm`}
+                style={numColumns > 1 ? { flex: 1 / numColumns, maxWidth: `${100 / numColumns - 2}%` } : undefined}
             >
                 {/* Product Image */}
-                <View className="w-16 h-16 bg-gray-100 rounded-lg items-center justify-center mr-4 overflow-hidden">
+                <View className={`${isTablet ? 'w-20 h-20' : 'w-16 h-16'} bg-gray-100 rounded-lg items-center justify-center mr-4 overflow-hidden`}>
                     {item.image ? (
                         <Image
                             source={{ uri: item.image }}
@@ -104,29 +114,29 @@ export default function ProductsScreen() {
                             resizeMode="cover"
                         />
                     ) : (
-                        <MaterialCommunityIcons name="package-variant" size={28} color="#9ca3af" />
+                        <MaterialCommunityIcons name="package-variant" size={iconSizes.medium} color="#9ca3af" />
                     )}
                 </View>
 
                 {/* Product Info */}
                 <View className="flex-1">
-                    <Text className="text-gray-900 font-semibold text-base" numberOfLines={1}>
+                    <Text className={`text-gray-900 font-semibold ${isTablet ? 'text-lg' : 'text-base'}`} numberOfLines={1}>
                         {item.name}
                     </Text>
-                    <Text className="text-gray-500 text-sm mt-0.5">
+                    <Text className={`text-gray-500 ${typography.small} mt-0.5`}>
                         {item.sku || 'No SKU'} {item.category && `• ${item.category.name}`}
                     </Text>
                     <View className="flex-row items-center mt-1">
-                        <Text className="text-green-600 font-bold">
+                        <Text className={`text-green-600 font-bold ${typography.body}`}>
                             {formatCurrency(item.price)}
                         </Text>
                         {isOutOfStock ? (
-                            <View className="bg-red-100 px-2 py-0.5 rounded ml-2">
-                                <Text className="text-red-600 text-xs font-medium">Out of Stock</Text>
+                            <View className={`bg-red-100 ${isTablet ? 'px-3 py-1' : 'px-2 py-0.5'} rounded ml-2`}>
+                                <Text className={`text-red-600 ${typography.small} font-medium`}>Out of Stock</Text>
                             </View>
                         ) : isLowStock ? (
-                            <View className="bg-yellow-100 px-2 py-0.5 rounded ml-2">
-                                <Text className="text-yellow-700 text-xs font-medium">Low Stock</Text>
+                            <View className={`bg-yellow-100 ${isTablet ? 'px-3 py-1' : 'px-2 py-0.5'} rounded ml-2`}>
+                                <Text className={`text-yellow-700 ${typography.small} font-medium`}>Low Stock</Text>
                             </View>
                         ) : null}
                     </View>
@@ -134,9 +144,9 @@ export default function ProductsScreen() {
 
                 {/* Stock Badge */}
                 <View className="items-end">
-                    <Text className="text-gray-400 text-xs">Stock</Text>
+                    <Text className={`text-gray-400 ${typography.small}`}>Stock</Text>
                     <Text
-                        className={`text-lg font-bold ${isOutOfStock ? 'text-red-500' : isLowStock ? 'text-yellow-600' : 'text-gray-900'
+                        className={`${isTablet ? 'text-xl' : 'text-lg'} font-bold ${isOutOfStock ? 'text-red-500' : isLowStock ? 'text-yellow-600' : 'text-gray-900'
                             }`}
                     >
                         {item.quantity}
@@ -148,13 +158,13 @@ export default function ProductsScreen() {
 
     const ListEmpty = () => (
         <View className="flex-1 items-center justify-center py-20">
-            <MaterialCommunityIcons name="package-variant" size={64} color="#d1d5db" />
-            <Text className="text-gray-400 text-lg mt-4">No products found</Text>
+            <MaterialCommunityIcons name="package-variant" size={iconSizes.xlarge} color="#d1d5db" />
+            <Text className={`text-gray-400 ${isTablet ? 'text-xl' : 'text-lg'} mt-4`}>No products found</Text>
             <Pressable
                 onPress={() => router.push('/products/create')}
-                className="mt-4 bg-green-500 px-6 py-3 rounded-xl"
+                className={`mt-4 bg-green-500 ${isTablet ? 'px-8 py-4' : 'px-6 py-3'} rounded-xl`}
             >
-                <Text className="text-white font-semibold">Add First Product</Text>
+                <Text className={`text-white font-semibold ${typography.body}`}>Add First Product</Text>
             </Pressable>
         </View>
     );
@@ -169,18 +179,18 @@ export default function ProductsScreen() {
                             onPress={() => router.push('/products/create')}
                             className="mr-4"
                         >
-                            <MaterialCommunityIcons name="plus" size={26} color="#fff" />
+                            <MaterialCommunityIcons name="plus" size={iconSizes.medium} color="#fff" />
                         </Pressable>
                     ),
                 }}
             />
 
             {/* Search Bar */}
-            <View className="px-4 py-3 bg-white border-b border-gray-100">
-                <View className="flex-row items-center bg-gray-100 rounded-xl px-4 py-2">
-                    <MaterialCommunityIcons name="magnify" size={20} color="#9ca3af" />
+            <View className={`${isTablet ? 'px-6 py-4' : 'px-4 py-3'} bg-white border-b border-gray-100`}>
+                <View className={`flex-row items-center bg-gray-100 rounded-xl ${isTablet ? 'px-5 py-3' : 'px-4 py-2'}`} style={isLargeTablet ? { maxWidth: 600 } : undefined}>
+                    <MaterialCommunityIcons name="magnify" size={iconSizes.small} color="#9ca3af" />
                     <TextInput
-                        className="flex-1 ml-2 text-gray-900"
+                        className={`flex-1 ml-2 text-gray-900 ${typography.body}`}
                         placeholder="Search products..."
                         placeholderTextColor="#9ca3af"
                         value={searchQuery}
@@ -188,7 +198,7 @@ export default function ProductsScreen() {
                     />
                     {searchQuery ? (
                         <Pressable onPress={() => setSearchQuery('')}>
-                            <MaterialCommunityIcons name="close-circle" size={20} color="#9ca3af" />
+                            <MaterialCommunityIcons name="close-circle" size={iconSizes.small} color="#9ca3af" />
                         </Pressable>
                     ) : null}
                 </View>
@@ -204,7 +214,9 @@ export default function ProductsScreen() {
                     data={products}
                     renderItem={renderProduct}
                     keyExtractor={(item) => item.id}
-                    contentContainerStyle={{ paddingTop: 12, paddingBottom: 100 }}
+                    numColumns={numColumns}
+                    key={numColumns}
+                    contentContainerStyle={{ paddingTop: 12, paddingBottom: 100, ...(isLargeTablet && { maxWidth: 1400, alignSelf: 'center', width: '100%' }) }}
                     refreshControl={
                         <RefreshControl
                             refreshing={isRefreshing}
@@ -227,9 +239,9 @@ export default function ProductsScreen() {
             {/* FAB */}
             <Pressable
                 onPress={() => router.push('/products/create')}
-                className="absolute bottom-6 right-6 w-14 h-14 bg-green-500 rounded-full items-center justify-center shadow-lg"
+                className={`absolute bottom-6 right-6 ${isTablet ? 'w-16 h-16' : 'w-14 h-14'} bg-green-500 rounded-full items-center justify-center shadow-lg`}
             >
-                <MaterialCommunityIcons name="plus" size={28} color="#fff" />
+                <MaterialCommunityIcons name="plus" size={iconSizes.medium} color="#fff" />
             </Pressable>
         </View>
     );
