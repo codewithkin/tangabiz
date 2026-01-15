@@ -259,19 +259,22 @@ export default function POSScreen() {
                         color="#9ca3af"
                     />
                 </View>
-                <Text className={`text-gray-900 font-medium ${typography.body}`} numberOfLines={2}>
-                    {item.name}
+                <View className="flex-1">
+                    <Text className={`text-gray-900 font-medium ${typography.body}`} numberOfLines={2}>
+                        {item.name}
+                    </Text>
                     <Text className={`text-green-600 font-bold mt-1 ${typography.body}`}>
                         {formatCurrency(item.price)}
                     </Text>
                     <Text className={`text-gray-400 ${typography.small} mt-1`}>
                         Stock: {item.quantity}
                     </Text>
-                    {inCart && (
-                        <View className={`absolute top-2 right-2 bg-green-500 ${isTablet ? 'w-7 h-7' : 'w-6 h-6'} rounded-full items-center justify-center`}>
-                            <Text className="text-white text-xs font-bold">{inCart.quantity}</Text>
-                        </View>
-                    )}
+                </View>
+                {inCart && (
+                    <View className={`absolute top-2 right-2 bg-green-500 ${isTablet ? 'w-7 h-7' : 'w-6 h-6'} rounded-full items-center justify-center`}>
+                        <Text className="text-white text-xs font-bold">{inCart.quantity}</Text>
+                    </View>
+                )}
             </Pressable>
         );
     };
