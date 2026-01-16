@@ -15,6 +15,73 @@ import { getUploadUrl } from "../lib/s3";
 
 export const reportRoutes = new Hono();
 
+// Sales summary schema
+const salesSummarySchema = z.object({
+  businessId: z.string(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  period: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
+});
+
+// Get sales summary for dashboard
+reportRoutes.get("/sales-summary", requireAuth, zValidator("query", salesSummarySchema), async (c) => {
+  const { businessId, startDate, endDate, period } = c.req.valid("query");
+
+  // Calculate date range
+  let start: Date;
+  let end: Date = new Date();
+
+  if (startDate && endDate) {
+    start = new Date(startDate);
+    end = new Date(endDate);
+  } else {
+    // Default to today based on period
+    switch (period) {
+      case "yearly":
+        start = new Date();
+        start.setFullYear(start.getFullYear() - 1);
+        break;
+      case "monthly":
+        start = new Date();
+        start.setMonth(start.getMonth() - 1);
+        break;
+      case "weekly":
+        start = new Date();
+        start.setDate(start.getDate() - 7);
+        break;
+      case "daily":
+      default:
+        start = new Date();
+        start.setHours(0, 0, 0, 0);
+        break;
+    }
+  }
+
+  // Get sales data
+  const transactions = await db.transaction.findMany({
+    where: {
+      businessId,
+      type: "SALE",
+      status: "COMPLETED",
+      createdAt: { gte: start, lte: end },
+    },
+    select: {
+      id: true,
+      total: true,
+    },
+  });
+
+  const totalSales = transactions.reduce((sum, t) => sum + Number(t.total), 0);
+  const totalTransactions = transactions.length;
+
+  return c.json({
+    totalSales,
+    totalTransactions,
+    averageTransaction: totalTransactions > 0 ? totalSales / totalTransactions : 0,
+    period: { start, end },
+  });
+});
+
 // Validation schemas
 const generateReportSchema = z.object({
   businessId: z.string(),

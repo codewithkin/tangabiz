@@ -97,20 +97,21 @@ enum Role {
 }
 
 model Business {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  logo        String?
-  description String?
-  address     String?
-  phone       String?
-  email       String?
-  website     String?
-  currency    String   @default("USD")
-  timezone    String   @default("UTC")
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  logo          String?
+  description   String?
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  currency      String   @default("USD")
+  timezone      String   @default("UTC")
+  invoiceFooter String?  // Custom text shown at the bottom of invoices
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   
   // Relations
   members      BusinessMember[]

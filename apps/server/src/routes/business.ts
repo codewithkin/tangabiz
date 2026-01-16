@@ -22,6 +22,7 @@ const createBusinessSchema = z.object({
   website: z.string().url().optional(),
   currency: z.string().default("USD"),
   timezone: z.string().default("UTC"),
+  invoiceFooter: z.string().max(500).optional(),
 });
 
 const updateBusinessSchema = createBusinessSchema.partial();

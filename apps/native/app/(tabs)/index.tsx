@@ -17,6 +17,7 @@ import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 import { useResponsive } from '@/lib/useResponsive';
 import { usePermissions, getRoleBadgeStyle } from '@/lib/permissions';
 import { PermissionGuard, ManagerAndAbove } from '@/components/PermissionGuard';
+import { PeriodDropdown, PeriodType, CustomPeriod, getPeriodDates } from '@/components/PeriodSelector';
 
 interface DashboardStats {
     todaySales: number;
@@ -42,16 +43,36 @@ export default function HomeScreen() {
     const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('24h');
+    const [customPeriod, setCustomPeriod] = useState<CustomPeriod>({ startDate: new Date(), endDate: new Date() });
     const { hasPermission, role } = usePermissions();
     const roleBadgeStyle = getRoleBadgeStyle(role);
+
+    // Get period label for display
+    const getPeriodLabel = () => {
+        switch (selectedPeriod) {
+            case '24h': return "Today's";
+            case '1w': return 'This Week\'s';
+            case '1m': return 'This Month\'s';
+            case '1y': return 'This Year\'s';
+            case 'custom': return 'Period';
+            default: return "Today's";
+        }
+    };
 
     const fetchDashboardData = useCallback(async () => {
         if (!currentBusiness) return;
 
         try {
+            const { startDate, endDate } = getPeriodDates(selectedPeriod, customPeriod);
+
             // Fetch stats
             const [salesRes, productsRes, customersRes, transactionsRes] = await Promise.all([
-                api.get('/api/reports/sales-summary', { businessId: currentBusiness.id, period: 'daily' }),
+                api.get('/api/reports/sales-summary', {
+                    businessId: currentBusiness.id,
+                    startDate: startDate.toISOString(),
+                    endDate: endDate.toISOString()
+                }),
                 api.get('/api/products', { businessId: currentBusiness.id, limit: 1 }),
                 api.get('/api/customers', { businessId: currentBusiness.id, limit: 1 }),
                 api.get('/api/transactions', { businessId: currentBusiness.id, limit: 5 }),
@@ -72,7 +93,7 @@ export default function HomeScreen() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    }, [currentBusiness]);
+    }, [currentBusiness, selectedPeriod, customPeriod]);
 
     useEffect(() => {
         fetchDashboardData();
@@ -193,28 +214,40 @@ export default function HomeScreen() {
             </View>
 
             {/* Stats Row - Only show sales figures to users with view_revenue permission */}
-            <View className={`flex-row ${isTablet ? 'px-8' : 'px-5'} -mt-4`}>
-                {hasPermission('view_revenue') ? (
-                    <StatCard
-                        title="Today's Sales"
-                        value={formatCurrency(stats?.todaySales || 0)}
-                        icon="cash"
-                        color="#22c55e"
+            <View className={`${isTablet ? 'px-8' : 'px-5'} -mt-4`}>
+                {/* Period Selector */}
+                <View className="flex-row justify-end mb-3">
+                    <PeriodDropdown
+                        selectedPeriod={selectedPeriod}
+                        onSelect={setSelectedPeriod}
+                        customPeriod={customPeriod}
+                        onCustomPeriodChange={setCustomPeriod}
                     />
-                ) : (
+                </View>
+
+                <View className="flex-row">
+                    {hasPermission('view_revenue') ? (
+                        <StatCard
+                            title={`${getPeriodLabel()} Sales`}
+                            value={formatCurrency(stats?.todaySales || 0)}
+                            icon="cash"
+                            color="#22c55e"
+                        />
+                    ) : (
+                        <StatCard
+                            title={`${getPeriodLabel()} Sales`}
+                            value={stats?.todayTransactions || 0}
+                            icon="cart-check"
+                            color="#22c55e"
+                        />
+                    )}
                     <StatCard
-                        title="Your Sales"
+                        title="Transactions"
                         value={stats?.todayTransactions || 0}
-                        icon="cart-check"
-                        color="#22c55e"
+                        icon="receipt"
+                        color="#3b82f6"
                     />
-                )}
-                <StatCard
-                    title="Transactions"
-                    value={stats?.todayTransactions || 0}
-                    icon="receipt"
-                    color="#3b82f6"
-                />
+                </View>
             </View>
 
             {/* Quick Actions */}

@@ -21,8 +21,8 @@ import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import { usePermissions } from '@/lib/permissions';
 import { PermissionGuard, ManagerAndAbove } from '@/components/PermissionGuard';
+import { PeriodTags, PeriodType, CustomPeriod, getPeriodDates } from '@/components/PeriodSelector';
 
-type DateRange = 'today' | 'week' | 'month' | 'year';
 type ReportType = 'SALES' | 'INVENTORY' | 'CUSTOMERS';
 
 interface ReportData {
@@ -58,7 +58,8 @@ const BREAKPOINTS = {
 export default function ReportsScreen() {
     const { width } = useWindowDimensions();
     const { currentBusiness } = useAuthStore();
-    const [dateRange, setDateRange] = useState<DateRange>('week');
+    const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('1w');
+    const [customPeriod, setCustomPeriod] = useState<CustomPeriod | undefined>();
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -73,45 +74,18 @@ export default function ReportsScreen() {
     const subtitleSize = isTablet ? 'text-base' : 'text-sm';
 
     const getDateRange = useCallback(() => {
-        const now = new Date();
-        let start: Date;
-        const end = new Date();
-        end.setHours(23, 59, 59, 999);
-
-        switch (dateRange) {
-            case 'today':
-                start = new Date();
-                start.setHours(0, 0, 0, 0);
-                break;
-            case 'week':
-                start = new Date();
-                start.setDate(start.getDate() - 7);
-                break;
-            case 'month':
-                start = new Date();
-                start.setMonth(start.getMonth() - 1);
-                break;
-            case 'year':
-                start = new Date();
-                start.setFullYear(start.getFullYear() - 1);
-                break;
-            default:
-                start = new Date();
-                start.setDate(start.getDate() - 7);
-        }
-
-        return { start, end };
-    }, [dateRange]);
+        return getPeriodDates(selectedPeriod, customPeriod);
+    }, [selectedPeriod, customPeriod]);
 
     const fetchReports = useCallback(async () => {
         if (!currentBusiness) return;
 
         try {
-            const { start, end } = getDateRange();
+            const { startDate, endDate } = getDateRange();
             const res = await api.get('/api/reports/summary', {
                 businessId: currentBusiness.id,
-                startDate: start.toISOString(),
-                endDate: end.toISOString(),
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
             });
             setReportData(res.data?.data || null);
         } catch (error) {
@@ -152,7 +126,7 @@ export default function ReportsScreen() {
     useEffect(() => {
         setIsLoading(true);
         fetchReports();
-    }, [dateRange]);
+    }, [selectedPeriod, customPeriod]);
 
     useEffect(() => {
         fetchReports();
@@ -172,16 +146,16 @@ export default function ReportsScreen() {
         setIsGeneratingPdf(true);
 
         try {
-            const { start, end } = getDateRange();
+            const { startDate, endDate } = getDateRange();
 
             // Request PDF generation from server
             const res = await api.post('/api/reports/generate', {
                 businessId: currentBusiness.id,
                 type,
-                period: dateRange.toUpperCase(),
-                startDate: start.toISOString(),
-                endDate: end.toISOString(),
-                name: `${type} Report - ${dateRange}`,
+                period: selectedPeriod.toUpperCase(),
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
+                name: `${type} Report - ${selectedPeriod}`,
             });
 
             if (!res.success || !res.data?.downloadUrl) {
@@ -303,23 +277,14 @@ export default function ReportsScreen() {
                     />
                 }
             >
-                {/* Date Range Selector - Responsive */}
-                <View className={`flex-row bg-white mt-4 p-1 rounded-xl ${isTablet ? 'mx-6' : 'mx-4'}`}>
-                    {(['today', 'week', 'month', 'year'] as DateRange[]).map((range) => (
-                        <Pressable
-                            key={range}
-                            onPress={() => setDateRange(range)}
-                            className={`flex-1 rounded-lg ${isTablet ? 'py-3' : 'py-2'} ${dateRange === range ? 'bg-green-500' : ''
-                                }`}
-                        >
-                            <Text
-                                className={`text-center font-medium capitalize ${dateRange === range ? 'text-white' : 'text-gray-600'
-                                    } ${isTablet ? 'text-base' : 'text-sm'}`}
-                            >
-                                {range}
-                            </Text>
-                        </Pressable>
-                    ))}
+                {/* Period Selector - Tags */}
+                <View className="mt-4">
+                    <PeriodTags
+                        selectedPeriod={selectedPeriod}
+                        onSelect={setSelectedPeriod}
+                        customPeriod={customPeriod}
+                        onCustomPeriodChange={setCustomPeriod}
+                    />
                 </View>
 
                 {/* Summary Cards - Responsive Grid */}

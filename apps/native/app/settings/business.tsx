@@ -48,6 +48,7 @@ export default function BusinessSettingsScreen() {
         phone: '',
         email: '',
         taxId: '',
+        invoiceFooter: '',
     });
 
     useEffect(() => {
@@ -61,6 +62,7 @@ export default function BusinessSettingsScreen() {
                 phone: currentBusiness.phone || '',
                 email: currentBusiness.email || '',
                 taxId: currentBusiness.taxId || '',
+                invoiceFooter: currentBusiness.invoiceFooter || '',
             });
         }
     }, [currentBusiness]);
@@ -89,6 +91,7 @@ export default function BusinessSettingsScreen() {
                 phone: form.phone.trim() || undefined,
                 email: form.email.trim() || undefined,
                 taxId: form.taxId.trim() || undefined,
+                invoiceFooter: form.invoiceFooter.trim() || undefined,
             });
 
             if (res.data?.data) {
@@ -289,6 +292,37 @@ export default function BusinessSettingsScreen() {
                                 onChangeText={(value) => updateField('taxId', value)}
                             />
                         </View>
+                    </View>
+                </View>
+
+                {/* Invoice Settings */}
+                <View className="bg-white mx-4 mt-4 rounded-xl p-4">
+                    <Text className="text-gray-500 text-sm font-medium mb-4">
+                        Invoice Settings
+                    </Text>
+
+                    <View>
+                        <Text className="text-gray-700 text-sm font-medium mb-2">Invoice Footer Text</Text>
+                        <Text className="text-gray-400 text-xs mb-2">
+                            Add custom text to appear at the bottom of invoices (e.g., return policies, disclaimers)
+                        </Text>
+                        <View className="bg-gray-100 rounded-xl px-4 py-3">
+                            <TextInput
+                                className="text-gray-900 text-base"
+                                placeholder="e.g., NO REFUNDS. All sales are final."
+                                placeholderTextColor="#9ca3af"
+                                multiline
+                                numberOfLines={3}
+                                textAlignVertical="top"
+                                maxLength={500}
+                                value={form.invoiceFooter}
+                                onChangeText={(value) => updateField('invoiceFooter', value)}
+                                style={{ minHeight: 80 }}
+                            />
+                        </View>
+                        <Text className="text-gray-400 text-xs text-right mt-1">
+                            {form.invoiceFooter.length}/500
+                        </Text>
                     </View>
                 </View>
             </ScrollView>

@@ -16,6 +16,7 @@ import { api } from '@/lib/api';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
 import { useResponsive } from '@/lib/useResponsive';
 import { usePermissions } from '@/lib/permissions';
+import { PeriodTags, PeriodType, CustomPeriod, getPeriodDates } from '@/components/PeriodSelector';
 
 interface Transaction {
     id: string;
@@ -37,6 +38,8 @@ export default function TransactionsScreen() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [filter, setFilter] = useState<'all' | 'SALE' | 'REFUND'>('all');
+    const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('1m');
+    const [customPeriod, setCustomPeriod] = useState<CustomPeriod>({ startDate: new Date(), endDate: new Date() });
     const { hasPermission } = usePermissions();
 
     // Responsive
@@ -50,11 +53,15 @@ export default function TransactionsScreen() {
         if (!currentBusiness) return;
 
         try {
+            const { startDate, endDate } = getPeriodDates(selectedPeriod, customPeriod);
+
             const res = await api.get('/api/transactions', {
                 businessId: currentBusiness.id,
                 page: pageNum,
                 limit: 20,
                 type: filter === 'all' ? undefined : filter,
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
             });
 
             const newTransactions = res.data?.data || [];
@@ -73,12 +80,12 @@ export default function TransactionsScreen() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    }, [currentBusiness, filter]);
+    }, [currentBusiness, filter, selectedPeriod, customPeriod]);
 
     useEffect(() => {
         setIsLoading(true);
         fetchTransactions(1, true);
-    }, [filter]);
+    }, [filter, selectedPeriod, customPeriod]);
 
     useEffect(() => {
         fetchTransactions(1, true);
@@ -206,6 +213,16 @@ export default function TransactionsScreen() {
                 <FilterButton value="all" label="All" />
                 <FilterButton value="SALE" label="Sales" />
                 <FilterButton value="REFUND" label="Refunds" />
+            </View>
+
+            {/* Period Selector */}
+            <View className={`${isTablet ? 'px-6' : 'px-4'} pb-3`}>
+                <PeriodTags
+                    selectedPeriod={selectedPeriod}
+                    onSelect={setSelectedPeriod}
+                    customPeriod={customPeriod}
+                    onCustomPeriodChange={setCustomPeriod}
+                />
             </View>
 
             {/* Transactions List */}
