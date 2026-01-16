@@ -102,7 +102,8 @@
       },
       "eas": {
         "projectId": "25830ad5-8307-4c9d-8a16-a785a2da9256"
-      }
+      },
+      "apiUrl": "${API_URL}"
     },
     "owner": "codewithkin"
   }

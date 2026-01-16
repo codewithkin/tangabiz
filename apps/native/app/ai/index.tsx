@@ -12,9 +12,13 @@ import {
     Animated,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { useResponsive } from '@/lib/useResponsive';
+
+// Get API URL from environment
+const API_URL = Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface Message {
     id: string;
@@ -84,8 +88,7 @@ export default function TatendaAIScreen() {
 
         try {
             // Use streaming endpoint
-            const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
-            const response = await fetch(`${apiUrl}/api/ai/chat`, {
+            const response = await fetch(`${API_URL}/api/ai/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

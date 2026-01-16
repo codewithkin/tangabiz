@@ -2,22 +2,49 @@
 
 import { MMKV } from 'react-native-mmkv';
 
-// Main app storage instance
-export const storage = new MMKV({
-  id: 'tangabiz-storage',
-  encryptionKey: 'tangabiz-secure-key',
-});
+// Initialize storage instances with error handling
+let storage: MMKV;
+let secureStorage: MMKV;
+let cacheStorage: MMKV;
 
-// Secure storage for sensitive data
-export const secureStorage = new MMKV({
-  id: 'tangabiz-secure',
-  encryptionKey: 'tangabiz-ultra-secure-key',
-});
+try {
+  // Main app storage instance
+  storage = new MMKV({
+    id: 'tangabiz-storage',
+    encryptionKey: 'tangabiz-secure-key',
+  });
 
-// Cache storage for temporary data
-export const cacheStorage = new MMKV({
-  id: 'tangabiz-cache',
-});
+  // Secure storage for sensitive data
+  secureStorage = new MMKV({
+    id: 'tangabiz-secure',
+    encryptionKey: 'tangabiz-ultra-secure-key',
+  });
+
+  // Cache storage for temporary data
+  cacheStorage = new MMKV({
+    id: 'tangabiz-cache',
+  });
+} catch (error) {
+  console.error('Failed to initialize MMKV storage:', error);
+  // Fallback to in-memory storage if MMKV fails
+  const fallbackStorage = {
+    data: new Map<string, any>(),
+    getString: (key: string) => fallbackStorage.data.get(key),
+    getNumber: (key: string) => fallbackStorage.data.get(key),
+    getBoolean: (key: string) => fallbackStorage.data.get(key),
+    set: (key: string, value: any) => fallbackStorage.data.set(key, value),
+    delete: (key: string) => fallbackStorage.data.delete(key),
+    clearAll: () => fallbackStorage.data.clear(),
+    contains: (key: string) => fallbackStorage.data.has(key),
+    getAllKeys: () => Array.from(fallbackStorage.data.keys()),
+  } as any;
+  
+  storage = fallbackStorage;
+  secureStorage = fallbackStorage;
+  cacheStorage = fallbackStorage;
+}
+
+export { storage, secureStorage, cacheStorage };
 
 // Storage utility functions
 export const StorageUtils = {
