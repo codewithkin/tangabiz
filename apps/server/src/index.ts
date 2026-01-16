@@ -13,6 +13,7 @@ import { transactionRoutes } from "./routes/transactions";
 import { reportRoutes } from "./routes/reports";
 import { uploadRoutes } from "./routes/upload";
 import { notificationRoutes } from "./routes/notifications";
+import { aiRoutes } from "./routes/ai";
 
 // Import WebSocket manager
 import {
@@ -62,6 +63,7 @@ app.route("/api/transactions", transactionRoutes);
 app.route("/api/reports", reportRoutes);
 app.route("/api/upload", uploadRoutes);
 app.route("/api/notifications", notificationRoutes);
+app.route("/api/ai", aiRoutes);
 
 // 404 handler
 app.notFound((c) => {

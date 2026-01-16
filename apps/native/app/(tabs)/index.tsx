@@ -284,6 +284,12 @@ export default function HomeScreen() {
                             onPress={() => router.push('/reports')}
                         />
                     )}
+                    <QuickAction
+                        icon="robot"
+                        label="Tatenda AI"
+                        color="#10b981"
+                        onPress={() => router.push('/ai')}
+                    />
                     {isTablet && hasPermission('edit_business_settings') && (
                         <QuickAction
                             icon="cog"
