@@ -202,8 +202,8 @@ export default function TatendaAIScreen() {
                 )}
                 <View
                     className={`max-w-[80%] rounded-2xl px-4 py-3 ${isUser
-                            ? 'bg-green-500 rounded-br-sm'
-                            : 'bg-white border border-gray-200 rounded-bl-sm'
+                        ? 'bg-green-500 rounded-br-sm'
+                        : 'bg-white border border-gray-200 rounded-bl-sm'
                         }`}
                     style={isTablet ? { maxWidth: '60%' } : undefined}
                 >
@@ -319,8 +319,8 @@ export default function TatendaAIScreen() {
                         onPress={sendMessage}
                         disabled={!inputText.trim() || isLoading}
                         className={`ml-2 w-10 h-10 rounded-full items-center justify-center ${inputText.trim() && !isLoading
-                                ? 'bg-green-500'
-                                : 'bg-gray-300'
+                            ? 'bg-green-500'
+                            : 'bg-gray-300'
                             }`}
                     >
                         {isLoading ? (
