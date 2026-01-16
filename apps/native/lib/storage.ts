@@ -1,68 +1,113 @@
-// MMKV Storage Utilities for Tangabiz
+// AsyncStorage Utilities for Tangabiz
+// Replaced MMKV with AsyncStorage for better Expo compatibility
 
-import { MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Initialize storage instances with error handling
-let storage: MMKV;
-let secureStorage: MMKV;
-let cacheStorage: MMKV;
+// Storage prefix for namespacing
+const STORAGE_PREFIX = 'tangabiz:';
+const SECURE_PREFIX = 'tangabiz:secure:';
+const CACHE_PREFIX = 'tangabiz:cache:';
 
-try {
-  // Main app storage instance
-  storage = new MMKV({
-    id: 'tangabiz-storage',
-    encryptionKey: 'tangabiz-secure-key',
-  });
+// Storage wrapper to provide MMKV-like API
+class StorageWrapper {
+  constructor(private prefix: string) {}
 
-  // Secure storage for sensitive data
-  secureStorage = new MMKV({
-    id: 'tangabiz-secure',
-    encryptionKey: 'tangabiz-ultra-secure-key',
-  });
+  async getString(key: string): Promise<string | undefined> {
+    try {
+      const value = await AsyncStorage.getItem(this.prefix + key);
+      return value ?? undefined;
+    } catch {
+      return undefined;
+    }
+  }
 
-  // Cache storage for temporary data
-  cacheStorage = new MMKV({
-    id: 'tangabiz-cache',
-  });
-} catch (error) {
-  console.error('Failed to initialize MMKV storage:', error);
-  // Fallback to in-memory storage if MMKV fails
-  const fallbackStorage = {
-    data: new Map<string, any>(),
-    getString: (key: string) => fallbackStorage.data.get(key),
-    getNumber: (key: string) => fallbackStorage.data.get(key),
-    getBoolean: (key: string) => fallbackStorage.data.get(key),
-    set: (key: string, value: any) => fallbackStorage.data.set(key, value),
-    delete: (key: string) => fallbackStorage.data.delete(key),
-    clearAll: () => fallbackStorage.data.clear(),
-    contains: (key: string) => fallbackStorage.data.has(key),
-    getAllKeys: () => Array.from(fallbackStorage.data.keys()),
-  } as any;
-  
-  storage = fallbackStorage;
-  secureStorage = fallbackStorage;
-  cacheStorage = fallbackStorage;
+  async getNumber(key: string): Promise<number | undefined> {
+    try {
+      const value = await this.getString(key);
+      return value ? Number(value) : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async getBoolean(key: string): Promise<boolean | undefined> {
+    try {
+      const value = await this.getString(key);
+      return value === 'true' ? true : value === 'false' ? false : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async set(key: string, value: string | number | boolean): Promise<void> {
+    try {
+      await AsyncStorage.setItem(this.prefix + key, String(value));
+    } catch (error) {
+      console.error('Storage set error:', error);
+    }
+  }
+
+  async delete(key: string): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(this.prefix + key);
+    } catch (error) {
+      console.error('Storage delete error:', error);
+    }
+  }
+
+  async clearAll(): Promise<void> {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      const prefixedKeys = keys.filter(k => k.startsWith(this.prefix));
+      await AsyncStorage.multiRemove(prefixedKeys);
+    } catch (error) {
+      console.error('Storage clearAll error:', error);
+    }
+  }
+
+  async contains(key: string): Promise<boolean> {
+    try {
+      const value = await AsyncStorage.getItem(this.prefix + key);
+      return value !== null;
+    } catch {
+      return false;
+    }
+  }
+
+  async getAllKeys(): Promise<string[]> {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      return keys
+        .filter(k => k.startsWith(this.prefix))
+        .map(k => k.substring(this.prefix.length));
+    } catch {
+      return [];
+    }
+  }
 }
 
-export { storage, secureStorage, cacheStorage };
+// Storage instances
+export const storage = new StorageWrapper(STORAGE_PREFIX);
+export const secureStorage = new StorageWrapper(SECURE_PREFIX);
+export const cacheStorage = new StorageWrapper(CACHE_PREFIX);
 
-// Storage utility functions
+// Storage utility functions (async versions)
 export const StorageUtils = {
   // String operations
-  getString: (key: string): string | undefined => storage.getString(key),
-  setString: (key: string, value: string) => storage.set(key, value),
+  getString: async (key: string): Promise<string | undefined> => storage.getString(key),
+  setString: async (key: string, value: string): Promise<void> => storage.set(key, value),
 
   // Number operations
-  getNumber: (key: string): number | undefined => storage.getNumber(key),
-  setNumber: (key: string, value: number) => storage.set(key, value),
+  getNumber: async (key: string): Promise<number | undefined> => storage.getNumber(key),
+  setNumber: async (key: string, value: number): Promise<void> => storage.set(key, value),
 
   // Boolean operations
-  getBoolean: (key: string): boolean | undefined => storage.getBoolean(key),
-  setBoolean: (key: string, value: boolean) => storage.set(key, value),
+  getBoolean: async (key: string): Promise<boolean | undefined> => storage.getBoolean(key),
+  setBoolean: async (key: string, value: boolean): Promise<void> => storage.set(key, value),
 
   // Object operations (JSON)
-  getObject: <T>(key: string): T | null => {
-    const json = storage.getString(key);
+  getObject: async <T>(key: string): Promise<T | null> => {
+    const json = await storage.getString(key);
     if (!json) return null;
     try {
       return JSON.parse(json) as T;
@@ -70,38 +115,38 @@ export const StorageUtils = {
       return null;
     }
   },
-  setObject: <T>(key: string, value: T) => {
-    storage.set(key, JSON.stringify(value));
+  setObject: async <T>(key: string, value: T): Promise<void> => {
+    await storage.set(key, JSON.stringify(value));
   },
 
   // Delete operations
-  delete: (key: string) => storage.delete(key),
-  clearAll: () => storage.clearAll(),
+  delete: async (key: string): Promise<void> => storage.delete(key),
+  clearAll: async (): Promise<void> => storage.clearAll(),
 
   // Check if key exists
-  contains: (key: string): boolean => storage.contains(key),
+  contains: async (key: string): Promise<boolean> => storage.contains(key),
 
   // Get all keys
-  getAllKeys: (): string[] => storage.getAllKeys(),
+  getAllKeys: async (): Promise<string[]> => storage.getAllKeys(),
 };
 
 // Secure storage utility functions
 export const SecureStorageUtils = {
-  getString: (key: string): string | undefined => secureStorage.getString(key),
-  setString: (key: string, value: string) => secureStorage.set(key, value),
-  delete: (key: string) => secureStorage.delete(key),
-  clearAll: () => secureStorage.clearAll(),
+  getString: async (key: string): Promise<string | undefined> => secureStorage.getString(key),
+  setString: async (key: string, value: string): Promise<void> => secureStorage.set(key, value),
+  delete: async (key: string): Promise<void> => secureStorage.delete(key),
+  clearAll: async (): Promise<void> => secureStorage.clearAll(),
 };
 
 // Cache storage utility functions
 export const CacheUtils = {
-  get: <T>(key: string): T | null => {
-    const json = cacheStorage.getString(key);
+  get: async <T>(key: string): Promise<T | null> => {
+    const json = await cacheStorage.getString(key);
     if (!json) return null;
     try {
       const { data, expiry } = JSON.parse(json);
       if (expiry && Date.now() > expiry) {
-        cacheStorage.delete(key);
+        await cacheStorage.delete(key);
         return null;
       }
       return data as T;
@@ -110,16 +155,16 @@ export const CacheUtils = {
     }
   },
 
-  set: <T>(key: string, value: T, ttlMs?: number) => {
+  set: async <T>(key: string, value: T, ttlMs?: number): Promise<void> => {
     const data = {
       data: value,
       expiry: ttlMs ? Date.now() + ttlMs : null,
     };
-    cacheStorage.set(key, JSON.stringify(data));
+    await cacheStorage.set(key, JSON.stringify(data));
   },
 
-  delete: (key: string) => cacheStorage.delete(key),
-  clearAll: () => cacheStorage.clearAll(),
+  delete: async (key: string): Promise<void> => cacheStorage.delete(key),
+  clearAll: async (): Promise<void> => cacheStorage.clearAll(),
 };
 
 // Storage keys constants
