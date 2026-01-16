@@ -11,6 +11,18 @@ export function nanoid(length: number = 21): string {
 }
 
 /**
+ * Generate a short 8-character invoice ID (uppercase alphanumeric)
+ */
+export function generateInvoiceId(): string {
+  const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let id = "";
+  for (let i = 0; i < 8; i++) {
+    id += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+  }
+  return id;
+}
+
+/**
  * Generate a slug from a string
  */
 export function slugify(text: string): string {

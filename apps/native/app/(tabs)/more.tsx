@@ -202,6 +202,13 @@ export default function MoreScreen() {
                         badge={unreadNotifications > 0 ? String(unreadNotifications) : undefined}
                     />
                     <MenuItem
+                        icon="file-document-check"
+                        label="Verify Invoice"
+                        description="Scan or enter an invoice ID to verify"
+                        onPress={() => router.push('/verify-invoice')}
+                        color="#10b981"
+                    />
+                    <MenuItem
                         icon="account-group"
                         label="Customers"
                         description="Manage your customer database"

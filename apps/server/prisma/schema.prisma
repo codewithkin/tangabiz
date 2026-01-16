@@ -254,6 +254,7 @@ enum PaymentMethod {
 
 model Transaction {
   id            String            @id @default(cuid())
+  invoiceId     String            @unique // Short 8-character invoice ID for verification
   reference     String            @unique // Auto-generated reference number
   type          TransactionType   @default(SALE)
   status        TransactionStatus @default(COMPLETED)

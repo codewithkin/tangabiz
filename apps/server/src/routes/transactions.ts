@@ -3,7 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { db } from "../lib/db";
 import { requireAuth, requireRole } from "../middleware/auth";
-import { nanoid } from "../utils/helpers";
+import { nanoid, generateInvoiceId } from "../utils/helpers";
 import { notifyNewSale, notifyRefund, notifyLowStock } from "../lib/notifications";
 
 export const transactionRoutes = new Hono();
@@ -127,8 +127,9 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
   const userId = c.get("userId");
   const data = c.req.valid("json");
 
-  // Generate unique reference
+  // Generate unique reference and invoice ID
   const reference = `TXN-${nanoid(10).toUpperCase()}`;
+  const invoiceId = generateInvoiceId();
 
   // Calculate totals
   const itemsWithTotals = await Promise.all(
@@ -159,6 +160,7 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
   // Create transaction with items
   const transaction = await db.transaction.create({
     data: {
+      invoiceId,
       reference,
       businessId: data.businessId,
       customerId: data.customerId,
@@ -456,5 +458,77 @@ transactionRoutes.get("/stats/payment-methods", requireAuth, async (c) => {
       count: b._count.id,
       total: b._sum.total || 0,
     })),
+  });
+});
+
+// Verify an invoice by invoiceId
+transactionRoutes.get("/verify/:invoiceId", async (c) => {
+  const invoiceId = c.req.param("invoiceId");
+
+  if (!invoiceId || invoiceId.length !== 8) {
+    return c.json({
+      success: false,
+      error: "Invalid invoice ID format. Must be 8 characters.",
+    }, 400);
+  }
+
+  const transaction = await db.transaction.findUnique({
+    where: { invoiceId: invoiceId.toUpperCase() },
+    include: {
+      business: {
+        select: { id: true, name: true, logo: true, currency: true },
+      },
+      customer: {
+        select: { id: true, name: true, email: true, phone: true },
+      },
+      items: {
+        include: {
+          product: {
+            select: { id: true, name: true, image: true },
+          },
+        },
+      },
+      createdBy: {
+        select: { id: true, name: true },
+      },
+    },
+  });
+
+  if (!transaction) {
+    return c.json({
+      success: false,
+      error: "Invoice not found. Please check the ID and try again.",
+    }, 404);
+  }
+
+  return c.json({
+    success: true,
+    invoice: {
+      invoiceId: transaction.invoiceId,
+      reference: transaction.reference,
+      type: transaction.type,
+      status: transaction.status,
+      paymentMethod: transaction.paymentMethod,
+      subtotal: transaction.subtotal,
+      discount: transaction.discount,
+      total: transaction.total,
+      amountPaid: transaction.amountPaid,
+      change: transaction.change,
+      notes: transaction.notes,
+      createdAt: transaction.createdAt,
+      business: transaction.business,
+      customer: transaction.customer,
+      items: transaction.items.map((item) => ({
+        id: item.id,
+        productName: item.productName,
+        productSku: item.productSku,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: item.discount,
+        total: item.total,
+        product: item.product,
+      })),
+      createdBy: transaction.createdBy,
+    },
   });
 });
