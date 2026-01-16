@@ -106,7 +106,7 @@ export default function VerifyResultScreen() {
                                 </Text>
                             </View>
                             <Text className="text-gray-500 mt-2 text-sm">
-                                The invoice ID may be incorrect or the invoice may not exist in our system. 
+                                The invoice ID may be incorrect or the invoice may not exist in our system.
                                 Please double-check the ID and try again.
                             </Text>
                         </View>
@@ -185,10 +185,9 @@ export default function VerifyResultScreen() {
                                         {invoice?.invoiceId}
                                     </Text>
                                 </View>
-                                <View className={`px-3 py-1 rounded-full ${
-                                    invoice?.status === 'COMPLETED' ? 'bg-green-500' :
-                                    invoice?.status === 'PENDING' ? 'bg-yellow-500' : 'bg-red-500'
-                                }`}>
+                                <View className={`px-3 py-1 rounded-full ${invoice?.status === 'COMPLETED' ? 'bg-green-500' :
+                                        invoice?.status === 'PENDING' ? 'bg-yellow-500' : 'bg-red-500'
+                                    }`}>
                                     <Text className="text-white text-sm font-medium">
                                         {invoice?.status}
                                     </Text>

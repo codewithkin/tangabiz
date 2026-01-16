@@ -28,7 +28,7 @@ export default function ScanQRScreen() {
             // Extract invoice ID from QR code data
             // QR code could be just the ID or a URL containing the ID
             let invoiceId = data.trim().toUpperCase();
-            
+
             // If it's a URL, extract the ID from it
             if (invoiceId.includes('/')) {
                 const parts = invoiceId.split('/');
@@ -150,7 +150,7 @@ export default function ScanQRScreen() {
                 <View className="flex-1 items-center justify-center">
                     {/* Top Overlay */}
                     <View className="absolute top-0 left-0 right-0 h-40 bg-black/60" />
-                    
+
                     {/* Scanner Frame */}
                     <View className="w-64 h-64 border-2 border-white rounded-3xl overflow-hidden">
                         {/* Corner indicators */}
@@ -175,7 +175,7 @@ export default function ScanQRScreen() {
                                 <Text className="text-gray-400 text-center mt-2">
                                     The scanner will automatically detect the code
                                 </Text>
-                                
+
                                 <Pressable
                                     onPress={() => router.back()}
                                     className="mt-6 bg-white/20 px-6 py-3 rounded-xl"

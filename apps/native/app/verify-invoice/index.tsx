@@ -21,7 +21,7 @@ export default function VerifyInvoiceScreen() {
 
     const handleVerify = async () => {
         const trimmedId = invoiceId.trim().toUpperCase();
-        
+
         if (trimmedId.length !== 8) {
             setError('Invoice ID must be exactly 8 characters');
             return;
@@ -32,7 +32,7 @@ export default function VerifyInvoiceScreen() {
 
         try {
             const res = await api.get(`/api/transactions/verify/${trimmedId}`);
-            
+
             if (res.data?.success) {
                 router.push({
                     pathname: '/verify-invoice/result',
@@ -151,11 +151,10 @@ export default function VerifyInvoiceScreen() {
                         <Pressable
                             onPress={handleVerify}
                             disabled={isLoading || invoiceId.length === 0}
-                            className={`rounded-xl p-4 flex-row items-center justify-center ${
-                                invoiceId.length === 0 || isLoading
+                            className={`rounded-xl p-4 flex-row items-center justify-center ${invoiceId.length === 0 || isLoading
                                     ? 'bg-gray-300'
                                     : 'bg-gray-900 active:bg-gray-800'
-                            }`}
+                                }`}
                         >
                             {isLoading ? (
                                 <ActivityIndicator color="white" />
@@ -176,7 +175,7 @@ export default function VerifyInvoiceScreen() {
                                 <View className="flex-1 ml-3">
                                     <Text className="text-blue-800 font-medium">How it works</Text>
                                     <Text className="text-blue-600 text-sm mt-1">
-                                        Each invoice has a unique 8-character ID printed on it. 
+                                        Each invoice has a unique 8-character ID printed on it.
                                         Enter this ID or scan the QR code to verify the invoice is authentic.
                                     </Text>
                                 </View>
