@@ -39,12 +39,6 @@
         }
       ],
       [
-        "expo-barcode-scanner",
-        {
-          "cameraPermission": "Allow Tangabiz to use the camera for barcode scanning."
-        }
-      ],
-      [
         "expo-notifications",
         {
           "color": "#22c55e",
