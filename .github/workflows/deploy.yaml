@@ -1,7 +1,0 @@
-name: Deployment workflow
-
-on: push
-
-jobs: 
-  deploy:
-    runs-on: ubuntu-latest
