@@ -1,5 +1,5 @@
 // Onboarding screen - 3 step intro for first-time users
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -19,7 +19,8 @@ interface OnboardingSlide {
     id: string;
     title: string;
     description: string;
-    icon: keyof typeof MaterialCommunityIcons.glyphMap;
+    icon?: keyof typeof MaterialCommunityIcons.glyphMap;
+    image?: any;
     color: string;
 }
 
@@ -29,6 +30,8 @@ const slides: OnboardingSlide[] = [
         title: 'Welcome to Tangabiz',
         description:
             'Your all-in-one business management platform. Track sales, manage inventory, and grow your business with ease.',
+        // TODO: Add actual inventory.png image to assets/images/
+        // image: require('@/assets/images/inventory.png'),
         icon: 'store',
         color: '#22c55e',
     },
@@ -37,6 +40,8 @@ const slides: OnboardingSlide[] = [
         title: 'Powerful Features',
         description:
             'Record transactions, generate reports, manage customers, and track your products - all from your pocket.',
+        // TODO: Add actual sales.png image to assets/images/
+        // image: require('@/assets/images/sales.png'),
         icon: 'chart-line',
         color: '#eab308',
     },
@@ -54,7 +59,28 @@ export default function OnboardingScreen() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const flatListRef = useRef<FlatList>(null);
     const scrollX = useRef(new Animated.Value(0)).current;
+    const bubbleAnim = useRef(new Animated.Value(0)).current;
     const { setOnboardingComplete } = useOnboardingStore();
+
+    // Bubble-up animation loop
+    useEffect(() => {
+        const animation = Animated.loop(
+            Animated.sequence([
+                Animated.timing(bubbleAnim, {
+                    toValue: 1,
+                    duration: 2000,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(bubbleAnim, {
+                    toValue: 0,
+                    duration: 2000,
+                    useNativeDriver: true,
+                }),
+            ])
+        );
+        animation.start();
+        return () => animation.stop();
+    }, []);
 
     const handleNext = () => {
         if (currentIndex < slides.length - 1) {
@@ -80,22 +106,51 @@ export default function OnboardingScreen() {
     const renderSlide = ({ item, index }: { item: OnboardingSlide; index: number }) => {
         const isLastSlide = index === slides.length - 1;
 
+        // Bubble animation interpolations
+        const bubbleTranslateY = bubbleAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, -15],
+        });
+
+        const bubbleScale = bubbleAnim.interpolate({
+            inputRange: [0, 0.5, 1],
+            outputRange: [1, 1.08, 1],
+        });
+
         return (
             <View
                 className="flex-1 items-center justify-center px-8"
                 style={{ width }}
             >
-                {/* Icon Container */}
-                <View
-                    className="w-40 h-40 rounded-full items-center justify-center mb-8"
-                    style={{ backgroundColor: `${item.color}20` }}
-                >
-                    <MaterialCommunityIcons
-                        name={item.icon}
-                        size={80}
-                        color={item.color}
-                    />
-                </View>
+                {/* Image with bubble animation or Icon */}
+                {item.image ? (
+                    <Animated.View
+                        style={{
+                            transform: [
+                                { translateY: bubbleTranslateY },
+                                { scale: bubbleScale },
+                            ],
+                        }}
+                        className="mb-12"
+                    >
+                        <Image
+                            source={item.image}
+                            style={{ width: 280, height: 280 }}
+                            resizeMode="contain"
+                        />
+                    </Animated.View>
+                ) : (
+                    <View
+                        className="w-40 h-40 rounded-full items-center justify-center mb-12"
+                        style={{ backgroundColor: `${item.color}20` }}
+                    >
+                        <MaterialCommunityIcons
+                            name={item.icon!}
+                            size={80}
+                            color={item.color}
+                        />
+                    </View>
+                )}
 
                 {/* Title */}
                 <Text className="text-3xl font-bold text-gray-900 text-center mb-4">
@@ -103,13 +158,13 @@ export default function OnboardingScreen() {
                 </Text>
 
                 {/* Description */}
-                <Text className="text-lg text-gray-600 text-center mb-8 leading-7">
+                <Text className="text-lg text-gray-600 text-center mb-8 leading-7 px-4">
                     {item.description}
                 </Text>
 
                 {/* Buttons for last slide */}
                 {isLastSlide && (
-                    <View className="w-full mt-4">
+                    <View className="w-full mt-4 px-4">
                         <Pressable
                             onPress={handleSignIn}
                             className="w-full bg-green-500 py-4 rounded-xl mb-3 active:bg-green-600"
@@ -121,7 +176,7 @@ export default function OnboardingScreen() {
 
                         <Pressable
                             onPress={handleSignUp}
-                            className="w-full bg-yellow-500 py-4 rounded-xl active:bg-yellow-600"
+                            className="w-full bg-gray-200 py-4 rounded-xl active:bg-gray-300 border border-gray-300"
                         >
                             <Text className="text-black text-lg font-semibold text-center">
                                 Create Account

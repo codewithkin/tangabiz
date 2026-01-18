@@ -1,12 +1,65 @@
 // Sign Up screen - redirects to CVT website
-import React from 'react';
-import { View, Text, Pressable, Linking, ScrollView } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Pressable, Linking, ScrollView, Animated } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const CVT_SIGNUP_URL = 'https://cvt.co.zw/sign-up';
 
 export default function SignUpScreen() {
+    // Animation values
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+    const logoScaleAnim = useRef(new Animated.Value(0.8)).current;
+    const feature1Anim = useRef(new Animated.Value(0)).current;
+    const feature2Anim = useRef(new Animated.Value(0)).current;
+    const feature3Anim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        // Stagger entrance animations
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+            }),
+            Animated.spring(slideAnim, {
+                toValue: 0,
+                tension: 50,
+                friction: 8,
+                useNativeDriver: true,
+            }),
+            Animated.spring(logoScaleAnim, {
+                toValue: 1,
+                tension: 50,
+                friction: 7,
+                delay: 100,
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+        // Stagger feature cards
+        Animated.stagger(150, [
+            Animated.spring(feature1Anim, {
+                toValue: 1,
+                tension: 50,
+                friction: 8,
+                useNativeDriver: true,
+            }),
+            Animated.spring(feature2Anim, {
+                toValue: 1,
+                tension: 50,
+                friction: 8,
+                useNativeDriver: true,
+            }),
+            Animated.spring(feature3Anim, {
+                toValue: 1,
+                tension: 50,
+                friction: 8,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, []);
     const handleOpenSignUp = async () => {
         try {
             await Linking.openURL(CVT_SIGNUP_URL);
@@ -37,46 +90,72 @@ export default function SignUpScreen() {
         <ScrollView className="flex-1 bg-white">
             <View className="flex-1 px-6 pt-16 pb-8">
                 {/* Header */}
-                <View className="items-center mb-8">
-                    <View className="w-24 h-24 bg-yellow-100 rounded-full items-center justify-center mb-4">
+                <Animated.View 
+                    className="items-center mb-8"
+                    style={{
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    }}
+                >
+                    <Animated.View 
+                        className="w-24 h-24 bg-yellow-100 rounded-full items-center justify-center mb-4"
+                        style={{
+                            transform: [{ scale: logoScaleAnim }],
+                        }}
+                    >
                         <MaterialCommunityIcons
                             name="account-plus"
                             size={48}
                             color="#eab308"
                         />
-                    </View>
+                    </Animated.View>
                     <Text className="text-3xl font-bold text-gray-900 text-center">
                         Create Your Account
                     </Text>
                     <Text className="text-gray-500 text-center mt-2 text-base">
                         Sign up through Christus Veritas Technologies
                     </Text>
-                </View>
+                </Animated.View>
 
                 {/* Features */}
                 <View className="mb-8">
-                    {features.map((feature, index) => (
-                        <View
-                            key={index}
-                            className="flex-row items-start bg-gray-50 rounded-xl p-4 mb-3"
-                        >
-                            <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mr-4">
-                                <MaterialCommunityIcons
-                                    name={feature.icon}
-                                    size={24}
-                                    color="#22c55e"
-                                />
-                            </View>
-                            <View className="flex-1">
-                                <Text className="text-lg font-semibold text-gray-900">
-                                    {feature.title}
-                                </Text>
-                                <Text className="text-gray-500 mt-1">
-                                    {feature.description}
-                                </Text>
-                            </View>
-                        </View>
-                    ))}
+                    {features.map((feature, index) => {
+                        const animValue = index === 0 ? feature1Anim : index === 1 ? feature2Anim : feature3Anim;
+                        
+                        return (
+                            <Animated.View
+                                key={index}
+                                className="flex-row items-start bg-gray-50 rounded-xl p-4 mb-3"
+                                style={{
+                                    opacity: animValue,
+                                    transform: [
+                                        {
+                                            translateX: animValue.interpolate({
+                                                inputRange: [0, 1],
+                                                outputRange: [50, 0],
+                                            }),
+                                        },
+                                    ],
+                                }}
+                            >
+                                <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mr-4">
+                                    <MaterialCommunityIcons
+                                        name={feature.icon}
+                                        size={24}
+                                        color="#22c55e"
+                                    />
+                                </View>
+                                <View className="flex-1">
+                                    <Text className="text-lg font-semibold text-gray-900">
+                                        {feature.title}
+                                    </Text>
+                                    <Text className="text-gray-500 mt-1">
+                                        {feature.description}
+                                    </Text>
+                                </View>
+                            </Animated.View>
+                        );
+                    })}
                 </View>
 
                 {/* Sign Up Button */}
