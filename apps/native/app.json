@@ -1,25 +1,42 @@
 {
   "expo": {
-    "scheme": "tangabiz",
-    "userInterfaceStyle": "automatic",
-    "orientation": "default",
+    "name": "native",
+    "slug": "native",
+    "version": "1.0.0",
+
+    "scheme": "native",
+    "platforms": ["ios", "android"],
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
     },
-    "name": "Tangabiz",
-    "slug": "tangabiz",
-    "plugins": [
-      "expo-font"
-    ],
+    "plugins": ["expo-router"],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+
+      "tsconfigPaths": true
     },
-    "extra": {
-      "eas": {
-        "projectId": "7578de77-0092-442d-85a6-f9690cfadb75"
+
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+
+    "userInterfaceStyle": "light",
+
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
       }
-    },
-    "owner": "codewithkin"
+    }
   }
 }
