@@ -1,6 +1,6 @@
 // Sign Up screen - redirects to CVT website
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Pressable, Linking, ScrollView, Animated } from 'react-native';
+import { View, Text, Pressable, Linking, ScrollView, Animated, Image } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -90,23 +90,23 @@ export default function SignUpScreen() {
         <ScrollView className="flex-1 bg-white">
             <View className="flex-1 px-6 pt-16 pb-8">
                 {/* Header */}
-                <Animated.View 
+                <Animated.View
                     className="items-center mb-8"
                     style={{
                         opacity: fadeAnim,
                         transform: [{ translateY: slideAnim }],
                     }}
                 >
-                    <Animated.View 
-                        className="w-24 h-24 bg-yellow-100 rounded-full items-center justify-center mb-4"
+                    <Animated.View
+                        className="w-24 h-24 bg-white rounded-2xl items-center justify-center mb-4 shadow-lg overflow-hidden"
                         style={{
                             transform: [{ scale: logoScaleAnim }],
                         }}
                     >
-                        <MaterialCommunityIcons
-                            name="account-plus"
-                            size={48}
-                            color="#eab308"
+                        <Image
+                            source={require('@/assets/icon.png')}
+                            style={{ width: 72, height: 72 }}
+                            resizeMode="contain"
                         />
                     </Animated.View>
                     <Text className="text-3xl font-bold text-gray-900 text-center">
@@ -121,7 +121,7 @@ export default function SignUpScreen() {
                 <View className="mb-8">
                     {features.map((feature, index) => {
                         const animValue = index === 0 ? feature1Anim : index === 1 ? feature2Anim : feature3Anim;
-                        
+
                         return (
                             <Animated.View
                                 key={index}

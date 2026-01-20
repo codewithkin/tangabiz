@@ -30,7 +30,7 @@ function useProtectedRoute() {
     const inOnboarding = segments[0] === 'onboarding';
     const inTabs = segments[0] === '(tabs)';
 
-    // If user hasn't completed onboarding, show onboarding
+    // If user hasn't completed onboarding (first time app launch), show onboarding
     if (!hasCompletedOnboarding && !inOnboarding) {
       router.replace('/onboarding');
       return;
@@ -42,7 +42,7 @@ function useProtectedRoute() {
       return;
     }
 
-    // If user is signed in but on auth pages, redirect to app
+    // If user is signed in but on auth pages or onboarding, redirect to app
     if (token && (inAuthGroup || inOnboarding)) {
       router.replace('/(tabs)');
       return;

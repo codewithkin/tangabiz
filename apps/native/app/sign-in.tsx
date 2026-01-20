@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Linking, KeyboardAvoidingView, Platform, ScrollView, Animated } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Linking, KeyboardAvoidingView, Platform, ScrollView, Animated, Image } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useAuthStore, CVT_URLS } from '@/store/auth';
 
 export default function SignIn() {
     const [apiKey, setApiKey] = useState('');
     const { signIn, isLoading, error, clearError } = useAuthStore();
-    
+
     // Animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(30)).current;
@@ -92,14 +92,14 @@ export default function SignIn() {
             >
                 <View className="flex-1 bg-primary-500">
                     {/* Header Section */}
-                    <Animated.View 
+                    <Animated.View
                         className="flex-1 justify-center items-center px-6 pt-16 pb-8"
                         style={{
                             opacity: fadeAnim,
                             transform: [{ translateY: slideAnim }],
                         }}
                     >
-                        <Animated.View 
+                        <Animated.View
                             className="w-20 h-20 bg-white rounded-2xl items-center justify-center mb-4 shadow-lg"
                             style={{
                                 transform: [{ scale: logoScaleAnim }],
@@ -114,7 +114,7 @@ export default function SignIn() {
                     </Animated.View>
 
                     {/* Form Section */}
-                    <Animated.View 
+                    <Animated.View
                         className="bg-white rounded-t-3xl px-6 py-8 min-h-[400px]"
                         style={{
                             opacity: fadeAnim,
@@ -149,7 +149,7 @@ export default function SignIn() {
                         )}
 
                         {/* API Key Input */}
-                        <Animated.View 
+                        <Animated.View
                             className="mb-4"
                             style={{
                                 transform: [{ scale: inputScaleAnim }],
@@ -182,8 +182,8 @@ export default function SignIn() {
                         {/* Sign In Button */}
                         <TouchableOpacity
                             className={`rounded-xl py-4 items-center mb-4 ${isLoading || !apiKey.trim()
-                                    ? 'bg-primary-300'
-                                    : 'bg-primary-500 active:bg-primary-600'
+                                ? 'bg-primary-300'
+                                : 'bg-primary-500 active:bg-primary-600'
                                 }`}
                             onPress={handleSignIn}
                             disabled={isLoading || !apiKey.trim()}

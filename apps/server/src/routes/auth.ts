@@ -24,8 +24,11 @@ const signInSchema = z.object({
 authRoutes.post("/sign-in", zValidator("json", signInSchema), async (c) => {
   const { apiKey } = c.req.valid("json");
 
+  // Use CVT_BACKEND_API_URL from environment variables
+  const cvtBackendUrl = process.env.CVT_BACKEND_API_URL || "http://localhost:3001";
+
   // Verify the API key with CVT backend
-  const verification = await verifyCVTApiKey(apiKey);
+  const verification = await verifyCVTApiKey(apiKey, cvtBackendUrl);
 
   if (!verification.success) {
     return c.json(

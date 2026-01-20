@@ -1,0 +1,3 @@
+# CVT Backend API Key
+# This key is used to authenticate requests to the CVT backend.
+API_KEY=your-generated-api-key-here
