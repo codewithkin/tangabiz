@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "scheme": "tangabiz",
+    "userInterfaceStyle": "automatic",
+    "orientation": "default",
+    "web": {
+      "bundler": "metro"
+    },
+    "name": "Tangabiz",
+    "slug": "tangabiz",
+    "plugins": [
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7578de77-0092-442d-85a6-f9690cfadb75"
+      }
+    },
+    "owner": "codewithkin"
+  }
+}
