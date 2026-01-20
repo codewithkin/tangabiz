@@ -42,7 +42,9 @@ export async function verifyCVTApiKey(apiKey: string): Promise<{
   error?: string;
 }> {
   try {
-    const response = await fetch(`${CVT_BACKEND}/api/api-keys/verify-service`, {
+    const cvtBackendUrl = process.env.CVT_BACKEND_API_URL || "http://localhost:3001";
+
+    const response = await fetch(`${cvtBackendUrl}/api/api-keys/verify-service`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
