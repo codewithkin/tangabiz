@@ -214,7 +214,7 @@ export default function POS() {
                     <Text className="font-bold text-gray-900 ml-2 text-lg">Cart ({totalItems})</Text>
                 </View>
                 {cart.length > 0 && (
-                    <Pressable 
+                    <Pressable
                         onPress={clearCart}
                         className="bg-red-50 px-3 py-1 rounded-lg"
                     >
@@ -291,15 +291,13 @@ export default function POS() {
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                     setPaymentMethod(method);
                                 }}
-                                className={`flex-1 py-2.5 rounded-xl border-2 ${
-                                    paymentMethod === method
+                                className={`flex-1 py-2.5 rounded-xl border-2 ${paymentMethod === method
                                         ? 'border-green-500 bg-green-50'
                                         : 'border-gray-200 bg-white'
-                                }`}
+                                    }`}
                             >
-                                <Text className={`text-center text-xs font-semibold ${
-                                    paymentMethod === method ? 'text-green-600' : 'text-gray-500'
-                                }`}>
+                                <Text className={`text-center text-xs font-semibold ${paymentMethod === method ? 'text-green-600' : 'text-gray-500'
+                                    }`}>
                                     {method === 'MOBILE_MONEY' ? 'MOBILE' : method}
                                 </Text>
                             </Pressable>
@@ -316,9 +314,8 @@ export default function POS() {
                     <Pressable
                         onPress={handleCheckout}
                         disabled={cart.length === 0 || isSubmitting}
-                        className={`py-4 rounded-xl items-center justify-center flex-row ${
-                            isSubmitting ? 'bg-gray-300' : 'bg-green-500 active:bg-green-600'
-                        }`}
+                        className={`py-4 rounded-xl items-center justify-center flex-row ${isSubmitting ? 'bg-gray-300' : 'bg-green-500 active:bg-green-600'
+                            }`}
                     >
                         {isSubmitting ? (
                             <ActivityIndicator size="small" color="white" />

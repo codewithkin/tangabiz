@@ -221,7 +221,7 @@ export default function Dashboard() {
                 <View className="mb-6">
                     <View className="flex-row items-center justify-between mb-3">
                         <Text className="text-lg font-semibold text-gray-900">Recent Sales</Text>
-                        <Pressable 
+                        <Pressable
                             onPress={() => router.push('/(tabs)/transactions')}
                             className="flex-row items-center"
                         >
@@ -246,7 +246,7 @@ export default function Dashboard() {
 
                 {/* Low Stock Alert */}
                 {stats.lowStock > 0 && (
-                    <Pressable 
+                    <Pressable
                         onPress={() => router.push('/products?filter=lowStock')}
                         className="mb-6"
                     >

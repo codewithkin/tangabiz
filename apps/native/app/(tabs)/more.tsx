@@ -16,11 +16,11 @@ interface MenuItemProps {
 }
 
 const MenuItem = ({ icon, label, onPress, color = '#22c55e', badge, description }: MenuItemProps) => (
-    <Pressable 
+    <Pressable
         onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             onPress();
-        }} 
+        }}
         className="flex-row items-center py-3"
     >
         <View
@@ -82,8 +82,8 @@ export default function More() {
         <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
             <Stack.Screen options={{ headerShown: false }} />
 
-            <ScrollView 
-                className="flex-1" 
+            <ScrollView
+                className="flex-1"
                 contentContainerStyle={{ paddingBottom: 32 }}
                 showsVerticalScrollIndicator={false}
             >

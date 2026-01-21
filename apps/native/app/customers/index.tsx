@@ -65,9 +65,9 @@ export default function Customers() {
 
     const renderCustomer = ({ item }: { item: Customer }) => {
         const avatarColor = getAvatarColor(item.name);
-        
+
         return (
-            <Pressable 
+            <Pressable
                 onPress={() => router.push(`/customers/${item.id}`)}
                 className="mx-4 mb-3"
             >

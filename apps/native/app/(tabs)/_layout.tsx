@@ -37,10 +37,10 @@ export default function TabLayout() {
                 options={{
                     title: 'Home',
                     tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
-                        <MaterialCommunityIcons 
-                            name={focused ? "home" : "home-outline"} 
-                            size={24} 
-                            color={color} 
+                        <MaterialCommunityIcons
+                            name={focused ? "home" : "home-outline"}
+                            size={24}
+                            color={color}
                         />
                     ),
                 }}
@@ -50,10 +50,10 @@ export default function TabLayout() {
                 options={{
                     title: 'Products',
                     tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
-                        <MaterialCommunityIcons 
-                            name={focused ? "package-variant" : "package-variant-closed"} 
-                            size={24} 
-                            color={color} 
+                        <MaterialCommunityIcons
+                            name={focused ? "package-variant" : "package-variant-closed"}
+                            size={24}
+                            color={color}
                         />
                     ),
                 }}
@@ -63,7 +63,7 @@ export default function TabLayout() {
                 options={{
                     title: '',
                     tabBarIcon: ({ focused }: { focused: boolean }) => (
-                        <View 
+                        <View
                             className="rounded-full items-center justify-center shadow-lg"
                             style={{
                                 backgroundColor: focused ? '#16a34a' : '#22c55e',
@@ -88,10 +88,10 @@ export default function TabLayout() {
                 options={{
                     title: 'Sales',
                     tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
-                        <MaterialCommunityIcons 
-                            name={focused ? "receipt" : "receipt-text-outline"} 
-                            size={24} 
-                            color={color} 
+                        <MaterialCommunityIcons
+                            name={focused ? "receipt" : "receipt-text-outline"}
+                            size={24}
+                            color={color}
                         />
                     ),
                 }}
@@ -101,10 +101,10 @@ export default function TabLayout() {
                 options={{
                     title: 'Settings',
                     tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
-                        <MaterialCommunityIcons 
-                            name={focused ? "cog" : "cog-outline"} 
-                            size={24} 
-                            color={color} 
+                        <MaterialCommunityIcons
+                            name={focused ? "cog" : "cog-outline"}
+                            size={24}
+                            color={color}
                         />
                     ),
                 }}

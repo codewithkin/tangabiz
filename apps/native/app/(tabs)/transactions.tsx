@@ -47,7 +47,7 @@ export default function Transactions() {
     const getDateRange = (period: PeriodType) => {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        
+
         switch (period) {
             case 'today':
                 return { startDate: today.toISOString() };
@@ -115,7 +115,7 @@ export default function Transactions() {
             REFUNDED: { bg: 'bg-gray-100', text: 'text-gray-700' },
         };
         const style = styles[status] || styles.PENDING;
-        
+
         return (
             <View className={`${style.bg} px-2 py-0.5 rounded-md`}>
                 <Text className={`${style.text} text-xs font-semibold`}>{status}</Text>
@@ -148,7 +148,7 @@ export default function Transactions() {
     );
 
     const renderTransaction = ({ item }: { item: Transaction }) => (
-        <Pressable 
+        <Pressable
             onPress={() => router.push(`/transactions/${item.id}`)}
             className="mx-4 mb-3"
         >
@@ -156,10 +156,9 @@ export default function Transactions() {
                 <View className="flex-row items-start">
                     {/* Icon */}
                     <View
-                        className={`w-11 h-11 rounded-xl items-center justify-center mr-3 ${
-                            item.type === 'SALE' ? 'bg-green-100' :
-                            item.type === 'REFUND' ? 'bg-red-100' : 'bg-gray-100'
-                        }`}
+                        className={`w-11 h-11 rounded-xl items-center justify-center mr-3 ${item.type === 'SALE' ? 'bg-green-100' :
+                                item.type === 'REFUND' ? 'bg-red-100' : 'bg-gray-100'
+                            }`}
                     >
                         <MaterialCommunityIcons
                             name={getTypeIcon(item.type) as any}
@@ -191,9 +190,8 @@ export default function Transactions() {
 
                     {/* Amount */}
                     <View className="items-end">
-                        <Text className={`text-lg font-bold ${
-                            item.type === 'REFUND' ? 'text-red-500' : 'text-green-600'
-                        }`}>
+                        <Text className={`text-lg font-bold ${item.type === 'REFUND' ? 'text-red-500' : 'text-green-600'
+                            }`}>
                             {item.type === 'REFUND' ? '-' : '+'}{formatCurrency(item.total)}
                         </Text>
                     </View>
@@ -229,13 +227,11 @@ export default function Transactions() {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                 setFilter(f);
                             }}
-                            className={`flex-1 py-2.5 rounded-xl mr-2 last:mr-0 ${
-                                filter === f ? 'bg-gray-900' : 'bg-gray-100'
-                            }`}
+                            className={`flex-1 py-2.5 rounded-xl mr-2 last:mr-0 ${filter === f ? 'bg-gray-900' : 'bg-gray-100'
+                                }`}
                         >
-                            <Text className={`text-center font-medium ${
-                                filter === f ? 'text-white' : 'text-gray-600'
-                            }`}>
+                            <Text className={`text-center font-medium ${filter === f ? 'text-white' : 'text-gray-600'
+                                }`}>
                                 {f === 'all' ? 'All' : f === 'SALE' ? 'Sales' : 'Refunds'}
                             </Text>
                         </Pressable>

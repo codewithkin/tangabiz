@@ -169,11 +169,10 @@ export default function AIChat() {
                                 </View>
                             )}
                             <View
-                                className={`max-w-[85%] p-4 ${
-                                    message.role === 'user'
+                                className={`max-w-[85%] p-4 ${message.role === 'user'
                                         ? 'bg-yellow-500 rounded-2xl rounded-br-md'
                                         : 'bg-white rounded-2xl rounded-tl-md shadow-sm border border-gray-100'
-                                }`}
+                                    }`}
                             >
                                 <Text
                                     className={message.role === 'user' ? 'text-white' : 'text-gray-800'}
@@ -236,9 +235,8 @@ export default function AIChat() {
                         <Pressable
                             onPress={sendMessage}
                             disabled={!input.trim() || isLoading}
-                            className={`w-12 h-12 rounded-full items-center justify-center ${
-                                input.trim() && !isLoading ? 'bg-yellow-500 active:bg-yellow-600' : 'bg-gray-200'
-                            }`}
+                            className={`w-12 h-12 rounded-full items-center justify-center ${input.trim() && !isLoading ? 'bg-yellow-500 active:bg-yellow-600' : 'bg-gray-200'
+                                }`}
                         >
                             <MaterialCommunityIcons
                                 name="send"

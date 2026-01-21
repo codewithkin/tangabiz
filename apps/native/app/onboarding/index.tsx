@@ -82,13 +82,13 @@ export default function Onboarding() {
     const currentSlide = slides[currentIndex];
 
     return (
-        <SafeAreaView 
-            className="flex-1" 
+        <SafeAreaView
+            className="flex-1"
             style={{ backgroundColor: currentSlide.bgColor }}
         >
             {/* Skip Button */}
             <View className="absolute top-16 right-6 z-10">
-                <Pressable 
+                <Pressable
                     onPress={handleSkip}
                     className="px-4 py-2"
                 >
@@ -140,11 +140,10 @@ export default function Onboarding() {
                     {slides.map((slide, index) => (
                         <View
                             key={index}
-                            className={`h-2 rounded-full mx-1.5 transition-all ${
-                                index === currentIndex ? 'w-8' : 'w-2'
-                            }`}
-                            style={{ 
-                                backgroundColor: index === currentIndex ? slide.color : '#d1d5db' 
+                            className={`h-2 rounded-full mx-1.5 transition-all ${index === currentIndex ? 'w-8' : 'w-2'
+                                }`}
+                            style={{
+                                backgroundColor: index === currentIndex ? slide.color : '#d1d5db'
                             }}
                         />
                     ))}

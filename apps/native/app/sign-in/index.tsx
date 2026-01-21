@@ -103,11 +103,10 @@ export default function SignIn() {
                         <Pressable
                             onPress={handleSignIn}
                             disabled={isLoading || !apiKey.trim()}
-                            className={`py-4 rounded-xl items-center justify-center flex-row ${
-                                isLoading || !apiKey.trim() 
-                                    ? 'bg-gray-300' 
+                            className={`py-4 rounded-xl items-center justify-center flex-row ${isLoading || !apiKey.trim()
+                                    ? 'bg-gray-300'
                                     : 'bg-green-500 active:bg-green-600'
-                            }`}
+                                }`}
                         >
                             {isLoading ? (
                                 <ActivityIndicator size="small" color="white" />
