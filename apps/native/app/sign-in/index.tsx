@@ -1,17 +1,15 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, Linking, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { View, Text, ScrollView, Pressable, Linking, KeyboardAvoidingView, Platform, TextInput, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Button, Surface, Spinner, useThemeColor } from 'heroui-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore, CVT_URLS } from '@/store/auth';
-import { Container } from '@/components/container';
 
 export default function SignIn() {
     const [apiKey, setApiKey] = useState('');
     const [showApiKey, setShowApiKey] = useState(false);
     const { signIn, isLoading, error, clearError } = useAuthStore();
     const router = useRouter();
-    const foregroundColor = useThemeColor('foreground');
 
     const handleSignIn = async () => {
         if (!apiKey.trim()) return;
@@ -21,10 +19,8 @@ export default function SignIn() {
         if (result.success) {
             router.replace('/(tabs)');
         } else if (result.needsSubscription) {
-            // Redirect to CVT to subscribe
             Linking.openURL(CVT_URLS.dashboard);
         } else if (result.needsPayment) {
-            // Redirect to CVT billing
             Linking.openURL(CVT_URLS.billing);
         }
     };
@@ -34,38 +30,47 @@ export default function SignIn() {
     };
 
     return (
-        <Container>
+        <SafeAreaView className="flex-1 bg-white">
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}
+                className="flex-1"
             >
                 <ScrollView
-                    contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}
+                    contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
                     keyboardShouldPersistTaps="handled"
+                    className="px-6 py-8"
                 >
-                    {/* Logo & Header */}
-                    <View className="items-center mb-10">
-                        <View className="w-20 h-20 bg-primary rounded-2xl items-center justify-center mb-4">
-                            <MaterialCommunityIcons name="store" size={40} color="white" />
+                    {/* Header */}
+                    <View className="items-center mb-8">
+                        <View className="w-20 h-20 bg-green-500 rounded-2xl items-center justify-center mb-4 shadow-lg">
+                            <MaterialCommunityIcons name="store-outline" size={48} color="white" />
                         </View>
-                        <Text className="text-3xl font-bold text-foreground">Tangabiz</Text>
-                        <Text className="text-muted text-center mt-2">
-                            Sign in with your CVT API Key
+                        <Text className="text-3xl font-bold text-gray-900 mt-4">Tangabiz</Text>
+                        <Text className="text-gray-500 text-center mt-2">
+                            Point of Sale Management System
                         </Text>
                     </View>
 
-                    {/* Sign In Form */}
-                    <Surface variant="secondary" className="p-6 rounded-2xl">
+                    {/* Form Section */}
+                    <View className="mt-8">
+                        <Text className="text-2xl font-bold text-gray-900 mb-2">Sign In</Text>
+                        <Text className="text-gray-600 mb-6">
+                            Enter your CVT API key to get started
+                        </Text>
+
+                        {/* API Key Input */}
                         <View className="mb-4">
-                            <Text className="text-foreground font-medium mb-2">CVT API Key</Text>
-                            <View className="flex-row items-center">
+                            <Text className="text-gray-700 font-medium mb-2">CVT API Key</Text>
+                            <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+                                <View className="pl-4">
+                                    <MaterialCommunityIcons name="key-variant" size={20} color="#9ca3af" />
+                                </View>
                                 <TextInput
-                                    className="flex-1 bg-background-secondary border border-gray-300 rounded-lg px-4 py-3"
-                                    style={{ color: foregroundColor }}
+                                    className="flex-1 px-3 py-4 text-gray-900"
                                     placeholder="Enter your API key"
                                     placeholderTextColor="#9ca3af"
                                     value={apiKey}
-                                    onChangeText={(text: string) => {
+                                    onChangeText={(text) => {
                                         setApiKey(text);
                                         if (error) clearError();
                                     }}
@@ -75,64 +80,81 @@ export default function SignIn() {
                                 />
                                 <Pressable
                                     onPress={() => setShowApiKey(!showApiKey)}
-                                    className="ml-2 p-2"
+                                    className="px-4 py-4"
                                 >
                                     <MaterialCommunityIcons
                                         name={showApiKey ? 'eye-off' : 'eye'}
-                                        size={24}
+                                        size={22}
                                         color="#6b7280"
                                     />
                                 </Pressable>
                             </View>
                         </View>
 
+                        {/* Error Message */}
                         {error && (
-                            <Surface variant="tertiary" className="p-3 rounded-lg mb-4 bg-red-50">
-                                <Text className="text-red-600 text-sm">{error}</Text>
-                            </Surface>
+                            <View className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex-row items-start">
+                                <MaterialCommunityIcons name="alert-circle" size={20} color="#dc2626" />
+                                <Text className="text-red-700 text-sm ml-2 flex-1">{error}</Text>
+                            </View>
                         )}
 
-                        <Button
-                            variant="primary"
+                        {/* Sign In Button */}
+                        <Pressable
                             onPress={handleSignIn}
-                            isDisabled={isLoading || !apiKey.trim()}
-                            className="w-full"
+                            disabled={isLoading || !apiKey.trim()}
+                            className={`py-4 rounded-xl items-center justify-center flex-row ${
+                                isLoading || !apiKey.trim() 
+                                    ? 'bg-gray-300' 
+                                    : 'bg-green-500 active:bg-green-600'
+                            }`}
                         >
                             {isLoading ? (
-                                <Spinner size="sm" color="white" />
+                                <ActivityIndicator size="small" color="white" />
                             ) : (
-                                <Button.Label>Sign In</Button.Label>
+                                <>
+                                    <MaterialCommunityIcons name="login" size={20} color="white" />
+                                    <Text className="text-white font-semibold text-base ml-2">Sign In</Text>
+                                </>
                             )}
-                        </Button>
+                        </Pressable>
 
-                        <View className="flex-row items-center my-6">
+                        {/* Divider */}
+                        <View className="flex-row items-center my-8">
                             <View className="flex-1 h-px bg-gray-200" />
-                            <Text className="text-muted mx-4">OR</Text>
+                            <Text className="text-gray-400 mx-4 text-sm">OR</Text>
                             <View className="flex-1 h-px bg-gray-200" />
                         </View>
 
-                        <Button
-                            variant="secondary"
+                        {/* Create Account Button */}
+                        <Pressable
                             onPress={handleSignUp}
-                            className="w-full"
+                            className="py-4 rounded-xl items-center justify-center border-2 border-green-500 active:bg-green-50"
                         >
-                            <Button.Label>Create CVT Account</Button.Label>
-                        </Button>
-                    </Surface>
+                            <Text className="text-green-600 font-semibold text-base">Create CVT Account</Text>
+                        </Pressable>
+                    </View>
 
                     {/* Help Text */}
                     <View className="mt-8 items-center">
-                        <Text className="text-muted text-sm text-center">
-                            Don't have an API key?{' '}
+                        <Text className="text-gray-500 text-sm text-center">
+                            Need help?{' '}
                         </Text>
                         <Pressable onPress={() => Linking.openURL(CVT_URLS.dashboard)}>
-                            <Text className="text-primary text-sm font-medium">
-                                Get one from your CVT Dashboard
+                            <Text className="text-green-600 text-sm font-medium mt-1">
+                                Get your API key from CVT Dashboard
                             </Text>
                         </Pressable>
                     </View>
+
+                    {/* Footer */}
+                    <View className="mt-12 items-center">
+                        <Text className="text-gray-400 text-xs">
+                            Powered by CVT • v1.0.0
+                        </Text>
+                    </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </Container>
+        </SafeAreaView>
     );
 }
