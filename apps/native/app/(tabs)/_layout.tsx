@@ -1,64 +1,82 @@
 import { Tabs } from 'expo-router';
 import { Platform, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useThemeColor } from 'heroui-native';
 
 export default function TabLayout() {
-    const linkColor = useThemeColor('link');
-    const mutedColor = useThemeColor('muted');
-    const backgroundColor = useThemeColor('background');
+    const activeColor = '#22c55e';
+    const inactiveColor = '#9ca3af';
 
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: linkColor,
-                tabBarInactiveTintColor: mutedColor,
+                tabBarActiveTintColor: activeColor,
+                tabBarInactiveTintColor: inactiveColor,
                 tabBarStyle: {
-                    backgroundColor: backgroundColor,
+                    backgroundColor: '#ffffff',
                     borderTopWidth: 1,
-                    borderTopColor: '#e5e7eb',
-                    paddingBottom: Platform.OS === 'ios' ? 25 : 10,
-                    paddingTop: 10,
-                    height: Platform.OS === 'ios' ? 85 : 65,
+                    borderTopColor: '#f3f4f6',
+                    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+                    paddingTop: 12,
+                    height: Platform.OS === 'ios' ? 88 : 68,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -2 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 8,
+                    elevation: 8,
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,
                     fontWeight: '600',
+                    marginTop: 4,
                 },
-                headerStyle: {
-                    backgroundColor: linkColor,
-                },
-                headerTintColor: '#fff',
-                headerTitleStyle: {
-                    fontWeight: 'bold',
-                },
+                headerShown: false,
             }}
         >
             <Tabs.Screen
                 name="index"
                 options={{
                     title: 'Home',
-                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-                        <MaterialCommunityIcons name="home" size={size} color={color} />
+                    tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
+                        <MaterialCommunityIcons 
+                            name={focused ? "home" : "home-outline"} 
+                            size={24} 
+                            color={color} 
+                        />
                     ),
-                    headerTitle: 'Tangabiz',
                 }}
             />
             <Tabs.Screen
                 name="products"
                 options={{
                     title: 'Products',
-                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-                        <MaterialCommunityIcons name="package-variant" size={size} color={color} />
+                    tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
+                        <MaterialCommunityIcons 
+                            name={focused ? "package-variant" : "package-variant-closed"} 
+                            size={24} 
+                            color={color} 
+                        />
                     ),
                 }}
             />
             <Tabs.Screen
                 name="pos"
                 options={{
-                    title: 'New Sale',
-                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-                        <View className="bg-success rounded-full p-2 -mt-4">
+                    title: '',
+                    tabBarIcon: ({ focused }: { focused: boolean }) => (
+                        <View 
+                            className="rounded-full items-center justify-center shadow-lg"
+                            style={{
+                                backgroundColor: focused ? '#16a34a' : '#22c55e',
+                                width: 56,
+                                height: 56,
+                                marginTop: -24,
+                                shadowColor: '#22c55e',
+                                shadowOffset: { width: 0, height: 4 },
+                                shadowOpacity: 0.3,
+                                shadowRadius: 8,
+                                elevation: 8,
+                            }}
+                        >
                             <MaterialCommunityIcons name="cart-plus" size={28} color="#fff" />
                         </View>
                     ),
@@ -69,17 +87,25 @@ export default function TabLayout() {
                 name="transactions"
                 options={{
                     title: 'Sales',
-                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-                        <MaterialCommunityIcons name="receipt" size={size} color={color} />
+                    tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
+                        <MaterialCommunityIcons 
+                            name={focused ? "receipt" : "receipt-text-outline"} 
+                            size={24} 
+                            color={color} 
+                        />
                     ),
                 }}
             />
             <Tabs.Screen
                 name="more"
                 options={{
-                    title: 'More',
-                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-                        <MaterialCommunityIcons name="dots-horizontal" size={size} color={color} />
+                    title: 'Settings',
+                    tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
+                        <MaterialCommunityIcons 
+                            name={focused ? "cog" : "cog-outline"} 
+                            size={24} 
+                            color={color} 
+                        />
                     ),
                 }}
             />
