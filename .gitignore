@@ -48,3 +48,6 @@ coverage
 .cache
 tmp
 temp
+
+# Android build folder
+apps/native/android
