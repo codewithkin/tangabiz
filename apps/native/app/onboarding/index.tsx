@@ -61,7 +61,7 @@ export default function Onboarding() {
 
     const handleGetStarted = () => {
         setOnboardingComplete();
-        router.replace('/(sign-in)');
+        router.replace('/sign-in');
     };
 
     const handleScroll = (event: any) => {

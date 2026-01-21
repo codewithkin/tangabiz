@@ -20,7 +20,7 @@ const queryClient = new QueryClient({
 });
 
 export const unstable_settings = {
-  initialRouteName: "(tabs)",
+  initialRouteName: "onboarding",
 };
 
 function AuthProtection({ children }: { children: React.ReactNode }) {
@@ -31,24 +31,29 @@ function AuthProtection({ children }: { children: React.ReactNode }) {
   const navigationState = useRootNavigationState();
 
   useEffect(() => {
-    // Wait for navigation to be ready
+    // Wait for both navigation state and hydration
     if (!navigationState?.key) return;
     if (!isHydrated) return;
 
-    const inAuthGroup = segments[0] === '(tabs)' || segments[0] === '(drawer)';
-    const inOnboarding = segments[0] === 'onboarding';
-    const inSignIn = segments[0] === 'sign-in';
+    // Small delay to ensure Slot is fully mounted
+    const timeout = setTimeout(() => {
+      const inAuthGroup = segments[0] === '(tabs)' || segments[0] === '(drawer)';
+      const inOnboarding = segments.includes('onboarding');
+      const inSignIn = segments.includes('sign-in');
 
-    if (!hasCompletedOnboarding && !inOnboarding) {
-      // First time user - show onboarding
-      router.replace('/(onboarding)');
-    } else if (!token && inAuthGroup) {
-      // Not authenticated but trying to access protected route
-      router.replace('/(sign-in)');
-    } else if (token && (inSignIn || inOnboarding)) {
-      // Authenticated but on auth screens
-      router.replace('/(tabs)');
-    }
+      if (!hasCompletedOnboarding && !inOnboarding) {
+        // First time user - show onboarding
+        router.replace('/onboarding');
+      } else if (!token && inAuthGroup) {
+        // Not authenticated but trying to access protected route
+        router.replace('/sign-in');
+      } else if (token && (inSignIn || inOnboarding)) {
+        // Authenticated but on auth screens
+        router.replace('/(tabs)');
+      }
+    }, 1);
+
+    return () => clearTimeout(timeout);
   }, [user, token, segments, hasCompletedOnboarding, isHydrated, navigationState?.key]);
 
   return <>{children}</>;
