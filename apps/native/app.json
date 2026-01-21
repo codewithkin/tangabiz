@@ -1,42 +1,49 @@
 {
   "expo": {
-    "name": "native",
-    "slug": "native",
+    "name": "Tangabiz",
+    "slug": "tangabiz",
     "version": "1.0.0",
-
-    "scheme": "native",
-    "platforms": ["ios", "android"],
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": ["expo-router"],
-    "experiments": {
-      "typedRoutes": true,
-
-      "tsconfigPaths": true
-    },
-
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-
-    "userInterfaceStyle": "light",
-
+    "scheme": "tangabiz",
+    "userInterfaceStyle": "automatic",
+    "orientation": "default",
+    "icon": "./assets/images/icon.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#22c55e"
     },
-    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.christusveritastechnologies.tangabiz"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#22c55e"
+      },
+      "package": "com.christusveritastechnologies.tangabiz"
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "7578de77-0092-442d-85a6-f9690cfadb75"
       }
-    }
+    },
+    "owner": "codewithkin"
   }
 }

@@ -1,0 +1,3 @@
+{
+  "extends": "@tangabiz/config/tsconfig.base.json"
+}
