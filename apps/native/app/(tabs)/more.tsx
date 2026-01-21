@@ -1,9 +1,9 @@
 import { View, Text, ScrollView, Pressable, Linking, Alert } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Surface, Button, useThemeColor, Divider } from 'heroui-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 
-import { Container } from '@/components/container';
 import { useAuthStore, CVT_URLS } from '@/store/auth';
 
 interface MenuItemProps {
@@ -12,31 +12,55 @@ interface MenuItemProps {
     onPress: () => void;
     color?: string;
     badge?: string;
+    description?: string;
 }
 
-const MenuItem = ({ icon, label, onPress, color, badge }: MenuItemProps) => (
-    <Pressable onPress={onPress} className="flex-row items-center py-4">
+const MenuItem = ({ icon, label, onPress, color = '#22c55e', badge, description }: MenuItemProps) => (
+    <Pressable 
+        onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onPress();
+        }} 
+        className="flex-row items-center py-3"
+    >
         <View
-            className="w-10 h-10 rounded-lg items-center justify-center mr-4"
-            style={{ backgroundColor: (color || '#22c55e') + '20' }}
+            className="w-10 h-10 rounded-xl items-center justify-center mr-3"
+            style={{ backgroundColor: color + '15' }}
         >
-            <MaterialCommunityIcons name={icon} size={24} color={color || '#22c55e'} />
+            <MaterialCommunityIcons name={icon} size={22} color={color} />
         </View>
-        <Text className="flex-1 text-foreground font-medium">{label}</Text>
+        <View className="flex-1">
+            <Text className="text-gray-900 font-medium">{label}</Text>
+            {description && (
+                <Text className="text-gray-400 text-sm">{description}</Text>
+            )}
+        </View>
         {badge && (
             <View className="bg-red-500 px-2 py-1 rounded-full mr-2">
                 <Text className="text-white text-xs font-bold">{badge}</Text>
             </View>
         )}
-        <MaterialCommunityIcons name="chevron-right" size={24} color="#9ca3af" />
+        <MaterialCommunityIcons name="chevron-right" size={22} color="#d1d5db" />
     </Pressable>
 );
+
+const MenuSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <View className="mb-5">
+        <Text className="text-gray-400 text-xs font-semibold uppercase tracking-wider px-4 mb-2">{title}</Text>
+        <View className="bg-white rounded-2xl mx-4 px-4 shadow-sm border border-gray-100">
+            {children}
+        </View>
+    </View>
+);
+
+const MenuDivider = () => <View className="h-px bg-gray-100" />;
 
 export default function More() {
     const { currentBusiness, user, signOut } = useAuthStore();
     const router = useRouter();
 
     const handleSignOut = () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         Alert.alert(
             'Sign Out',
             'Are you sure you want to sign out?',
@@ -55,132 +79,162 @@ export default function More() {
     };
 
     return (
-        <Container>
-            <Stack.Screen options={{ title: 'More' }} />
+        <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+            <Stack.Screen options={{ headerShown: false }} />
 
-            <ScrollView className="flex-1 p-4">
-                {/* User Info */}
-                <Surface variant="secondary" className="p-4 rounded-xl mb-6">
-                    <View className="flex-row items-center">
-                        <View className="w-14 h-14 bg-success rounded-full items-center justify-center mr-4">
-                            <Text className="text-white text-xl font-bold">
-                                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                            </Text>
-                        </View>
-                        <View className="flex-1">
-                            <Text className="text-foreground font-bold text-lg">{user?.name}</Text>
-                            <Text className="text-muted">{user?.email}</Text>
-                            <View className="flex-row items-center mt-1">
-                                <View className="w-2 h-2 bg-green-500 rounded-full mr-2" />
-                                <Text className="text-muted text-sm">
-                                    {currentBusiness?.role || 'Member'}
+            <ScrollView 
+                className="flex-1" 
+                contentContainerStyle={{ paddingBottom: 32 }}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Header */}
+                <View className="px-4 pt-4 pb-6">
+                    <Text className="text-2xl font-bold text-gray-900">Settings</Text>
+                </View>
+
+                {/* Profile Card */}
+                <View className="mx-4 mb-6">
+                    <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <View className="flex-row items-center">
+                            <View className="w-16 h-16 bg-green-500 rounded-2xl items-center justify-center mr-4">
+                                <Text className="text-white text-2xl font-bold">
+                                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                                 </Text>
                             </View>
+                            <View className="flex-1">
+                                <Text className="text-gray-900 font-bold text-lg">{user?.name || 'User'}</Text>
+                                <Text className="text-gray-500">{user?.email || 'No email'}</Text>
+                                <View className="flex-row items-center mt-1.5">
+                                    <View className="w-2 h-2 bg-green-500 rounded-full mr-2" />
+                                    <Text className="text-gray-400 text-sm">
+                                        {currentBusiness?.role || 'Member'}
+                                    </Text>
+                                </View>
+                            </View>
+                            <Pressable
+                                onPress={() => router.push('/settings/profile')}
+                                className="w-10 h-10 bg-gray-100 rounded-xl items-center justify-center"
+                            >
+                                <MaterialCommunityIcons name="pencil" size={18} color="#6b7280" />
+                            </Pressable>
                         </View>
-                    </View>
-                </Surface>
 
-                {/* Business */}
-                <Surface variant="secondary" className="rounded-xl mb-6 px-4">
-                    <Text className="text-muted text-sm font-medium pt-4 pb-2">BUSINESS</Text>
-                    <MenuItem
-                        icon="store"
-                        label={currentBusiness?.name || 'Select Business'}
-                        onPress={() => router.push('/settings/business')}
-                        color="#3b82f6"
-                    />
-                    <Divider />
+                        {/* Business Switcher */}
+                        <Pressable
+                            onPress={() => router.push('/settings/business')}
+                            className="mt-4 pt-4 border-t border-gray-100 flex-row items-center"
+                        >
+                            <View className="w-10 h-10 bg-blue-100 rounded-xl items-center justify-center mr-3">
+                                <MaterialCommunityIcons name="store" size={20} color="#3b82f6" />
+                            </View>
+                            <View className="flex-1">
+                                <Text className="text-gray-900 font-medium">
+                                    {currentBusiness?.name || 'Select Business'}
+                                </Text>
+                                <Text className="text-gray-400 text-sm">Current business</Text>
+                            </View>
+                            <MaterialCommunityIcons name="chevron-right" size={22} color="#d1d5db" />
+                        </Pressable>
+                    </View>
+                </View>
+
+                {/* Business Section */}
+                <MenuSection title="Business">
                     <MenuItem
                         icon="account-group"
                         label="Customers"
+                        description="Manage your customer database"
                         onPress={() => router.push('/customers')}
                         color="#8b5cf6"
                     />
-                    <Divider />
+                    <MenuDivider />
                     <MenuItem
                         icon="chart-bar"
                         label="Reports"
+                        description="Sales analytics & insights"
                         onPress={() => router.push('/reports')}
                         color="#f97316"
                     />
-                </Surface>
+                </MenuSection>
 
-                {/* Features */}
-                <Surface variant="secondary" className="rounded-xl mb-6 px-4">
-                    <Text className="text-muted text-sm font-medium pt-4 pb-2">FEATURES</Text>
+                {/* Features Section */}
+                <MenuSection title="Features">
                     <MenuItem
                         icon="robot"
                         label="Tatenda AI Assistant"
+                        description="Ask questions about your business"
                         onPress={() => router.push('/ai')}
                         color="#eab308"
                     />
-                    <Divider />
+                    <MenuDivider />
                     <MenuItem
                         icon="qrcode-scan"
                         label="Verify Invoice"
+                        description="Scan QR code to verify"
                         onPress={() => router.push('/verify-invoice')}
                         color="#22c55e"
                     />
-                    <Divider />
+                    <MenuDivider />
                     <MenuItem
                         icon="bell"
                         label="Notifications"
+                        description="Alerts and updates"
                         onPress={() => router.push('/notifications')}
                         color="#ef4444"
                     />
-                </Surface>
+                </MenuSection>
 
-                {/* Settings */}
-                <Surface variant="secondary" className="rounded-xl mb-6 px-4">
-                    <Text className="text-muted text-sm font-medium pt-4 pb-2">SETTINGS</Text>
-                    <MenuItem
-                        icon="account-cog"
-                        label="Profile Settings"
-                        onPress={() => router.push('/settings/profile')}
-                        color="#6b7280"
-                    />
-                    <Divider />
+                {/* Settings Section */}
+                <MenuSection title="App Settings">
                     <MenuItem
                         icon="cog"
-                        label="App Settings"
+                        label="Preferences"
+                        description="Theme, language, display"
                         onPress={() => router.push('/settings')}
                         color="#6b7280"
                     />
-                </Surface>
+                </MenuSection>
 
-                {/* Support */}
-                <Surface variant="secondary" className="rounded-xl mb-6 px-4">
-                    <Text className="text-muted text-sm font-medium pt-4 pb-2">SUPPORT</Text>
+                {/* Support Section */}
+                <MenuSection title="Support">
                     <MenuItem
                         icon="help-circle"
                         label="Help & Support"
+                        description="FAQs and contact support"
                         onPress={() => Linking.openURL('https://tangabiz.store/help')}
                         color="#3b82f6"
                     />
-                    <Divider />
+                    <MenuDivider />
                     <MenuItem
                         icon="open-in-new"
                         label="CVT Dashboard"
+                        description="Manage your CVT account"
                         onPress={() => Linking.openURL(CVT_URLS.dashboard)}
                         color="#8b5cf6"
                     />
-                </Surface>
+                </MenuSection>
 
-                {/* Sign Out */}
-                <Button
-                    variant="secondary"
-                    onPress={handleSignOut}
-                    className="w-full mb-8"
-                >
-                    <MaterialCommunityIcons name="logout" size={20} color="#ef4444" />
-                    <Button.Label className="text-red-500 ml-2">Sign Out</Button.Label>
-                </Button>
+                {/* Sign Out Button */}
+                <View className="mx-4 mt-2">
+                    <Pressable
+                        onPress={handleSignOut}
+                        className="bg-white py-4 rounded-2xl items-center justify-center flex-row shadow-sm border border-gray-100 active:bg-red-50"
+                    >
+                        <MaterialCommunityIcons name="logout" size={20} color="#ef4444" />
+                        <Text className="text-red-500 font-semibold ml-2">Sign Out</Text>
+                    </Pressable>
+                </View>
 
                 {/* Version */}
-                <Text className="text-center text-muted text-sm mb-8">
-                    Tangabiz v1.0.0
-                </Text>
+                <View className="items-center mt-8">
+                    <Text className="text-gray-400 text-sm">
+                        Tangabiz v1.0.0
+                    </Text>
+                    <Text className="text-gray-300 text-xs mt-1">
+                        Powered by CVT
+                    </Text>
+                </View>
             </ScrollView>
-        </Container>
+        </SafeAreaView>
     );
 }
