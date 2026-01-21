@@ -1,6 +1,6 @@
 import "@/global.css";
 import { useEffect } from "react";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Slot, useRouter, useRootNavigationState, useSegments } from "expo-router";
 import { HeroUINativeProvider } from "heroui-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -28,8 +28,11 @@ function AuthProtection({ children }: { children: React.ReactNode }) {
   const { hasCompletedOnboarding } = useOnboardingStore();
   const segments = useSegments();
   const router = useRouter();
+  const navigationState = useRootNavigationState();
 
   useEffect(() => {
+    // Wait for navigation to be ready
+    if (!navigationState?.key) return;
     if (!isHydrated) return;
 
     const inAuthGroup = segments[0] === '(tabs)' || segments[0] === '(drawer)';
@@ -38,29 +41,17 @@ function AuthProtection({ children }: { children: React.ReactNode }) {
 
     if (!hasCompletedOnboarding && !inOnboarding) {
       // First time user - show onboarding
-      router.replace('/onboarding');
+      router.replace('/(onboarding)');
     } else if (!token && inAuthGroup) {
       // Not authenticated but trying to access protected route
-      router.replace('/sign-in');
+      router.replace('/(sign-in)');
     } else if (token && (inSignIn || inOnboarding)) {
       // Authenticated but on auth screens
       router.replace('/(tabs)');
     }
-  }, [user, token, segments, hasCompletedOnboarding, isHydrated]);
+  }, [user, token, segments, hasCompletedOnboarding, isHydrated, navigationState?.key]);
 
   return <>{children}</>;
-}
-
-function StackLayout() {
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-      <Stack.Screen name="sign-in" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-      <Stack.Screen name="modal" options={{ title: "Modal", presentation: "modal" }} />
-    </Stack>
-  );
 }
 
 export default function Layout() {
@@ -71,7 +62,7 @@ export default function Layout() {
           <AppThemeProvider>
             <HeroUINativeProvider>
               <AuthProtection>
-                <StackLayout />
+                <Slot />
               </AuthProtection>
             </HeroUINativeProvider>
           </AppThemeProvider>
