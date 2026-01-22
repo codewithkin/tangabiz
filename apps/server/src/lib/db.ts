@@ -1,3 +1,4 @@
 // Export the Prisma client from the centralized db package
-export { default as db } from "@tangabiz/db";
+import prisma from "@tangabiz/db";
+export { prisma as db };
 export type { PrismaClient as Database } from "@prisma/client";
