@@ -292,8 +292,8 @@ export default function POS() {
                                     setPaymentMethod(method);
                                 }}
                                 className={`flex-1 py-2.5 rounded-xl border-2 ${paymentMethod === method
-                                        ? 'border-green-500 bg-green-50'
-                                        : 'border-gray-200 bg-white'
+                                    ? 'border-green-500 bg-green-50'
+                                    : 'border-gray-200 bg-white'
                                     }`}
                             >
                                 <Text className={`text-center text-xs font-semibold ${paymentMethod === method ? 'text-green-600' : 'text-gray-500'
