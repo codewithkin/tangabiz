@@ -65,15 +65,15 @@ export default function Onboarding() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
-            {/* Skip Button */}
-            <View className="absolute top-4 right-6 z-10">
+        <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
+            {/* Header with Skip */}
+            <View className="px-6 py-4 flex-row justify-end">
                 <Pressable onPress={handleSkip} className="px-4 py-2">
                     <Text className="text-gray-500 text-base font-medium">Skip</Text>
                 </Pressable>
             </View>
 
-            {/* Content */}
+            {/* Content - Centered */}
             <View className="flex-1 items-center justify-center px-8">
                 {/* Image */}
                 <Image
@@ -100,9 +100,8 @@ export default function Onboarding() {
                     {steps.map((_, index) => (
                         <View
                             key={index}
-                            className={`h-2 rounded-full mx-1.5 ${
-                                index === currentStep ? 'w-8' : 'w-2'
-                            }`}
+                            className={`h-2 rounded-full mx-1.5 ${index === currentStep ? 'w-8' : 'w-2'
+                                }`}
                             style={{
                                 backgroundColor: index === currentStep ? step.color : '#d1d5db',
                             }}
