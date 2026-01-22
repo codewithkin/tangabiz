@@ -5,7 +5,6 @@ import { HeroUINativeProvider } from "heroui-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { PortalHost } from "@rn-primitives/portal";
 
 import { AppThemeProvider } from "@/contexts/app-theme-context";
 import { useAuthStore } from "@/store/auth";
@@ -74,7 +73,6 @@ export default function Layout() {
           </AppThemeProvider>
         </QueryClientProvider>
       </KeyboardProvider>
-      <PortalHost />
     </GestureHandlerRootView>
   );
 }
