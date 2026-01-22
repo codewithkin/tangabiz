@@ -1,55 +1,53 @@
-import { useState, useRef } from 'react';
-import { View, Text, ScrollView, Dimensions, Pressable, Image } from 'react-native';
+import { useState } from 'react';
+import { View, Text, Pressable, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useOnboardingStore } from '@/store/onboarding';
 
-const { width, height } = Dimensions.get('window');
-
-interface OnboardingSlide {
+interface Step {
     id: number;
-    image: any;
-    title: string;
+    imageSource: any;
+    heading: string;
     description: string;
     color: string;
 }
 
-const slides: OnboardingSlide[] = [
+const steps: Step[] = [
     {
         id: 1,
-        image: require('@/assets/onboarding/mobile-phone-shopping-this-is-meant-to-show-how-they-can-control-sales.svg'),
-        title: 'Manage Your Business',
+        imageSource: require('@/assets/onboarding/mobile-phone-shopping-this-is-meant-to-show-how-they-can-control-sales.svg'),
+        heading: 'Manage Your Business',
         description: 'Track sales, inventory, and customers all in one place. Get real-time insights to grow your business.',
         color: '#22c55e',
     },
     {
         id: 2,
-        image: require('@/assets/onboarding/mobile-payments.svg'),
-        title: 'Quick Point of Sale',
+        imageSource: require('@/assets/onboarding/mobile-payments.svg'),
+        heading: 'Quick Point of Sale',
         description: 'Process sales quickly with our intuitive POS system. Accept multiple payment methods and generate receipts.',
         color: '#eab308',
     },
     {
         id: 3,
-        image: require('@/assets/onboarding/predictive-analytics.svg'),
-        title: 'AI-Powered Insights',
+        imageSource: require('@/assets/onboarding/predictive-analytics.svg'),
+        heading: 'AI-Powered Insights',
         description: 'Meet Tatenda, your AI assistant. Get answers about your business, trends, and smart recommendations.',
         color: '#3b82f6',
     },
 ];
 
 export default function Onboarding() {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const scrollRef = useRef<ScrollView>(null);
+    const [currentStep, setCurrentStep] = useState(0);
     const { setOnboardingComplete } = useOnboardingStore();
     const router = useRouter();
 
+    const step = steps[currentStep];
+
     const handleNext = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        if (currentIndex < slides.length - 1) {
-            scrollRef.current?.scrollTo({ x: width * (currentIndex + 1), animated: true });
-            setCurrentIndex(currentIndex + 1);
+        if (currentStep < steps.length - 1) {
+            setCurrentStep(currentStep + 1);
         } else {
             handleGetStarted();
         }
@@ -66,16 +64,6 @@ export default function Onboarding() {
         router.replace('/sign-in');
     };
 
-    const handleScroll = (event: any) => {
-        const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
-        if (slideIndex !== currentIndex) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setCurrentIndex(slideIndex);
-        }
-    };
-
-    const currentSlide = slides[currentIndex];
-
     return (
         <SafeAreaView className="flex-1 bg-white">
             {/* Skip Button */}
@@ -85,53 +73,38 @@ export default function Onboarding() {
                 </Pressable>
             </View>
 
-            {/* Horizontal ScrollView for Slides */}
-            <ScrollView
-                ref={scrollRef}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onScroll={handleScroll}
-                scrollEventThrottle={16}
-                style={{ flex: 1 }}
-            >
-                {slides.map((slide) => (
-                    <View
-                        key={slide.id}
-                        style={{ width, height: height - 100 }}
-                        className="items-center justify-center px-8"
-                    >
-                        {/* Image */}
-                        <Image
-                            source={slide.image}
-                            style={{ width: width * 0.8, height: width * 0.8 }}
-                            resizeMode="contain"
-                        />
+            {/* Content */}
+            <View className="flex-1 items-center justify-center px-8">
+                {/* Image */}
+                <Image
+                    source={step.imageSource}
+                    style={{ width: 280, height: 280 }}
+                    resizeMode="contain"
+                />
 
-                        {/* Title */}
-                        <Text className="text-3xl font-bold text-gray-900 text-center mb-4 mt-8">
-                            {slide.title}
-                        </Text>
+                {/* Heading */}
+                <Text className="text-3xl font-bold text-gray-900 text-center mb-4 mt-8">
+                    {step.heading}
+                </Text>
 
-                        {/* Description */}
-                        <Text className="text-gray-500 text-center text-lg leading-7 px-4">
-                            {slide.description}
-                        </Text>
-                    </View>
-                ))}
-            </ScrollView>
+                {/* Description */}
+                <Text className="text-gray-500 text-center text-lg leading-7">
+                    {step.description}
+                </Text>
+            </View>
 
-            {/* Pagination & Button */}
+            {/* Footer */}
             <View className="px-8 pb-8">
                 {/* Dots */}
                 <View className="flex-row justify-center mb-6">
-                    {slides.map((slide, index) => (
+                    {steps.map((_, index) => (
                         <View
                             key={index}
-                            className={`h-2 rounded-full mx-1.5 ${index === currentIndex ? 'w-8' : 'w-2'
-                                }`}
+                            className={`h-2 rounded-full mx-1.5 ${
+                                index === currentStep ? 'w-8' : 'w-2'
+                            }`}
                             style={{
-                                backgroundColor: index === currentIndex ? currentSlide.color : '#d1d5db',
+                                backgroundColor: index === currentStep ? step.color : '#d1d5db',
                             }}
                         />
                     ))}
@@ -141,10 +114,10 @@ export default function Onboarding() {
                 <Pressable
                     onPress={handleNext}
                     className="py-4 rounded-2xl items-center justify-center active:opacity-90"
-                    style={{ backgroundColor: currentSlide.color }}
+                    style={{ backgroundColor: step.color }}
                 >
                     <Text className="text-white font-bold text-lg">
-                        {currentIndex === slides.length - 1 ? 'Get Started' : 'Next'}
+                        {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
                     </Text>
                 </Pressable>
             </View>
