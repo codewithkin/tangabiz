@@ -8,10 +8,6 @@
     "dev": "bun run --hot src/index.ts",
     "build": "bun build src/index.ts --outdir ./dist --target bun",
     "start": "bun run dist/index.js",
-    "db:generate": "bunx prisma generate",
-    "db:push": "bunx prisma db push",
-    "db:migrate": "bunx prisma migrate dev",
-    "db:studio": "bunx prisma studio",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
@@ -23,7 +19,8 @@
     "@mastra/core": "^0.24.9",
     "@mastra/memory": "^0.15.13",
     "@prisma/client": "^6.2.1",
-    "@prisma/extension-accelerate": "^1.2.1",
+    "@tangabiz/db": "workspace:*",
+    "@tangabiz/env": "workspace:*",
     "ai": "^6.0.39",
     "hono": "^4.6.16",
     "nodemailer": "^6.9.16",
@@ -35,7 +32,6 @@
     "@types/node": "^22.10.2",
     "@types/nodemailer": "^6.4.17",
     "@types/pdfkit": "^0.13.8",
-    "prisma": "^6.2.1",
     "typescript": "^5.7.2"
   }
 }
