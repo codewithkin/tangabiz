@@ -22,7 +22,7 @@
     "@hono/zod-validator": "^0.4.2",
     "@mastra/core": "^0.24.9",
     "@mastra/memory": "^0.15.13",
-    "@prisma/adapter-pg": "^7.2.0",
+    "@prisma/adapter-pg": "^6.2.1",
     "@prisma/client": "^6.2.1",
     "@tangabiz/env": "workspace:*",
     "ai": "^6.0.39",
@@ -38,7 +38,7 @@
     "@types/nodemailer": "^6.4.17",
     "@types/pdfkit": "^0.13.8",
     "@types/pg": "^8.16.0",
-    "prisma": "^7.3.0",
+    "prisma": "^6.2.1",
     "typescript": "^5.7.2"
   }
 }
