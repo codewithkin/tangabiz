@@ -83,7 +83,7 @@ app.onError((err, c) => {
 });
 
 // Start server
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3002;
 
 console.log(`
 ╔══════════════════════════════════════════════════════════╗
