@@ -73,7 +73,7 @@ export default function Onboarding() {
                 </Pressable>
             </View>
 
-            {/* Content - Centered */}
+            {/* Content - Centered in middle */}
             <View className="flex-1 items-center justify-center px-8">
                 {/* Image */}
                 <View className="mb-8 bg-gray-100 rounded-3xl overflow-hidden" style={{ width: 280, height: 280 }}>
@@ -95,10 +95,10 @@ export default function Onboarding() {
                 </Text>
             </View>
 
-            {/* Footer */}
-            <View className="px-8 pb-8">
+            {/* Footer - Stuck at bottom */}
+            <View className="px-8 pb-8 gap-6">
                 {/* Dots */}
-                <View className="flex-row justify-center mb-6">
+                <View className="flex-row justify-center">
                     {steps.map((_, index) => (
                         <View
                             key={index}
