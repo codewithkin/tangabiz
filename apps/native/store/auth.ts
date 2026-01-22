@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // Create Zustand-compatible storage adapter using AsyncStorage
 const asyncStorageAdapter: StateStorage = {
@@ -16,10 +17,28 @@ const asyncStorageAdapter: StateStorage = {
   },
 };
 
-// API Configuration
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3002';
+// API Configuration with Android Emulator support
+const getBaseUrls = () => {
+  const envApiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3002';
+  const envCvtUrl = process.env.EXPO_PUBLIC_CVT_BACKEND_API_URL || 'http://localhost:3001';
+  
+  // Android emulator uses 10.0.2.2 instead of localhost to reach host machine
+  const isAndroidEmulator = Platform.OS === 'android' && !process.env.EXPO_PUBLIC_DEVICE_IP;
+  
+  let apiUrl = envApiUrl;
+  let cvtUrl = envCvtUrl;
+  
+  if (isAndroidEmulator) {
+    apiUrl = envApiUrl.replace('localhost', '10.0.2.2');
+    cvtUrl = envCvtUrl.replace('localhost', '10.0.2.2');
+    console.log('[Auth] Android emulator detected, using 10.0.2.2 for localhost');
+  }
+  
+  return { apiUrl, cvtUrl };
+};
+
+const { apiUrl: API_URL, cvtUrl: CVT_API_URL } = getBaseUrls();
 const CVT_FRONTEND = process.env.EXPO_PUBLIC_CVT_FRONTEND || 'https://cvt.co.zw';
-const CVT_API_URL = process.env.EXPO_PUBLIC_CVT_BACKEND_API_URL || 'https://api.cvt.co.zw';
 
 export interface User {
   id: string;
@@ -100,14 +119,21 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           // Step 1: Verify API key with CVT
+          console.log('CVT_API_URL:', CVT_API_URL);
           console.log('Verifying API key with CVT...');
-          const cvtResponse = await fetch(`${CVT_API_URL}/api/api-keys/verify`, {
+          
+          const cvtUrl = `${CVT_API_URL}/api/api-keys/verify`;
+          console.log('Fetching from:', cvtUrl);
+          
+          const cvtResponse = await fetch(cvtUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ apiKey }),
           });
 
+          console.log('CVT Response status:', cvtResponse.status);
           const cvtData = await cvtResponse.json();
+          console.log('CVT Response data:', cvtData);
 
           if (!cvtResponse.ok || !cvtData.valid) {
             set({ 
