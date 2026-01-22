@@ -128,9 +128,8 @@ export default function Onboarding() {
                     {slides.map((slide, index) => (
                         <View
                             key={index}
-                            className={`h-2 rounded-full mx-1.5 ${
-                                index === currentIndex ? 'w-8' : 'w-2'
-                            }`}
+                            className={`h-2 rounded-full mx-1.5 ${index === currentIndex ? 'w-8' : 'w-2'
+                                }`}
                             style={{
                                 backgroundColor: index === currentIndex ? currentSlide.color : '#d1d5db',
                             }}
