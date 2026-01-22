@@ -1,8 +1,9 @@
 // Tangabiz - Business Management Platform
-// Prisma Schema for PostgreSQL with Prisma Accelerate
+// Prisma Schema for PostgreSQL
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
