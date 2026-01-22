@@ -67,7 +67,7 @@ interface AuthState {
   isHydrated: boolean;
 
   // Actions
-  signIn: (apiKey: string) => Promise<{ success: boolean; error?: string; needsPayment?: boolean; needsSubscription?: boolean }>;
+  signIn: (apiKey: string) => Promise<{ success: boolean; error?: string; needsPayment?: boolean; needsSubscription?: boolean; cvt?: any; tangabiz?: any; service?: any }>;
   signOut: () => Promise<void>;
   verifySession: () => Promise<boolean>;
   setCurrentBusiness: (business: Business) => void;
@@ -197,7 +197,7 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
 
-          return { success: true };
+          return { success: true, cvt: cvtData, tangabiz: tangabizData, service: tangabizService };
         } catch (error) {
           console.error('Sign in error:', error);
           const errorMessage = error instanceof Error ? error.message : 'Network error. Please check your connection.';
