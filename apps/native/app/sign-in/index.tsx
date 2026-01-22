@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore, CVT_URLS } from '@/store/auth';
+import AppName from '@/components/app-name';
 
 export default function SignIn() {
     const [apiKey, setApiKey] = useState('');
@@ -46,7 +47,7 @@ export default function SignIn() {
                             <View className="w-20 h-20 bg-green-500 rounded-2xl items-center justify-center mb-4 shadow-lg">
                                 <MaterialCommunityIcons name="store-outline" size={48} color="white" />
                             </View>
-                            <Text className="text-3xl font-bold text-gray-900 mt-4">Tangabiz</Text>
+                            <AppName className="text-3xl font-bold mt-4" />
                             <Text className="text-gray-500 text-center mt-2">
                                 Point of Sale Management System
                             </Text>

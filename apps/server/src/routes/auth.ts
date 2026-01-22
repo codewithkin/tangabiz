@@ -15,6 +15,21 @@ export const authRoutes = new Hono();
 // Validation schemas
 const signInSchema = z.object({
   apiKey: z.string().min(1, "API key is required"),
+  cvtUser: z.object({
+    id: z.string(),
+    email: z.string().email(),
+    name: z.string(),
+    image: z.string().optional().nullable(),
+    phoneNumber: z.string().optional().nullable(),
+    businessName: z.string().optional().nullable(),
+    businessAddress: z.string().optional().nullable(),
+  }).optional(),
+  cvtService: z.object({
+    id: z.string(),
+    name: z.string(),
+    status: z.string(),
+    paid: z.boolean(),
+  }).optional(),
 });
 
 /**
@@ -22,42 +37,47 @@ const signInSchema = z.object({
  * POST /api/auth/sign-in
  */
 authRoutes.post("/sign-in", zValidator("json", signInSchema), async (c) => {
-  const { apiKey } = c.req.valid("json");
+  const { apiKey, cvtUser: providedCvtUser, cvtService } = c.req.valid("json");
 
-  // Use CVT_BACKEND_API_URL from environment variables
-  const cvtBackendUrl = process.env.CVT_BACKEND_API_URL || "http://localhost:3001";
+  let cvtUser = providedCvtUser;
 
-  // Verify the API key with CVT backend
-  const verification = await verifyCVTApiKey(apiKey, cvtBackendUrl);
+  // If CVT user data not provided, fetch it from CVT
+  if (!cvtUser) {
+    // Use CVT_BACKEND_API_URL from environment variables
+    const cvtBackendUrl = process.env.CVT_BACKEND_API_URL || "http://localhost:3001";
 
-  if (!verification.success) {
-    return c.json(
-      {
-        success: false,
-        error: verification.error,
-        needsPayment: verification.verification?.hasService && !verification.verification?.paid,
-        needsSubscription: verification.verification?.valid && !verification.verification?.hasService,
-        cvtUrls: getCVTUrls(),
-      },
-      401
-    );
+    // Verify the API key with CVT backend
+    const verification = await verifyCVTApiKey(apiKey, cvtBackendUrl);
+
+    if (!verification.success) {
+      return c.json(
+        {
+          success: false,
+          error: verification.error,
+          needsPayment: verification.verification?.hasService && !verification.verification?.paid,
+          needsSubscription: verification.verification?.valid && !verification.verification?.hasService,
+          cvtUrls: getCVTUrls(),
+        },
+        401
+      );
+    }
+
+    // Get user profile from CVT
+    const profileResult = await getCVTUserProfile(apiKey);
+
+    if (!profileResult.success || !profileResult.user) {
+      return c.json(
+        {
+          success: false,
+          error: "Failed to get user profile",
+          cvtUrls: getCVTUrls(),
+        },
+        401
+      );
+    }
+
+    cvtUser = profileResult.user;
   }
-
-  // Get user profile from CVT
-  const profileResult = await getCVTUserProfile(apiKey);
-
-  if (!profileResult.success || !profileResult.user) {
-    return c.json(
-      {
-        success: false,
-        error: "Failed to get user profile",
-        cvtUrls: getCVTUrls(),
-      },
-      401
-    );
-  }
-
-  const cvtUser = profileResult.user;
 
   // Find or create user in our database
   let user = await db.user.findUnique({
@@ -71,17 +91,43 @@ authRoutes.post("/sign-in", zValidator("json", signInSchema), async (c) => {
         id: cvtUser.id,
         email: cvtUser.email,
         name: cvtUser.name,
-        image: cvtUser.image,
+        image: cvtUser.image || undefined,
         emailVerified: true, // CVT users are already verified
       },
     });
+
+    // Create a default business if user has business info
+    if (cvtUser.businessName) {
+      const slug = cvtUser.businessName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      const business = await db.business.create({
+        data: {
+          name: cvtUser.businessName,
+          slug: `${slug}-${user.id.slice(0, 8)}`,
+          address: cvtUser.businessAddress || undefined,
+        },
+      });
+
+      // Add user as admin of the business
+      await db.businessMember.create({
+        data: {
+          userId: user.id,
+          businessId: business.id,
+          role: 'ADMIN',
+          isActive: true,
+        },
+      });
+    }
   } else {
     // Update existing user info
     user = await db.user.update({
       where: { id: user.id },
       data: {
         name: cvtUser.name,
-        image: cvtUser.image,
+        image: cvtUser.image || undefined,
       },
     });
   }
@@ -128,7 +174,7 @@ authRoutes.post("/sign-in", zValidator("json", signInSchema), async (c) => {
       ...m.business,
       role: m.role,
     })),
-    service: verification.verification?.service,
+    service: cvtService,
   });
 });
 

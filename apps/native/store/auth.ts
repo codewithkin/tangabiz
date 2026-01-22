@@ -19,6 +19,7 @@ const asyncStorageAdapter: StateStorage = {
 // API Configuration
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3002';
 const CVT_FRONTEND = process.env.EXPO_PUBLIC_CVT_FRONTEND || 'https://cvt.co.zw';
+const CVT_API_URL = process.env.EXPO_PUBLIC_CVT_BACKEND_API_URL || 'https://api.cvt.co.zw';
 
 export interface User {
   id: string;
@@ -98,40 +99,101 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const response = await fetch(`${API_URL}/api/auth/sign-in`, {
+          // Step 1: Verify API key with CVT
+          console.log('Verifying API key with CVT...');
+          const cvtResponse = await fetch(`${CVT_API_URL}/api/api-keys/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ apiKey }),
           });
 
-          const data = await response.json();
+          const cvtData = await cvtResponse.json();
 
-          if (!response.ok || !data.success) {
+          if (!cvtResponse.ok || !cvtData.valid) {
             set({ 
               isLoading: false, 
-              error: data.error || 'Sign in failed' 
+              error: cvtData.message || 'Invalid or expired API key' 
             });
             return { 
               success: false, 
-              error: data.error,
-              needsPayment: data.needsPayment,
-              needsSubscription: data.needsSubscription,
+              error: cvtData.message || 'Invalid API key',
             };
           }
 
+          // Step 2: Check for Tangabiz service
+          console.log('CVT Services:', cvtData.services);
+          const tangabizService = cvtData.services?.find(
+            (service: any) => service.name.toLowerCase() === 'tangabiz'
+          );
+
+          if (!tangabizService) {
+            set({ 
+              isLoading: false, 
+              error: 'Tangabiz service not found. Please subscribe to Tangabiz on CVT.' 
+            });
+            return { 
+              success: false, 
+              error: 'No Tangabiz subscription found',
+              needsSubscription: true,
+            };
+          }
+
+          // Step 3: Check if service is paid
+          if (!tangabizService.paid) {
+            set({ 
+              isLoading: false, 
+              error: 'Tangabiz subscription payment required. Please complete payment on CVT.' 
+            });
+            return { 
+              success: false, 
+              error: 'Payment required',
+              needsPayment: true,
+            };
+          }
+
+          console.log('CVT verification successful. Creating/signing in to Tangabiz...');
+
+          // Step 4: Sign in to Tangabiz backend (creates account if doesn't exist)
+          const tangabizResponse = await fetch(`${API_URL}/api/auth/sign-in`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              apiKey,
+              cvtUser: cvtData.user,
+              cvtService: tangabizService,
+            }),
+          });
+
+          const tangabizData = await tangabizResponse.json();
+
+          if (!tangabizResponse.ok || !tangabizData.success) {
+            set({ 
+              isLoading: false, 
+              error: tangabizData.error || 'Failed to sign in to Tangabiz' 
+            });
+            return { 
+              success: false, 
+              error: tangabizData.error,
+            };
+          }
+
+          console.log('Tangabiz sign-in successful!');
+
+          // Step 5: Store auth data
           set({
-            user: data.user,
-            token: data.session.token,
-            businesses: data.businesses || [],
-            currentBusiness: data.businesses?.[0] || null,
-            service: data.service || null,
+            user: tangabizData.user,
+            token: tangabizData.session.token,
+            businesses: tangabizData.businesses || [],
+            currentBusiness: tangabizData.businesses?.[0] || null,
+            service: tangabizService,
             isLoading: false,
             error: null,
           });
 
           return { success: true };
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Network error';
+          console.error('Sign in error:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Network error. Please check your connection.';
           set({ isLoading: false, error: errorMessage });
           return { success: false, error: errorMessage };
         }
