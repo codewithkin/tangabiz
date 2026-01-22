@@ -170,8 +170,8 @@ export default function AIChat() {
                             )}
                             <View
                                 className={`max-w-[85%] p-4 ${message.role === 'user'
-                                        ? 'bg-yellow-500 rounded-2xl rounded-br-md'
-                                        : 'bg-white rounded-2xl rounded-tl-md shadow-sm border border-gray-100'
+                                    ? 'bg-yellow-500 rounded-2xl rounded-br-md'
+                                    : 'bg-white rounded-2xl rounded-tl-md shadow-sm border border-gray-100'
                                     }`}
                             >
                                 <Text

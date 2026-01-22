@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Image } from 'react-native';
+import { Image, Text, Pressable } from "react-native";
+import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useOnboardingStore } from '@/store/onboarding';
 
@@ -37,7 +38,7 @@ const steps: Step[] = [
     },
 ];
 
-export default function Onboarding() {
+export default function OnboardingIndex() {
     const [currentStep, setCurrentStep] = useState(0);
     const { setOnboardingComplete } = useOnboardingStore();
     const router = useRouter();
@@ -73,29 +74,22 @@ export default function Onboarding() {
                 </Pressable>
             </View>
 
-            {/* Content - Centered in middle */}
-            <View className="flex-1 items-center justify-center px-8">
-                {/* Image */}
-                <View className="mb-8 bg-gray-100 rounded-3xl overflow-hidden" style={{ width: 280, height: 280 }}>
+            <View className="flex flex-col flex-1 items-center justify-center">
+                {/* Onboarding image */}
+                <View className="my-12 items-center">
                     <Image
                         source={step.imageSource}
-                        style={{ width: 280, height: 280 }}
-                        resizeMode="cover"
+                        className="w-64 h-64 rounded-full"
                     />
                 </View>
 
-                {/* Heading */}
-                <Text className="text-3xl font-bold text-gray-900 text-center mb-4">
-                    {step.heading}
-                </Text>
-
-                {/* Description */}
-                <Text className="text-gray-500 text-center text-lg leading-7">
-                    {step.description}
-                </Text>
+                <View className="flex flex-col justify-center items-center px-8">
+                    <Text className="text-2xl font-semibold">{step.heading}</Text>
+                    <Text className="text-gray-400 font-light text-center">{step.description}</Text>
+                </View>
             </View>
 
-            {/* Footer - Stuck at bottom */}
+            {/* Footer */}
             <View className="px-8 pb-8 gap-6">
                 {/* Dots */}
                 <View className="flex-row justify-center">
@@ -123,5 +117,5 @@ export default function Onboarding() {
                 </Pressable>
             </View>
         </SafeAreaView>
-    );
+    )
 }

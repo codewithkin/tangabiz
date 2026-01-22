@@ -157,7 +157,7 @@ export default function Transactions() {
                     {/* Icon */}
                     <View
                         className={`w-11 h-11 rounded-xl items-center justify-center mr-3 ${item.type === 'SALE' ? 'bg-green-100' :
-                                item.type === 'REFUND' ? 'bg-red-100' : 'bg-gray-100'
+                            item.type === 'REFUND' ? 'bg-red-100' : 'bg-gray-100'
                             }`}
                     >
                         <MaterialCommunityIcons
