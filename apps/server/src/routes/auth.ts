@@ -42,41 +42,84 @@ authRoutes.post("/sign-in", zValidator("json", signInSchema), async (c) => {
   let cvtUser = providedCvtUser;
 
   // If CVT user data not provided, fetch it from CVT
+  // This is a fallback for direct server-to-CVT calls
   if (!cvtUser) {
     // Use CVT_BACKEND_API_URL from environment variables
     const cvtBackendUrl = process.env.CVT_BACKEND_API_URL || "http://localhost:3001";
 
-    // Verify the API key with CVT backend
-    const verification = await verifyCVTApiKey(apiKey, cvtBackendUrl);
+    // Call the basic verify endpoint to get user and services
+    const verifyResponse = await fetch(`${cvtBackendUrl}/api/api-keys/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey }),
+    });
 
-    if (!verification.success) {
+    if (!verifyResponse.ok) {
       return c.json(
         {
           success: false,
-          error: verification.error,
-          needsPayment: verification.verification?.hasService && !verification.verification?.paid,
-          needsSubscription: verification.verification?.valid && !verification.verification?.hasService,
+          error: 'Invalid or expired API key',
           cvtUrls: getCVTUrls(),
         },
         401
       );
     }
 
-    // Get user profile from CVT
-    const profileResult = await getCVTUserProfile(apiKey);
+    const verifyData = await verifyResponse.json();
 
-    if (!profileResult.success || !profileResult.user) {
+    if (!verifyData.valid) {
       return c.json(
         {
           success: false,
-          error: "Failed to get user profile",
+          error: verifyData.message || 'Invalid API key',
           cvtUrls: getCVTUrls(),
         },
         401
       );
     }
 
-    cvtUser = profileResult.user;
+    // Check for Tangabiz service
+    const tangabizService = verifyData.services?.find(
+      (service: any) => service.name.toLowerCase() === 'tangabiz'
+    );
+
+    if (!tangabizService) {
+      return c.json(
+        {
+          success: false,
+          error: 'Tangabiz service not found. Please subscribe to Tangabiz on CVT.',
+          needsSubscription: true,
+          cvtUrls: getCVTUrls(),
+        },
+        401
+      );
+    }
+
+    if (tangabizService.status.toUpperCase() !== 'ACTIVE') {
+      return c.json(
+        {
+          success: false,
+          error: `Tangabiz service is ${tangabizService.status}. Please contact support.`,
+          needsSubscription: true,
+          cvtUrls: getCVTUrls(),
+        },
+        401
+      );
+    }
+
+    if (!tangabizService.paid) {
+      return c.json(
+        {
+          success: false,
+          error: 'Tangabiz subscription payment required. Please complete payment on CVT.',
+          needsPayment: true,
+          cvtUrls: getCVTUrls(),
+        },
+        401
+      );
+    }
+
+    cvtUser = verifyData.user;
   }
 
   // Find or create user in our database

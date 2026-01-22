@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, Linking, KeyboardAvoidingView, Platform, TextInput, ActivityIndicator } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
+import { View, Text, ScrollView, Pressable, Linking, KeyboardAvoidingView, Platform, TextInput, ActivityIndicator, Clipboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -47,12 +46,12 @@ export default function SignIn() {
                         className="px-6 py-8"
                     >
                         {/* Header */}
-                        <View className="items-center mb-8">
+                        <View className="items-center mb-4">
                             <View className="w-20 h-20 bg-green-500 rounded-2xl items-center justify-center mb-4 shadow-lg">
                                 <MaterialCommunityIcons name="store-outline" size={48} color="white" />
                             </View>
                             <AppName className="text-3xl font-bold mt-4" />
-                            <Text className="text-gray-500 text-center mt-2">
+                            <Text className="text-gray-500 text-center mt-1">
                                 Point of Sale Management System
                             </Text>
                         </View>
@@ -87,7 +86,7 @@ export default function SignIn() {
                                     <Pressable
                                         onPress={async () => {
                                             try {
-                                                const str = await Clipboard.getStringAsync();
+                                                const str = await Clipboard.getString();
                                                 if (str) {
                                                     setApiKey(str);
                                                     if (error) clearError();
@@ -135,7 +134,7 @@ export default function SignIn() {
                             </Pressable>
 
                             {/* Divider */}
-                            <View className="flex-row items-center my-8">
+                            <View className="flex-row items-center my-4">
                                 <View className="flex-1 h-px bg-gray-200" />
                                 <Text className="text-gray-400 mx-4 text-sm">OR</Text>
                                 <View className="flex-1 h-px bg-gray-200" />

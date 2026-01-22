@@ -134,6 +134,7 @@ export const useAuthStore = create<AuthState>()(
           );
 
           if (!tangabizService) {
+            console.log('Tangabiz service not found in:', cvtData.services?.map((s: any) => s.name));
             set({ 
               isLoading: false, 
               error: 'Tangabiz service not found. Please subscribe to Tangabiz on CVT.' 
@@ -145,8 +146,23 @@ export const useAuthStore = create<AuthState>()(
             };
           }
 
-          // Step 3: Check if service is paid
+          console.log('Found Tangabiz service:', tangabizService);
+
+          // Step 3: Check if service is paid and active
+          if (tangabizService.status.toUpperCase() !== 'ACTIVE') {
+            set({ 
+              isLoading: false, 
+              error: `Tangabiz service is ${tangabizService.status}. Please contact support.` 
+            });
+            return { 
+              success: false, 
+              error: 'Service is not active',
+              needsSubscription: true,
+            };
+          }
+
           if (!tangabizService.paid) {
+            console.log('Tangabiz service payment required');
             set({ 
               isLoading: false, 
               error: 'Tangabiz subscription payment required. Please complete payment on CVT.' 
