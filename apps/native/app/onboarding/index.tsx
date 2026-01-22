@@ -1,46 +1,41 @@
 import { useState, useRef } from 'react';
-import { View, Text, ScrollView, Dimensions, Pressable } from 'react-native';
+import { View, Text, ScrollView, Dimensions, Pressable, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useOnboardingStore } from '@/store/onboarding';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 interface OnboardingSlide {
     id: number;
-    icon: keyof typeof MaterialCommunityIcons.glyphMap;
+    image: any;
     title: string;
     description: string;
     color: string;
-    bgColor: string;
 }
 
 const slides: OnboardingSlide[] = [
     {
         id: 1,
-        icon: 'store-outline',
+        image: require('@/assets/onboarding/mobile-phone-shopping-this-is-meant-to-show-how-they-can-control-sales.svg'),
         title: 'Manage Your Business',
         description: 'Track sales, inventory, and customers all in one place. Get real-time insights to grow your business.',
         color: '#22c55e',
-        bgColor: '#f0fdf4',
     },
     {
         id: 2,
-        icon: 'cart-plus',
+        image: require('@/assets/onboarding/mobile-payments.svg'),
         title: 'Quick Point of Sale',
         description: 'Process sales quickly with our intuitive POS system. Accept multiple payment methods and generate receipts.',
         color: '#eab308',
-        bgColor: '#fefce8',
     },
     {
         id: 3,
-        icon: 'robot-happy-outline',
+        image: require('@/assets/onboarding/predictive-analytics.svg'),
         title: 'AI-Powered Insights',
         description: 'Meet Tatenda, your AI assistant. Get answers about your business, trends, and smart recommendations.',
         color: '#3b82f6',
-        bgColor: '#eff6ff',
     },
 ];
 
@@ -82,21 +77,15 @@ export default function Onboarding() {
     const currentSlide = slides[currentIndex];
 
     return (
-        <SafeAreaView
-            className="flex-1"
-            style={{ backgroundColor: currentSlide.bgColor }}
-        >
+        <SafeAreaView className="flex-1 bg-white">
             {/* Skip Button */}
-            <View className="absolute top-16 right-6 z-10">
-                <Pressable
-                    onPress={handleSkip}
-                    className="px-4 py-2"
-                >
+            <View className="absolute top-4 right-6 z-10">
+                <Pressable onPress={handleSkip} className="px-4 py-2">
                     <Text className="text-gray-500 text-base font-medium">Skip</Text>
                 </Pressable>
             </View>
 
-            {/* Slides */}
+            {/* Horizontal ScrollView for Slides */}
             <ScrollView
                 ref={scrollRef}
                 horizontal
@@ -104,25 +93,23 @@ export default function Onboarding() {
                 showsHorizontalScrollIndicator={false}
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
-                className="flex-1 w-full"
-                contentContainerStyle={{ height: '100%' }}
+                style={{ flex: 1 }}
             >
                 {slides.map((slide) => (
                     <View
                         key={slide.id}
-                        style={{ width }}
-                        className="flex-1 items-center justify-center px-8"
+                        style={{ width, height: height - 100 }}
+                        className="items-center justify-center px-8"
                     >
-                        {/* Icon Container */}
-                        <View
-                            className="w-36 h-36 rounded-[32px] items-center justify-center mb-10 shadow-lg"
-                            style={{ backgroundColor: slide.color }}
-                        >
-                            <MaterialCommunityIcons name={slide.icon} size={72} color="white" />
-                        </View>
+                        {/* Image */}
+                        <Image
+                            source={slide.image}
+                            style={{ width: width * 0.8, height: width * 0.8 }}
+                            resizeMode="contain"
+                        />
 
                         {/* Title */}
-                        <Text className="text-3xl font-bold text-gray-900 text-center mb-4">
+                        <Text className="text-3xl font-bold text-gray-900 text-center mb-4 mt-8">
                             {slide.title}
                         </Text>
 
@@ -137,14 +124,15 @@ export default function Onboarding() {
             {/* Pagination & Button */}
             <View className="px-8 pb-8">
                 {/* Dots */}
-                <View className="flex-row justify-center mb-8">
+                <View className="flex-row justify-center mb-6">
                     {slides.map((slide, index) => (
                         <View
                             key={index}
-                            className={`h-2 rounded-full mx-1.5 transition-all ${index === currentIndex ? 'w-8' : 'w-2'
-                                }`}
+                            className={`h-2 rounded-full mx-1.5 ${
+                                index === currentIndex ? 'w-8' : 'w-2'
+                            }`}
                             style={{
-                                backgroundColor: index === currentIndex ? slide.color : '#d1d5db'
+                                backgroundColor: index === currentIndex ? currentSlide.color : '#d1d5db',
                             }}
                         />
                     ))}
@@ -160,11 +148,6 @@ export default function Onboarding() {
                         {currentIndex === slides.length - 1 ? 'Get Started' : 'Next'}
                     </Text>
                 </Pressable>
-
-                {/* Page indicator */}
-                <Text className="text-center text-gray-400 text-sm mt-4">
-                    {currentIndex + 1} of {slides.length}
-                </Text>
             </View>
         </SafeAreaView>
     );
