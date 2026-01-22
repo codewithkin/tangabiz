@@ -119,7 +119,7 @@ export default function Dashboard() {
     );
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+        <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'bottom']}>
             {/* Green Header */}
             <View className="bg-green-500 px-6 pt-6 pb-16 rounded-b-3xl">
                 <View className="flex-row items-center justify-between mb-2">

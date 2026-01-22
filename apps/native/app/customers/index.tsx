@@ -109,7 +109,7 @@ export default function Customers() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+        <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'bottom']}>
             <Stack.Screen options={{ headerShown: false }} />
 
             {/* Header */}
