@@ -104,7 +104,8 @@ export default function Onboarding() {
                 showsHorizontalScrollIndicator={false}
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
-                className="flex-1"
+                className="flex-1 w-full"
+                contentContainerStyle={{ height: '100%' }}
             >
                 {slides.map((slide) => (
                     <View
