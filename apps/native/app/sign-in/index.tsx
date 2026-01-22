@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, Pressable, Linking, KeyboardAvoidingView, Platform, TextInput, ActivityIndicator } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +9,6 @@ import AppName from '@/components/app-name';
 
 export default function SignIn() {
     const [apiKey, setApiKey] = useState('');
-    const [showApiKey, setShowApiKey] = useState(false);
     const { signIn, isLoading, error, clearError } = useAuthStore();
     const router = useRouter();
 
@@ -16,6 +16,10 @@ export default function SignIn() {
         if (!apiKey.trim()) return;
 
         const result = await signIn(apiKey.trim());
+        console.log('Sign-in result:', result);
+        console.log('CVT data:', result.cvt);
+        console.log('Tangabiz data:', result.tangabiz);
+        console.log('Service:', result.service);
 
         if (result.success) {
             router.replace('/(tabs)');
@@ -76,17 +80,27 @@ export default function SignIn() {
                                             setApiKey(text);
                                             if (error) clearError();
                                         }}
-                                        secureTextEntry={!showApiKey}
+                                        secureTextEntry={false}
                                         autoCapitalize="none"
                                         autoCorrect={false}
                                     />
                                     <Pressable
-                                        onPress={() => setShowApiKey(!showApiKey)}
+                                        onPress={async () => {
+                                            try {
+                                                const str = await Clipboard.getStringAsync();
+                                                if (str) {
+                                                    setApiKey(str);
+                                                    if (error) clearError();
+                                                }
+                                            } catch (e) {
+                                                // ignore clipboard errors
+                                            }
+                                        }}
                                         className="px-4 py-4"
                                     >
                                         <MaterialCommunityIcons
-                                            name={showApiKey ? 'eye-off' : 'eye'}
-                                            size={22}
+                                            name="content-paste"
+                                            size={20}
                                             color="#6b7280"
                                         />
                                     </Pressable>
