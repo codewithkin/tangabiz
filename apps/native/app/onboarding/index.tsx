@@ -113,6 +113,7 @@ export default function OnboardingIndex() {
                         <View className="my-8 items-center">
                             <Image
                                 source={step.image}
+                                className="rounded-full"
                                 style={{ width: 250, height: 250, resizeMode: 'contain' }}
                             />
                         </View>
