@@ -6,12 +6,12 @@ import Animated, { FadeIn, SlideInUp } from 'react-native-reanimated';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import {
-    Card,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-    CardContent
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardContent
 } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { ScrollView } from "react-native";
@@ -25,279 +25,279 @@ import { useConnection } from '@/hooks/useConnection';
 
 // Reusable currency formatter
 function formatCurrency(amount: number, decimals = 2, currency = 'USD') {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency,
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals,
-    }).format(amount);
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(amount);
 }
 
 export type SaleExtract = {
-    id: string;
-    customerName: string;
-    amount: number;
-    date: string;
-    method: 'cash' | 'card' | 'ecocash';
+  id: string;
+  customerName: string;
+  amount: number;
+  date: string;
+  method: 'cash' | 'card' | 'ecocash';
 }
 
 export type ProductExtact = {
-    productName: string,
-    unitsSold: number,
-    totalRevenue: number,
-    productImage?: string,
-    hasRemovedBackground: boolean,
-    price: number
+  productName: string,
+  unitsSold: number,
+  totalRevenue: number,
+  productImage?: string,
+  hasRemovedBackground: boolean,
+  price: number
 }
 
 export type ExpenseExract = {
-    expenseName: string,
-    date: string,
-    amount: number
+  expenseName: string,
+  date: string,
+  amount: number
 }
 
 function Sale({ data }: { data: SaleExtract }) {
-    const router = useRouter();
+  const router = useRouter();
 
-    const renderIcon = () => {
-        switch (data.method) {
-            case 'cash':
-                return <FontAwesome6 name="money-bill-transfer" size={20} color="white" />;
-            case 'card':
-                return <Entypo name="credit-card" size={20} color="white" />;
-            case 'ecocash':
-                return <FontAwesome6 name="search-dollar" size={20} color="white" />;
-            default:
-                return <FontAwesome6 name="money-bill-transfer" size={20} color="white" />;
-        }
-    };
+  const renderIcon = () => {
+    switch (data.method) {
+      case 'cash':
+        return <FontAwesome6 name="money-bill-transfer" size={20} color="white" />;
+      case 'card':
+        return <Entypo name="credit-card" size={20} color="white" />;
+      case 'ecocash':
+        return <FontAwesome6 name="search-dollar" size={20} color="white" />;
+      default:
+        return <FontAwesome6 name="money-bill-transfer" size={20} color="white" />;
+    }
+  };
 
-    return (
-        <Pressable onPress={() => router.push(`/transactions/${data.id}`)} className="flex flex-row justify-between items-center">
-            <View className="flex flex-row gap-2 items-center">
-                <View className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500">
-                    {renderIcon()}
-                </View>
-                <View className="flex-col">
-                    <Text className="text-sm">{data.customerName}</Text>
-                    <Text className="text-xs text-gray-400">{format(new Date(data.date), 'd MMM yyyy')}</Text>
-                </View>
-            </View>
+  return (
+    <Pressable onPress={() => router.push(`/transactions/${data.id}`)} className="flex flex-row justify-between items-center">
+      <View className="flex flex-row gap-2 items-center">
+        <View className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500">
+          {renderIcon()}
+        </View>
+        <View className="flex-col">
+          <Text className="text-sm">{data.customerName}</Text>
+          <Text className="text-xs text-gray-400">{format(new Date(data.date), 'd MMM yyyy')}</Text>
+        </View>
+      </View>
 
-            <Text className="text-green-600 text-sm">
-                +{formatCurrency(data.amount)}
-            </Text>
-        </Pressable>
-    );
+      <Text className="text-green-600 text-sm">
+        +{formatCurrency(data.amount)}
+      </Text>
+    </Pressable>
+  );
 }
 
 function Product({ data }: { data: ProductExtact }) {
-    return (
-        <View className="flex flex-col gap-2">
-            {/* Product image */}
-            <Image
-                source={{ uri: data.productImage }}
-                style={{ width: '100%', height: 150, borderRadius: 12 }}
-            />
+  return (
+    <View className="flex flex-col gap-2">
+      {/* Product image */}
+      <Image
+        source={{ uri: data.productImage }}
+        style={{ width: '100%', height: 150, borderRadius: 12 }}
+      />
 
-            <View className="flex-1">
-                <View className="flex flex-row justify-between items-center">
-                    {/* Product name */}
-                    <Text className="font-semibold text-sm">{data.productName}</Text>
-                </View>
-
-                <View className="flex flex-row gap-2 mt-1">
-                    {/* Revenue */}
-                    <Text className="text-xs text-gray-600">
-                        Revenue: {formatCurrency(data.totalRevenue)}
-                    </Text>
-                </View>
-
-                <View className="flex flex-row gap-2 mt-1">
-                    {/* Units Sold */}
-                    <Text className="text-xs text-gray-600">
-                        Sold: {data.unitsSold} units
-                    </Text>
-                </View>
-            </View>
+      <View className="flex-1">
+        <View className="flex flex-row justify-between items-center">
+          {/* Product name */}
+          <Text className="font-semibold text-sm">{data.productName}</Text>
         </View>
-    )
+
+        <View className="flex flex-row gap-2 mt-1">
+          {/* Revenue */}
+          <Text className="text-xs text-gray-600">
+            Revenue: {formatCurrency(data.totalRevenue)}
+          </Text>
+        </View>
+
+        <View className="flex flex-row gap-2 mt-1">
+          {/* Units Sold */}
+          <Text className="text-xs text-gray-600">
+            Sold: {data.unitsSold} units
+          </Text>
+        </View>
+      </View>
+    </View>
+  )
 }
 
 // Main dashboard homepage displaying business metrics: total revenue, recent sales, best performing products, and quick action buttons for common tasks with real-time API data.
 export default function Dashboard() {
-    const router = useRouter();
-    const { currentBusiness, user } = useAuthStore();
-    const businessId = currentBusiness?.id || null;
-    const { isLoading: connectionLoading, isConnected } = useConnection();
+  const router = useRouter();
+  const { currentBusiness, user } = useAuthStore();
+  const businessId = currentBusiness?.id || null;
+  const { isLoading: connectionLoading, isConnected } = useConnection();
 
-    // Check connection and redirect if offline
-    useEffect(() => {
-        if (!connectionLoading && !isConnected) {
-            router.push('/offline');
-        }
-    }, [connectionLoading, isConnected]);
-
-    // Fetch data from backend
-    const { data: recentSales = [], isLoading: salesLoading } = useRecentSales(businessId);
-    const { data: bestProducts = [], isLoading: productsLoading } = useBestPerformingProducts(businessId);
-    const { data: revenue = { totalRevenue: 0, totalTransactions: 0 }, isLoading: revenueLoading } = useRevenueSummary(businessId);
-    const { data: notificationCount = 0 } = useNotificationsCount(businessId);
-
-    // Log auth store and API data
-    React.useEffect(() => {
-        console.log('=== DASHBOARD AUTH & DATA ===');
-        console.log('Auth Store:', {
-            user: user?.name,
-            currentBusiness: currentBusiness?.name,
-            businessId,
-        });
-        console.log('Recent Sales:', recentSales);
-        console.log('Best Products:', bestProducts);
-        console.log('Revenue Summary:', revenue);
-        console.log('Notification Count:', notificationCount);
-        console.log('Loading States:', {
-            salesLoading,
-            productsLoading,
-            revenueLoading,
-        });
-        console.log('============================');
-    }, [user, currentBusiness, businessId, recentSales, bestProducts, revenue, notificationCount, salesLoading, productsLoading, revenueLoading]);
-
-    // Show full-page loading indicator while initial data loads
-    const isInitialLoading = salesLoading || productsLoading || revenueLoading;
-
-    if (isInitialLoading) {
-        return (
-            <View className="flex-1 bg-default-50 items-center justify-center">
-                <ActivityIndicator size="large" color="#0066ff" />
-            </View>
-        );
+  // Check connection and redirect if offline
+  useEffect(() => {
+    if (!connectionLoading && !isConnected) {
+      router.push('/offline');
     }
+  }, [connectionLoading, isConnected]);
 
+  // Fetch data from backend
+  const { data: recentSales = [], isLoading: salesLoading } = useRecentSales(businessId);
+  const { data: bestProducts = [], isLoading: productsLoading } = useBestPerformingProducts(businessId);
+  const { data: revenue = { totalRevenue: 0, totalTransactions: 0 }, isLoading: revenueLoading } = useRevenueSummary(businessId);
+  const { data: notificationCount = 0 } = useNotificationsCount(businessId);
+
+  // Log auth store and API data
+  React.useEffect(() => {
+    console.log('=== DASHBOARD AUTH & DATA ===');
+    console.log('Auth Store:', {
+      user: user?.name,
+      currentBusiness: currentBusiness?.name,
+      businessId,
+    });
+    console.log('Recent Sales:', recentSales);
+    console.log('Best Products:', bestProducts);
+    console.log('Revenue Summary:', revenue);
+    console.log('Notification Count:', notificationCount);
+    console.log('Loading States:', {
+      salesLoading,
+      productsLoading,
+      revenueLoading,
+    });
+    console.log('============================');
+  }, [user, currentBusiness, businessId, recentSales, bestProducts, revenue, notificationCount, salesLoading, productsLoading, revenueLoading]);
+
+  // Show full-page loading indicator while initial data loads
+  const isInitialLoading = salesLoading || productsLoading || revenueLoading;
+
+  if (isInitialLoading) {
     return (
-        <ScrollView>
-            <View className="px-4 py-10 flex flex-col gap-10">
-                {/* Header Section */}
-                <Animated.View className="flex flex-col gap-4" entering={FadeIn.duration(500)}>
-                    <View className="flex flex-row justify-between items-center">
-                        <View className="flex flex-col">
-                            <Text className="text-2xl font-semibold">Good morning, {user?.name?.split(' ')[0] || 'User'}</Text>
-                            <Text className="text-gray-400 text-sm">Welcome back to <Text className="text-yellow-500">Tanga<Text className="text-green-500">Biz</Text></Text></Text>
-                        </View>
+      <View className="flex-1 bg-default-50 items-center justify-center">
+        <ActivityIndicator size="large" color="#0066ff" />
+      </View>
+    );
+  }
 
-                        <Pressable onPress={() => router.push('/(drawer)/notifications')}>
-                            <View className="relative">
-                                <Button size="icon" variant="outline" className="p-2">
-                                    <Fontisto name="bell" size={20} color="black" />
-                                </Button>
-                                {notificationCount > 0 && (
-                                    <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
-                                        <Text className="text-white text-xs font-bold">{notificationCount > 9 ? '9+' : notificationCount}</Text>
-                                    </View>
-                                )}
-                            </View>
-                        </Pressable>
-                    </View>
-
-                    {/* Revenue Card */}
-                    <Card className="rounded-2xl px-4 flex flex-col gap-1 p-8">
-                        <Text className="text-gray-400 text-sm">Total Revenue</Text>
-                        {revenueLoading ? (
-                            <ActivityIndicator size="large" color="#3b82f6" />
-                        ) : (
-                            <>
-                                <Text className="text-4xl font-semibold">{formatCurrency(revenue.totalRevenue)}</Text>
-                                <Text className="text-xs text-gray-500 mt-1">{revenue.totalTransactions} transactions</Text>
-                            </>
-                        )}
-                        <Button className="rounded-full bg-yellow-500 py-4 h-auto mt-2">
-                            <Text className="font-bold">Add new Sale</Text>
-                        </Button>
-                    </Card>
-
-                    {/* Quick Actions Grid */}
-                    <View className="flex flex-row gap-4">
-                        {/* View Report */}
-                        <Pressable onPress={() => router.push('/(drawer)/reports')} className="flex-1 flex flex-col items-center justify-center gap-1">
-                            <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
-                                <MaterialCommunityIcons name="chart-line" size={24} color="white" />
-                            </View>
-                            <Text className="text-xs text-center font-semibold">View report</Text>
-                        </Pressable>
-
-                        {/* Add Customer */}
-                        <Pressable onPress={() => router.push('/(drawer)/customers/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
-                            <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
-                                <MaterialCommunityIcons name="user-plus" size={24} color="white" />
-                            </View>
-                            <Text className="text-xs text-center font-semibold">Add customer</Text>
-                        </Pressable>
-
-                        {/* New Product */}
-                        <Pressable onPress={() => router.push('/(drawer)/products/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
-                            <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
-                                <Entypo name="shopping-bag" size={24} color="white" />
-                            </View>
-                            <Text className="text-xs text-center font-semibold">New product</Text>
-                        </Pressable>
-
-                        {/* New Expenses */}
-                        <Pressable onPress={() => router.push('/(drawer)/expenses/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
-                            <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
-                                <FontAwesome6 name="receipt" size={24} color="white" />
-                            </View>
-                            <Text className="text-xs text-center font-semibold">New expense</Text>
-                        </Pressable>
-                    </View>
-                </Animated.View>
-
-                {/* Recent Sales Section */}
-                <Animated.View className="flex flex-col gap-2" entering={SlideInUp.duration(500).delay(300)}>
-                    <View className="flex flex-row justify-between items-center">
-                        <Text className="text-lg font-semibold">Recent Sales</Text>
-
-                        <Link href="/(drawer)/transactions" className="text-blue-500 text-sm font-semibold">See All</Link>
-                    </View>
-
-                    {/* Sales List */}
-                    {salesLoading ? (
-                        <ActivityIndicator size="small" color="#3b82f6" />
-                    ) : recentSales.length > 0 ? (
-                        <View className="flex flex-col gap-4 w-full mt-2">
-                            {recentSales.map((sale: SaleExtract, index: number) => (
-                                <Sale key={index} data={sale} />
-                            ))}
-                        </View>
-                    ) : (
-                        <Text className="text-gray-500 text-sm text-center py-4">No recent sales</Text>
-                    )}
-                </Animated.View>
-
-                {/* Best Performing Products Section */}
-                <Animated.View className="flex flex-col gap-2" entering={SlideInUp.duration(500).delay(400)}>
-                    <View className="flex flex-row justify-between items-center">
-                        <Text className="text-lg font-semibold">Best Performing Products</Text>
-
-                        <Link href="/(drawer)/products" className="text-blue-500 text-sm font-semibold">See All</Link>
-                    </View>
-
-                    {/* Products Grid */}
-                    {productsLoading ? (
-                        <ActivityIndicator size="small" color="#3b82f6" />
-                    ) : bestProducts.length > 0 ? (
-                        <View className="flex flex-row flex-wrap -mx-2 mt-2">
-                            {bestProducts.map((product: ProductExtact, index: number) => (
-                                <View key={index} className="w-1/2 px-2 mb-4">
-                                    <Product data={product} />
-                                </View>
-                            ))}
-                        </View>
-                    ) : (
-                        <Text className="text-gray-500 text-sm text-center py-4">No products yet</Text>
-                    )}
-                </Animated.View>
+  return (
+    <ScrollView>
+      <View className="px-4 py-10 flex flex-col gap-10">
+        {/* Header Section */}
+        <Animated.View className="flex flex-col gap-4" entering={FadeIn.duration(500)}>
+          <View className="flex flex-row justify-between items-center">
+            <View className="flex flex-col">
+              <Text className="text-2xl font-semibold">Good morning, {user?.name?.split(' ')[0] || 'User'}</Text>
+              <Text className="text-gray-400 text-sm">Welcome back to <Text className="text-yellow-500">Tanga<Text className="text-green-500">Biz</Text></Text></Text>
             </View>
-        </ScrollView>
-    )
+
+            <Pressable onPress={() => router.push('/(drawer)/notifications')}>
+              <View className="relative">
+                <Button size="icon" variant="outline" className="p-2">
+                  <Fontisto name="bell" size={20} color="black" />
+                </Button>
+                {notificationCount > 0 && (
+                  <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
+                    <Text className="text-white text-xs font-bold">{notificationCount > 9 ? '9+' : notificationCount}</Text>
+                  </View>
+                )}
+              </View>
+            </Pressable>
+          </View>
+
+          {/* Revenue Card */}
+          <Card className="rounded-2xl px-4 flex flex-col gap-1 p-8">
+            <Text className="text-gray-400 text-sm">Total Revenue</Text>
+            {revenueLoading ? (
+              <ActivityIndicator size="large" color="#3b82f6" />
+            ) : (
+              <>
+                <Text className="text-4xl font-semibold">{formatCurrency(revenue.totalRevenue)}</Text>
+                <Text className="text-xs text-gray-500 mt-1">{revenue.totalTransactions} transactions</Text>
+              </>
+            )}
+            <Pressable onPress={() => router.push('/sale/new')} className="rounded-full bg-yellow-500 py-4 mt-2 active:opacity-80">
+              <Text className="font-bold text-center text-white">Add new Sale</Text>
+            </Pressable>
+          </Card>
+
+          {/* Quick Actions Grid */}
+          <View className="flex flex-row gap-4">
+            {/* View Report */}
+            <Pressable onPress={() => router.push('/(drawer)/reports')} className="flex-1 flex flex-col items-center justify-center gap-1">
+              <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                <MaterialCommunityIcons name="chart-line" size={24} color="white" />
+              </View>
+              <Text className="text-xs text-center font-semibold">View reports</Text>
+            </Pressable>
+
+            {/* Add Customer */}
+            <Pressable onPress={() => router.push('/(drawer)/customers/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
+              <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                <MaterialCommunityIcons name="user-plus" size={24} color="white" />
+              </View>
+              <Text className="text-xs text-center font-semibold">Add customer</Text>
+            </Pressable>
+
+            {/* New Product */}
+            <Pressable onPress={() => router.push('/(drawer)/products/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
+              <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                <Entypo name="shopping-bag" size={24} color="white" />
+              </View>
+              <Text className="text-xs text-center font-semibold">New product</Text>
+            </Pressable>
+
+            {/* New Expenses */}
+            <Pressable onPress={() => router.push('/(drawer)/expenses/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
+              <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                <FontAwesome6 name="receipt" size={24} color="white" />
+              </View>
+              <Text className="text-xs text-center font-semibold">New expense</Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+
+        {/* Recent Sales Section */}
+        <Animated.View className="flex flex-col gap-2" entering={SlideInUp.duration(500).delay(300)}>
+          <View className="flex flex-row justify-between items-center">
+            <Text className="text-lg font-semibold">Recent Sales</Text>
+
+            <Link href="/(drawer)/transactions" className="text-blue-500 text-sm font-semibold">See All</Link>
+          </View>
+
+          {/* Sales List */}
+          {salesLoading ? (
+            <ActivityIndicator size="small" color="#3b82f6" />
+          ) : recentSales.length > 0 ? (
+            <View className="flex flex-col gap-4 w-full mt-2">
+              {recentSales.map((sale: SaleExtract, index: number) => (
+                <Sale key={index} data={sale} />
+              ))}
+            </View>
+          ) : (
+            <Text className="text-gray-500 text-sm text-center py-4">No recent sales</Text>
+          )}
+        </Animated.View>
+
+        {/* Best Performing Products Section */}
+        <Animated.View className="flex flex-col gap-2" entering={SlideInUp.duration(500).delay(400)}>
+          <View className="flex flex-row justify-between items-center">
+            <Text className="text-lg font-semibold">Best Performing Products</Text>
+
+            <Link href="/(drawer)/products" className="text-blue-500 text-sm font-semibold">See All</Link>
+          </View>
+
+          {/* Products Grid */}
+          {productsLoading ? (
+            <ActivityIndicator size="small" color="#3b82f6" />
+          ) : bestProducts.length > 0 ? (
+            <View className="flex flex-row flex-wrap -mx-2 mt-2">
+              {bestProducts.map((product: ProductExtact, index: number) => (
+                <View key={index} className="w-1/2 px-2 mb-4">
+                  <Product data={product} />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text className="text-gray-500 text-sm text-center py-4">No products yet</Text>
+          )}
+        </Animated.View>
+      </View>
+    </ScrollView>
+  )
 }

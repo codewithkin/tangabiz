@@ -48,6 +48,22 @@ function DrawerLayout() {
         }}
       />
       <Drawer.Screen
+        name="sales"
+        options={{
+          headerTitle: "Sales",
+          drawerLabel: ({ color, focused }) => (
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: focused ? 'Satoshi-Bold' : 'Satoshi-Regular' }}>Sales</RNText>
+          ),
+          drawerIcon: ({ size, color, focused }) => (
+            <Ionicons
+              name="receipt-outline"
+              size={size}
+              color={focused ? color : themeColorForeground}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
         name="products"
         options={{
           headerTitle: "Products",

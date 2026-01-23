@@ -53,7 +53,7 @@ function AuthProtection({ children }: { children: React.ReactNode }) {
     // Small delay to ensure Slot is fully mounted
     const timeout = setTimeout(() => {
       const routePath = segments.join('/');
-      const inAuthGroup = segments[0] === '(tabs)' || segments[0] === '(drawer)';
+      const inAuthGroup = segments[0] === '(drawer)';
       const inOnboarding = routePath.includes('onboarding');
       const inSignIn = routePath.includes('sign-in');
 
@@ -65,7 +65,7 @@ function AuthProtection({ children }: { children: React.ReactNode }) {
 
       // If user is signed in and on onboarding/sign-in, redirect to dashboard
       if (token && (inOnboarding || inSignIn)) {
-        router.replace('/(drawer)/(tabs)');
+        router.replace('/(drawer)/index');
         setIsReady(true);
         return;
       }

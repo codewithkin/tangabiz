@@ -21,7 +21,7 @@ export default function SignIn() {
         console.log('Service:', result.service);
 
         if (result.success) {
-            router.replace('/(tabs)');
+            router.replace('/(drawer)/index');
         } else if (result.needsSubscription) {
             Linking.openURL(CVT_URLS.dashboard);
         } else if (result.needsPayment) {
