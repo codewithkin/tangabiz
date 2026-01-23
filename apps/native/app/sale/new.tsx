@@ -380,11 +380,13 @@ export default function NewSaleScreen() {
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Customer Details Section */}
                                 <Animated.View entering={SlideInUp.duration(500).delay(50)} className="mb-4">
-                                    <CardItem>
-                                        <Text className="text-lg font-bold text-gray-900 ">Customer Details</Text>
-
+                                    <CollapsibleSection
+                                        title="Customer Details"
+                                        isOpen={isCustomerOpen}
+                                        onToggle={() => setIsCustomerOpen(!isCustomerOpen)}
+                                    >
                                         {/* Mode Toggle */}
-                                        <View className="flex-row gap-2 ">
+                                        <View className="flex-row gap-2 mb-3">
                                             <Pressable
                                                 className={`flex-1 py-2 rounded-xl items-center ${customerMode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
                                                 onPress={() => setCustomerMode('search')}
@@ -486,7 +488,7 @@ export default function NewSaleScreen() {
                                                 />
                                             </View>
                                         )}
-                                    </CardItem>
+                                    </CollapsibleSection>
                                 </Animated.View>
 
                                 {/* Payment Method Selection */}
