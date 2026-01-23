@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Pressable, View, Image, ActivityIndicator } from "react-native";
 import { useRouter } from 'expo-router';
 import React from 'react';
+import Animated, { FadeIn, SlideInUp } from 'react-native-reanimated';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import {
@@ -168,7 +169,7 @@ export default function Dashboard() {
         <ScrollView>
             <View className="px-4 py-10 flex flex-col gap-10">
                 {/* Header Section */}
-                <View className="flex flex-col gap-4 animate-fade-in">
+                <Animated.View className="flex flex-col gap-4" entering={FadeIn.duration(500)}>
                     <View className="flex flex-row justify-between items-center">
                         <View className="flex flex-col">
                             <Text className="text-2xl font-semibold">Good morning, {user?.name?.split(' ')[0] || 'User'}</Text>
@@ -190,7 +191,7 @@ export default function Dashboard() {
                     </View>
 
                     {/* Revenue Card */}
-                    <Card className="rounded-2xl px-4 flex flex-col gap-1 p-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                    <Card className="rounded-2xl px-4 flex flex-col gap-1 p-8">
                         <Text className="text-gray-400 text-sm">Total Revenue</Text>
                         {revenueLoading ? (
                             <ActivityIndicator size="large" color="#3b82f6" />
@@ -239,10 +240,10 @@ export default function Dashboard() {
                             <Text className="text-xs text-center font-semibold">New expense</Text>
                         </Pressable>
                     </View>
-                </View>
+                </Animated.View>
 
                 {/* Recent Sales Section */}
-                <View className="flex flex-col gap-2 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+                <Animated.View className="flex flex-col gap-2" entering={SlideInUp.duration(500).delay(300)}>
                     <View className="flex flex-row justify-between items-center">
                         <Text className="text-lg font-semibold">Recent Sales</Text>
 
@@ -261,10 +262,10 @@ export default function Dashboard() {
                     ) : (
                         <Text className="text-gray-500 text-sm text-center py-4">No recent sales</Text>
                     )}
-                </View>
+                </Animated.View>
 
                 {/* Best Performing Products Section */}
-                <View className="flex flex-col gap-2 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                <Animated.View className="flex flex-col gap-2" entering={SlideInUp.duration(500).delay(400)}>
                     <View className="flex flex-row justify-between items-center">
                         <Text className="text-lg font-semibold">Best Performing Products</Text>
 
@@ -285,7 +286,7 @@ export default function Dashboard() {
                     ) : (
                         <Text className="text-gray-500 text-sm text-center py-4">No products yet</Text>
                     )}
-                </View>
+                </Animated.View>
             </View>
         </ScrollView>
     )
