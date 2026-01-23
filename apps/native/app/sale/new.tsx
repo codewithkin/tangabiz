@@ -493,8 +493,11 @@ export default function NewSaleScreen() {
 
                                 {/* Payment Method Selection */}
                                 <Animated.View entering={SlideInUp.duration(500).delay(100)} className="mb-4">
-                                    <CardItem>
-                                        <Text className="text-lg font-bold text-gray-900 ">Payment Method</Text>
+                                    <CollapsibleSection
+                                        title="Payment Method"
+                                        isOpen={isPaymentOpen}
+                                        onToggle={() => setIsPaymentOpen(!isPaymentOpen)}
+                                    >
                                         <View className="flex-row flex-wrap gap-2">
                                             {(['CASH', 'CARD', 'BANK_TRANSFER', 'MOBILE_MONEY', 'OTHER'] as PaymentMethod[]).map((method) => (
                                                 <Pressable
@@ -508,7 +511,7 @@ export default function NewSaleScreen() {
                                                 </Pressable>
                                             ))}
                                         </View>
-                                    </CardItem>
+                                    </CollapsibleSection>
                                 </Animated.View>
                             </View>
 
@@ -698,9 +701,11 @@ export default function NewSaleScreen() {
                         <View className={isTablet ? 'flex-row gap-4' : 'gap-6'}>
                             {/* Transaction Details */}
                             <Animated.View entering={SlideInUp.duration(500).delay(400)} className={isTablet ? 'flex-1' : ''}>
-                                <CardItem>
-                                    <Text className="text-lg font-bold text-gray-900 ">Transaction Details</Text>
-
+                                <CollapsibleSection
+                                    title="Transaction Details"
+                                    isOpen={isTransactionOpen}
+                                    onToggle={() => setIsTransactionOpen(!isTransactionOpen)}
+                                >
                                     <View className="gap-3">
                                         <View>
                                             <Text className="text-sm font-medium text-gray-700 mb-1">Total Discount</Text>
@@ -771,7 +776,7 @@ export default function NewSaleScreen() {
                                             />
                                         </View>
                                     </View>
-                                </CardItem>
+                                </CollapsibleSection>
                             </Animated.View>
 
                             {/* Summary */}
