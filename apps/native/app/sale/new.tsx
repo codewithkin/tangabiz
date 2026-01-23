@@ -511,7 +511,9 @@ export default function NewSaleScreen() {
                                                                         className="p-3 border-b border-gray-200 active:bg-gray-100 flex-row justify-between"
                                                                         onPress={() => handleSelectProduct(product)}
                                                                     >
-                                                                        <Text className="font-medium text-gray-900">{product.name}</Text>
+                                                                        <Text className="font-medium text-gray-900 flex-1 mr-2" numberOfLines={1} ellipsizeMode="tail">
+                                                                            {product.name}
+                                                                        </Text>
                                                                         <Text className="font-bold text-green-600">{formatCurrency(product.price)}</Text>
                                                                     </Pressable>
                                                                 ))
@@ -526,8 +528,10 @@ export default function NewSaleScreen() {
                                                     )}
                                                     {selectedProduct && (
                                                         <View className="mt-2 p-3 bg-green-50 rounded-xl flex-row items-center justify-between">
-                                                            <View>
-                                                                <Text className="font-medium text-green-800">{selectedProduct.name}</Text>
+                                                            <View className="flex-1 mr-2">
+                                                                <Text className="font-medium text-green-800" numberOfLines={1} ellipsizeMode="tail">
+                                                                    {selectedProduct.name}
+                                                                </Text>
                                                                 <Text className="text-sm text-green-600">{formatCurrency(selectedProduct.price)}</Text>
                                                             </View>
                                                             <Pressable onPress={() => {
@@ -606,7 +610,9 @@ export default function NewSaleScreen() {
                                                 className="bg-gray-50 p-3 rounded-xl flex-row items-center justify-between"
                                             >
                                                 <View className="flex-1">
-                                                    <Text className="font-bold text-gray-900">{item.productName}</Text>
+                                                    <Text className="font-bold text-gray-900" numberOfLines={2} ellipsizeMode="tail">
+                                                        {item.productName}
+                                                    </Text>
                                                     <Text className="text-sm font-light text-gray-500">
                                                         {formatCurrency(item.unitPrice)} each
                                                     </Text>
