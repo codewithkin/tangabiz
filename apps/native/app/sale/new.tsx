@@ -87,6 +87,7 @@ export default function NewSaleScreen() {
     // Change tracking states
     const [trackChange, setTrackChange] = useState(false);
     const [selectedNote, setSelectedNote] = useState<number | null>(null);
+    const [noteQuantities, setNoteQuantities] = useState<{[key: number]: number}>({});
 
     // Accordion states for collapsible sections
     const [isCustomerOpen, setIsCustomerOpen] = useState(true);
