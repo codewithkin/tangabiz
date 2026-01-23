@@ -9,6 +9,8 @@ import { api, productsApi, customersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
+import { Card as CardItem } from '@/components/ui/card';
+import { formatCurrency, formatCurrencyAsYouType, formatPhoneNumberAsYouType, formatPhoneNumber, parseCurrencyValue } from '@/lib/utils';
 
 /**
  * New sale creation screen with comprehensive form for recording transactions. Includes customer selection, product items with quantity and pricing, payment method options, discount management, and automatic total calculation with real-time validation.
@@ -91,11 +93,11 @@ export default function NewSaleScreen() {
         return items.reduce((sum, item) => sum + item.total, 0);
     }, [items]);
 
-    const discountAmount = parseFloat(discount) || 0;
+    const discountAmount = parseCurrencyValue(discount);
     const total = subtotal - discountAmount;
 
     // Calculate amount paid and change based on tracking mode
-    const amountPaidValue = trackChange && selectedNote ? selectedNote : parseFloat(amountPaid) || 0;
+    const amountPaidValue = trackChange && selectedNote ? selectedNote : parseCurrencyValue(amountPaid);
     const change = amountPaidValue - total;
 
     // Fetch products when searching
@@ -163,7 +165,7 @@ export default function NewSaleScreen() {
                 setError('Please enter a product name');
                 return;
             }
-            const price = parseFloat(manualProductPrice);
+            const price = parseCurrencyValue(manualProductPrice);
             if (!price || price <= 0) {
                 setError('Please enter a valid price');
                 return;
@@ -258,7 +260,7 @@ export default function NewSaleScreen() {
             // Build notes with change tracking info
             let finalNotes = notes.trim();
             if (trackChange && selectedNote && change > 0) {
-                const changeNote = `Payment: $${selectedNote} note, Change: $${change.toFixed(2)}`;
+                const changeNote = `Payment: ${formatCurrency(selectedNote)} note, Change: ${formatCurrency(change)}`;
                 finalNotes = finalNotes ? `${finalNotes}\n${changeNote}` : changeNote;
             }
 
@@ -298,7 +300,7 @@ export default function NewSaleScreen() {
     };
 
     // Card wrapper for responsive layout
-    const CardSection = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+    const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
         <Surface className={`p-4 rounded-2xl ${className}`}>
             {children}
         </Surface>
@@ -318,7 +320,7 @@ export default function NewSaleScreen() {
                                 <MaterialCommunityIcons name="arrow-left" size={24} color="#6b7280" />
                             </Pressable>
                             <View className="flex-1">
-                                <Text className="text-2xl font-black text-gray-900">New Sale</Text>
+                                <Text className="text-xl font-black text-gray-900">New Sale</Text>
                                 <Text className="text-sm font-light text-gray-500">Create a new transaction</Text>
                             </View>
                         </Animated.View>
@@ -329,11 +331,11 @@ export default function NewSaleScreen() {
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Customer Details Section */}
                                 <Animated.View entering={SlideInUp.duration(500).delay(50)} className="mb-4">
-                                    <CardSection>
-                                        <Text className="text-lg font-bold text-gray-900 mb-3">Customer Details</Text>
+                                    <CardItem>
+                                        <Text className="text-lg font-bold text-gray-900 ">Customer Details</Text>
 
                                         {/* Mode Toggle */}
-                                        <View className="flex-row gap-2 mb-3">
+                                        <View className="flex-row gap-2 ">
                                             <Pressable
                                                 className={`flex-1 py-2 rounded-xl items-center ${customerMode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
                                                 onPress={() => setCustomerMode('search')}
@@ -430,18 +432,18 @@ export default function NewSaleScreen() {
                                                     placeholder="Phone (optional)"
                                                     placeholderTextColor="#9ca3af"
                                                     value={manualCustomerPhone}
-                                                    onChangeText={setManualCustomerPhone}
+                                                    onChangeText={(text) => setManualCustomerPhone(formatPhoneNumberAsYouType(text))}
                                                     keyboardType="phone-pad"
                                                 />
                                             </View>
                                         )}
-                                    </CardSection>
+                                    </CardItem>
                                 </Animated.View>
 
                                 {/* Payment Method Selection */}
                                 <Animated.View entering={SlideInUp.duration(500).delay(100)} className="mb-4">
-                                    <CardSection>
-                                        <Text className="text-lg font-bold text-gray-900 mb-3">Payment Method</Text>
+                                    <CardItem>
+                                        <Text className="text-lg font-bold text-gray-900 ">Payment Method</Text>
                                         <View className="flex-row flex-wrap gap-2">
                                             {(['CASH', 'CARD', 'BANK_TRANSFER', 'MOBILE_MONEY', 'OTHER'] as PaymentMethod[]).map((method) => (
                                                 <Pressable
@@ -455,7 +457,7 @@ export default function NewSaleScreen() {
                                                 </Pressable>
                                             ))}
                                         </View>
-                                    </CardSection>
+                                    </CardItem>
                                 </Animated.View>
                             </View>
 
@@ -463,11 +465,11 @@ export default function NewSaleScreen() {
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Add Product Section */}
                                 <Animated.View entering={SlideInUp.duration(500).delay(200)} className="mb-4">
-                                    <CardSection>
-                                        <Text className="text-lg font-bold text-gray-900 mb-3">Add Product</Text>
+                                    <CardItem>
+                                        <Text className="text-lg font-bold text-gray-900 ">Add Product</Text>
 
                                         {/* Mode Toggle */}
-                                        <View className="flex-row gap-2 mb-3">
+                                        <View className="flex-row gap-2 ">
                                             <Pressable
                                                 className={`flex-1 py-2 rounded-xl items-center ${productMode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
                                                 onPress={() => setProductMode('search')}
@@ -510,7 +512,7 @@ export default function NewSaleScreen() {
                                                                         onPress={() => handleSelectProduct(product)}
                                                                     >
                                                                         <Text className="font-medium text-gray-900">{product.name}</Text>
-                                                                        <Text className="font-bold text-green-600">${product.price.toFixed(2)}</Text>
+                                                                        <Text className="font-bold text-green-600">{formatCurrency(product.price)}</Text>
                                                                     </Pressable>
                                                                 ))
                                                             ) : (
@@ -526,7 +528,7 @@ export default function NewSaleScreen() {
                                                         <View className="mt-2 p-3 bg-green-50 rounded-xl flex-row items-center justify-between">
                                                             <View>
                                                                 <Text className="font-medium text-green-800">{selectedProduct.name}</Text>
-                                                                <Text className="text-sm text-green-600">${selectedProduct.price.toFixed(2)}</Text>
+                                                                <Text className="text-sm text-green-600">{formatCurrency(selectedProduct.price)}</Text>
                                                             </View>
                                                             <Pressable onPress={() => {
                                                                 setSelectedProduct(null);
@@ -551,7 +553,7 @@ export default function NewSaleScreen() {
                                                         placeholder="Price"
                                                         placeholderTextColor="#9ca3af"
                                                         value={manualProductPrice}
-                                                        onChangeText={setManualProductPrice}
+                                                        onChangeText={(text) => setManualProductPrice(formatCurrencyAsYouType(text))}
                                                         keyboardType="decimal-pad"
                                                     />
                                                 </View>
@@ -587,7 +589,7 @@ export default function NewSaleScreen() {
                                                 <Text className="text-white font-bold">Add Item</Text>
                                             </Pressable>
                                         </View>
-                                    </CardSection>
+                                    </CardItem>
                                 </Animated.View>
                             </View>
                         </View>
@@ -595,8 +597,8 @@ export default function NewSaleScreen() {
                         {/* Items List - Full Width */}
                         {items.length > 0 && (
                             <Animated.View entering={SlideInUp.duration(500).delay(300)}>
-                                <CardSection>
-                                    <Text className="text-lg font-bold text-gray-900 mb-3">Items ({items.length})</Text>
+                                <CardItem>
+                                    <Text className="text-lg font-bold text-gray-900 ">Items ({items.length})</Text>
                                     <View className="gap-2">
                                         {items.map((item, index) => (
                                             <View
@@ -606,7 +608,7 @@ export default function NewSaleScreen() {
                                                 <View className="flex-1">
                                                     <Text className="font-bold text-gray-900">{item.productName}</Text>
                                                     <Text className="text-sm font-light text-gray-500">
-                                                        ${item.unitPrice.toFixed(2)} each
+                                                        {formatCurrency(item.unitPrice)} each
                                                     </Text>
                                                 </View>
                                                 <View className="flex-row items-center gap-2">
@@ -623,7 +625,7 @@ export default function NewSaleScreen() {
                                                     >
                                                         <MaterialCommunityIcons name="plus" size={16} color="#374151" />
                                                     </Pressable>
-                                                    <Text className="font-bold text-gray-900 ml-2 w-20 text-right">${item.total.toFixed(2)}</Text>
+                                                    <Text className="font-bold text-gray-900 ml-2 w-20 text-right">{formatCurrency(item.total)}</Text>
                                                     <Pressable onPress={() => handleRemoveItem(index)}>
                                                         <MaterialCommunityIcons name="delete-outline" size={20} color="#ef4444" />
                                                     </Pressable>
@@ -631,7 +633,7 @@ export default function NewSaleScreen() {
                                             </View>
                                         ))}
                                     </View>
-                                </CardSection>
+                                </CardItem>
                             </Animated.View>
                         )}
 
@@ -639,8 +641,8 @@ export default function NewSaleScreen() {
                         <View className={isTablet ? 'flex-row gap-4' : 'gap-6'}>
                             {/* Transaction Details */}
                             <Animated.View entering={SlideInUp.duration(500).delay(400)} className={isTablet ? 'flex-1' : ''}>
-                                <CardSection>
-                                    <Text className="text-lg font-bold text-gray-900 mb-3">Transaction Details</Text>
+                                <CardItem>
+                                    <Text className="text-lg font-bold text-gray-900 ">Transaction Details</Text>
 
                                     <View className="gap-3">
                                         <View>
@@ -650,7 +652,7 @@ export default function NewSaleScreen() {
                                                 placeholder="0.00"
                                                 placeholderTextColor="#9ca3af"
                                                 value={discount}
-                                                onChangeText={setDiscount}
+                                                onChangeText={(text) => setDiscount(formatCurrencyAsYouType(text))}
                                                 keyboardType="decimal-pad"
                                             />
                                         </View>
@@ -692,7 +694,7 @@ export default function NewSaleScreen() {
                                                     placeholder="0.00"
                                                     placeholderTextColor="#9ca3af"
                                                     value={amountPaid}
-                                                    onChangeText={setAmountPaid}
+                                                    onChangeText={(text) => setAmountPaid(formatCurrencyAsYouType(text))}
                                                     keyboardType="decimal-pad"
                                                 />
                                             </View>
@@ -712,27 +714,27 @@ export default function NewSaleScreen() {
                                             />
                                         </View>
                                     </View>
-                                </CardSection>
+                                </CardItem>
                             </Animated.View>
 
                             {/* Summary */}
                             <Animated.View entering={SlideInUp.duration(500).delay(500)} className={isTablet ? 'flex-1' : ''}>
                                 <Surface className="p-4 rounded-2xl bg-green-50 border border-green-200">
-                                    <Text className="text-lg font-bold text-gray-900 mb-3">Summary</Text>
+                                    <Text className="text-lg font-bold text-gray-900 ">Summary</Text>
                                     <View className="gap-2">
                                         <View className="flex-row justify-between">
                                             <Text className="font-medium text-gray-700">Subtotal:</Text>
-                                            <Text className="font-bold text-gray-900">${subtotal.toFixed(2)}</Text>
+                                            <Text className="font-bold text-gray-900">{formatCurrency(subtotal)}</Text>
                                         </View>
                                         {discountAmount > 0 && (
                                             <View className="flex-row justify-between">
                                                 <Text className="font-medium text-gray-700">Discount:</Text>
-                                                <Text className="font-bold text-red-600">-${discountAmount.toFixed(2)}</Text>
+                                                <Text className="font-bold text-red-600">-{formatCurrency(discountAmount)}</Text>
                                             </View>
                                         )}
                                         <View className="flex-row justify-between pt-2 border-t border-green-200">
                                             <Text className="text-lg font-black text-gray-900">Total:</Text>
-                                            <Text className="text-lg font-black text-green-600">${total.toFixed(2)}</Text>
+                                            <Text className="text-lg font-black text-green-600">{formatCurrency(total)}</Text>
                                         </View>
                                         {amountPaidValue > 0 && (
                                             <>
@@ -740,12 +742,12 @@ export default function NewSaleScreen() {
                                                     <Text className="font-medium text-gray-700">
                                                         {trackChange && selectedNote ? `$${selectedNote} Note:` : 'Amount Paid:'}
                                                     </Text>
-                                                    <Text className="font-bold text-gray-900">${amountPaidValue.toFixed(2)}</Text>
+                                                    <Text className="font-bold text-gray-900">{formatCurrency(amountPaidValue)}</Text>
                                                 </View>
                                                 {change > 0 && (
                                                     <View className="flex-row justify-between">
                                                         <Text className="font-medium text-gray-700">Change:</Text>
-                                                        <Text className="font-bold text-green-600">${change.toFixed(2)}</Text>
+                                                        <Text className="font-bold text-green-600">{formatCurrency(change)}</Text>
                                                     </View>
                                                 )}
                                             </>

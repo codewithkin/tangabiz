@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import Animated, { FadeIn, SlideInUp } from 'react-native-reanimated';
 import { transactionsApi } from '@/lib/api';
 import { format } from 'date-fns';
+import { formatCurrency, formatDateTime, formatTime, formatDate } from '@/lib/utils';
 
 /**
  * Sale details screen displaying comprehensive transaction information including items purchased, payment details, customer info, and timestamps. Provides options to print receipt or share transaction details.
@@ -178,7 +179,7 @@ export default function SaleDetailsScreen() {
                                     <View className="flex-1">
                                         <Text className="font-bold text-green-800">Sale Completed!</Text>
                                         <Text className="text-sm text-green-600">
-                                            {format(new Date(transaction.createdAt), 'MMM d, yyyy \'at\' h:mm a')}
+                                            {formatDateTime(transaction.createdAt)}
                                         </Text>
                                     </View>
                                 </View>
@@ -209,26 +210,26 @@ export default function SaleDetailsScreen() {
                                     </View>
                                     <View className="flex-row justify-between">
                                         <Text className="text-gray-600">Subtotal</Text>
-                                        <Text className="font-medium text-gray-900">${Number(transaction.subtotal).toFixed(2)}</Text>
+                                        <Text className="font-medium text-gray-900">{formatCurrency(Number(transaction.subtotal))}</Text>
                                     </View>
                                     {Number(transaction.discount) > 0 && (
                                         <View className="flex-row justify-between">
                                             <Text className="text-gray-600">Discount</Text>
-                                            <Text className="font-medium text-red-600">-${Number(transaction.discount).toFixed(2)}</Text>
+                                            <Text className="font-medium text-red-600">-{formatCurrency(Number(transaction.discount))}</Text>
                                         </View>
                                     )}
                                     <View className="flex-row justify-between pt-2 border-t border-gray-200">
                                         <Text className="text-lg font-bold text-gray-900">Total</Text>
-                                        <Text className="text-lg font-black text-green-600">${Number(transaction.total).toFixed(2)}</Text>
+                                        <Text className="text-lg font-black text-green-600">{formatCurrency(Number(transaction.total))}</Text>
                                     </View>
                                     <View className="flex-row justify-between">
                                         <Text className="text-gray-600">Amount Paid</Text>
-                                        <Text className="font-medium text-gray-900">${Number(transaction.amountPaid).toFixed(2)}</Text>
+                                        <Text className="font-medium text-gray-900">{formatCurrency(Number(transaction.amountPaid))}</Text>
                                     </View>
                                     {Number(transaction.change) > 0 && (
                                         <View className="flex-row justify-between">
                                             <Text className="text-gray-600">Change</Text>
-                                            <Text className="font-medium text-green-600">${Number(transaction.change).toFixed(2)}</Text>
+                                            <Text className="font-medium text-green-600">{formatCurrency(Number(transaction.change))}</Text>
                                         </View>
                                     )}
                                 </View>
@@ -250,10 +251,10 @@ export default function SaleDetailsScreen() {
                                             <View className="flex-1">
                                                 <Text className="font-medium text-gray-900">{item.productName}</Text>
                                                 <Text className="text-sm text-gray-500">
-                                                    {item.quantity} × ${Number(item.unitPrice).toFixed(2)}
+                                                    {item.quantity} × {formatCurrency(Number(item.unitPrice))}
                                                 </Text>
                                             </View>
-                                            <Text className="font-bold text-gray-900">${Number(item.total).toFixed(2)}</Text>
+                                            <Text className="font-bold text-gray-900">{formatCurrency(Number(item.total))}</Text>
                                         </View>
                                     ))}
                                 </View>
