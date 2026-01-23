@@ -31,6 +31,7 @@ export default function TabLayout() {
                     fontSize: 11,
                     fontWeight: '600',
                     marginTop: 4,
+                    fontFamily: 'Satoshi-Bold',
                 },
                 headerShown: false,
             }}

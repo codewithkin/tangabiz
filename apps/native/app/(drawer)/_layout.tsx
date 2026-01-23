@@ -3,7 +3,7 @@ import { Link } from "expo-router";
 import { Drawer } from "expo-router/drawer";
 import { useThemeColor } from "heroui-native";
 import React, { useCallback } from "react";
-import { Pressable, Text } from "react-native";
+import { Pressable, Text as RNText } from "react-native";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -20,6 +20,7 @@ function DrawerLayout() {
         headerStyle: { backgroundColor: themeColorBackground },
         headerTitleStyle: {
           fontWeight: "600",
+          fontFamily: 'Satoshi-Bold',
           color: themeColorForeground,
         },
         headerRight: renderThemeToggle,
@@ -31,7 +32,7 @@ function DrawerLayout() {
         options={{
           headerTitle: "Home",
           drawerLabel: ({ color, focused }) => (
-            <Text style={{ color: focused ? color : themeColorForeground }}>Home</Text>
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>Home</RNText>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
@@ -47,7 +48,7 @@ function DrawerLayout() {
         options={{
           headerTitle: "Dashboard",
           drawerLabel: ({ color, focused }) => (
-            <Text style={{ color: focused ? color : themeColorForeground }}>Dashboard</Text>
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>Dashboard</RNText>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <MaterialIcons
@@ -70,7 +71,7 @@ function DrawerLayout() {
         options={{
           headerTitle: "Organisation",
           drawerLabel: ({ color, focused }) => (
-            <Text style={{ color: focused ? color : themeColorForeground }}>Organisation</Text>
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>Organisation</RNText>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
@@ -86,7 +87,7 @@ function DrawerLayout() {
         options={{
           headerTitle: "Billing",
           drawerLabel: ({ color, focused }) => (
-            <Text style={{ color: focused ? color : themeColorForeground }}>Billing</Text>
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>Billing</RNText>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
@@ -102,7 +103,7 @@ function DrawerLayout() {
         options={{
           headerTitle: "About",
           drawerLabel: ({ color, focused }) => (
-            <Text style={{ color: focused ? color : themeColorForeground }}>About</Text>
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>About</RNText>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
