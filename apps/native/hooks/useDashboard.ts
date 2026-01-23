@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { transactionsApi, productsApi, reportsApi } from '@/lib/api';
+import { transactionsApi, productsApi, reportsApi, notificationsApi } from '@/lib/api';
 import type { SaleExtract, ProductExtact } from '@/app/(drawer)/(tabs)/index';
 
 /**
@@ -151,20 +151,33 @@ export const useNotificationsCount = (businessId: string | null) => {
   return useQuery({
     queryKey: ['notifications', businessId, 'count'],
     queryFn: async () => {
-      if (!businessId) return 0;
+      if (!businessId) {
+        console.log('[useNotificationsCount] No businessId provided, returning 0');
+        return 0;
+      }
       
       try {
-        const response = await fetch(`/api/notifications/count?businessId=${businessId}`);
-        if (!response.ok) return 0;
-        const data = await response.json();
-        return data.count || 0;
+        console.log('[useNotificationsCount] Fetching with businessId:', businessId);
+        const response = await notificationsApi.getCount(businessId);
+        
+        console.log('[useNotificationsCount] API Response:', response);
+        
+        if (!response.success || !response.data) {
+          console.warn('[useNotificationsCount] API call failed or returned no data');
+          return 0;
+        }
+        
+        const count = response.data.count || response.data.unreadCount || 0;
+        console.log('[useNotificationsCount] Notification count:', count);
+        return count;
       } catch (error) {
-        console.error('Failed to fetch notifications count:', error);
+        console.error('[useNotificationsCount] Error fetching notifications count:', error);
         return 0;
       }
     },
     enabled: !!businessId,
     refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 30000,
   });
 };
 

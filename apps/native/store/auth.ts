@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 // Create Zustand-compatible storage adapter using AsyncStorage
 const asyncStorageAdapter: StateStorage = {
@@ -106,17 +107,13 @@ export const useAuthStore = create<AuthState>()(
           const cvtUrl = `${CVT_API_URL}/api/api-keys/verify`;
           console.log('Fetching from:', cvtUrl);
           
-          const cvtResponse = await fetch(cvtUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ apiKey }),
-          });
+          const cvtResponse = await axios.post(cvtUrl, { apiKey });
 
           console.log('CVT Response status:', cvtResponse.status);
-          const cvtData = await cvtResponse.json();
+          const cvtData = cvtResponse.data;
           console.log('CVT Response data:', cvtData);
 
-          if (!cvtResponse.ok || !cvtData.valid) {
+          if (!cvtData.valid) {
             set({ 
               isLoading: false, 
               error: cvtData.message || 'Invalid or expired API key' 
@@ -177,19 +174,15 @@ export const useAuthStore = create<AuthState>()(
           console.log('CVT verification successful. Creating/signing in to Tangabiz...');
 
           // Step 4: Sign in to Tangabiz backend (creates account if doesn't exist)
-          const tangabizResponse = await fetch(`${API_URL}/api/auth/sign-in`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              apiKey,
-              cvtUser: cvtData.user,
-              cvtService: tangabizService,
-            }),
+          const tangabizResponse = await axios.post(`${API_URL}/api/auth/sign-in`, { 
+            apiKey,
+            cvtUser: cvtData.user,
+            cvtService: tangabizService,
           });
 
-          const tangabizData = await tangabizResponse.json();
+          const tangabizData = tangabizResponse.data;
 
-          if (!tangabizResponse.ok || !tangabizData.success) {
+          if (!tangabizData.success) {
             set({ 
               isLoading: false, 
               error: tangabizData.error || 'Failed to sign in to Tangabiz' 
@@ -216,7 +209,9 @@ export const useAuthStore = create<AuthState>()(
           return { success: true, cvt: cvtData, tangabiz: tangabizData, service: tangabizService };
         } catch (error) {
           console.error('Sign in error:', error);
-          const errorMessage = error instanceof Error ? error.message : 'Network error. Please check your connection.';
+          const errorMessage = axios.isAxiosError(error) 
+            ? error.response?.data?.message || error.message 
+            : error instanceof Error ? error.message : 'Network error. Please check your connection.';
           set({ isLoading: false, error: errorMessage });
           return { success: false, error: errorMessage };
         }
@@ -228,13 +223,15 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           if (token) {
-            await fetch(`${API_URL}/api/auth/sign-out`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-            });
+            await axios.post(
+              `${API_URL}/api/auth/sign-out`,
+              {},
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
           }
         } catch {
           // Ignore errors during sign out
@@ -257,15 +254,17 @@ export const useAuthStore = create<AuthState>()(
         if (!token) return false;
 
         try {
-          const response = await fetch(`${API_URL}/api/auth/verify`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const response = await axios.post(
+            `${API_URL}/api/auth/verify`,
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
 
-          const data = await response.json();
+          const data = response.data;
 
           if (!data.valid) {
             set({

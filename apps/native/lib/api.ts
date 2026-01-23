@@ -1,7 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios, { AxiosRequestConfig, AxiosError } from 'axios';
 
 // API Configuration
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3002';
+
+// Create axios instance
+const axiosInstance = axios.create({
+  baseURL: API_URL,
+  timeout: 60000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 // Types
 export interface ApiResponse<T = any> {
@@ -41,84 +51,82 @@ const getAuthToken = async (): Promise<string | null> => {
   }
 };
 
-// Build URL with query params
-const buildUrl = (endpoint: string, params?: Record<string, string | number | boolean | undefined>): string => {
-  const baseUrl = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
-  const url = new URL(baseUrl);
-  
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        url.searchParams.append(key, String(value));
-      }
-    });
+// Add auth token interceptor
+axiosInstance.interceptors.request.use(async (config) => {
+  try {
+    const token = await getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (error) {
+    console.error('Error getting auth token:', error);
   }
-  
-  return url.toString();
-};
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
 
-// Main API request function
+// Add response interceptor for error handling
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    if (error.code === 'ECONNABORTED') {
+      return Promise.reject({
+        ...error,
+        message: 'Request timeout',
+      });
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Main API request function using axios
 export const apiRequest = async <T = any>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<ApiResponse<T>> => {
-  const { method = 'GET', headers = {}, body, params, timeout = 30000 } = options;
+  const { method = 'GET', headers = {}, body, params } = options;
 
   try {
-    const token = await getAuthToken();
-    
-    const requestHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...headers,
+    const config: AxiosRequestConfig = {
+      method: method as any,
+      url: endpoint,
+      params,
+      headers,
     };
 
-    if (token) {
-      requestHeaders['Authorization'] = `Bearer ${token}`;
+    if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+      config.data = body;
     }
 
-    const url = buildUrl(endpoint, params);
-
-    // Create abort controller for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    const response = await fetch(url, {
-      method,
-      headers: requestHeaders,
-      body: body ? JSON.stringify(body) : undefined,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    // Parse response
-    let data;
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
-    }
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data?.error || data?.message || `HTTP ${response.status}`,
-        data,
-      };
-    }
+    const response = await axiosInstance(config);
 
     return {
       success: true,
-      data,
+      data: response.data,
     };
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
+    if (axios.isAxiosError(error)) {
+      if (error.code === 'ECONNABORTED') {
         return { success: false, error: 'Request timeout' };
       }
+      
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Network error';
+      
+      return {
+        success: false,
+        error: errorMessage,
+        data: error.response?.data,
+      };
+    }
+
+    if (error instanceof Error) {
       return { success: false, error: error.message };
     }
+    
     return { success: false, error: 'Unknown error occurred' };
   }
 };
@@ -228,11 +236,8 @@ export const aiApi = {
 // Health check
 export const checkHealth = async (): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_URL}/health`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    return response.ok;
+    const response = await axiosInstance.get('/health');
+    return response.status === 200;
   } catch {
     return false;
   }

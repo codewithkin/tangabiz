@@ -152,6 +152,19 @@ export default function Dashboard() {
         });
         console.log('============================');
     }, [user, currentBusiness, businessId, recentSales, bestProducts, revenue, notificationCount, salesLoading, productsLoading, revenueLoading]);
+
+    // Show full-page loading indicator while initial data loads
+    const isInitialLoading = salesLoading || productsLoading || revenueLoading;
+
+    if (isInitialLoading) {
+        return (
+            <View className="flex-1 bg-default-50 items-center justify-center">
+                <ActivityIndicator size="large" color="#0066ff" />
+            </View>
+        );
+    }
+
+    return (
         <ScrollView>
             <View className="px-4 py-10 flex flex-col gap-10">
                 {/* Header Section */}
