@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { DrawerActions } from '@react-navigation/native';
+import { View } from 'react-native';
 
 export default function TabLayout() {
     const navigation = useNavigation();
@@ -67,12 +67,14 @@ export default function TabLayout() {
                     title: '',
                     tabBarIcon: ({ focused }: { focused: boolean }) => (
                         <View
-                            className="rounded-full items-center justify-center shadow-lg"
                             style={{
                                 backgroundColor: focused ? '#16a34a' : '#22c55e',
                                 width: 56,
                                 height: 56,
                                 marginTop: -24,
+                                borderRadius: 28,
+                                alignItems: 'center',
+                                justifyContent: 'center',
                                 shadowColor: '#22c55e',
                                 shadowOffset: { width: 0, height: 4 },
                                 shadowOpacity: 0.3,

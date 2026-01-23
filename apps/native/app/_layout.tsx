@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { View, ActivityIndicator } from "react-native";
 
 import { AppThemeProvider } from "@/contexts/app-theme-context";
 import { useAuthStore } from "@/store/auth";
@@ -31,6 +32,7 @@ function AuthProtection({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const navigationState = useRootNavigationState();
   const [onboardingViewed, setOnboardingViewed] = useState<boolean | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   // Load onboarding viewed state on mount
   useEffect(() => {
@@ -54,25 +56,54 @@ function AuthProtection({ children }: { children: React.ReactNode }) {
       const inOnboarding = routePath.includes('onboarding');
       const inSignIn = routePath.includes('sign-in');
 
-      // Check if user should skip onboarding:
-      // 1. They are signed in (have token)
-      // 2. They have seen onboarding before (onboardingViewed is true)
-      const shouldSkipOnboarding = token && onboardingViewed;
-
-      if (!hasCompletedOnboarding && !inOnboarding && !shouldSkipOnboarding) {
-        // First time user or hasn't viewed onboarding yet - show onboarding
-        router.replace('/onboarding');
-      } else if (!token && inAuthGroup) {
-        // Not authenticated but trying to access protected route
-        router.replace('/sign-in');
-      } else if (token && (inSignIn || inOnboarding)) {
-        // Authenticated but on auth screens
-        router.replace('/(tabs)');
+      // If user is already on onboarding page and not authenticated, don't redirect away
+      if (inOnboarding && !token) {
+        setIsReady(true);
+        return;
       }
+
+      // If user is signed in and on onboarding/sign-in, redirect to dashboard
+      if (token && (inOnboarding || inSignIn)) {
+        router.replace('/(drawer)/(tabs)');
+        setIsReady(true);
+        return;
+      }
+
+      // If not completed onboarding and not signed in, show onboarding
+      if (!hasCompletedOnboarding && !token && !inOnboarding) {
+        router.replace('/onboarding');
+        setIsReady(true);
+        return;
+      }
+
+      // If authenticated and in protected route, stay
+      if (token && inAuthGroup) {
+        setIsReady(true);
+        return;
+      }
+
+      // If not authenticated and trying to access protected route, go to sign in
+      if (!token && inAuthGroup) {
+        router.replace('/sign-in');
+        setIsReady(true);
+        return;
+      }
+
+      // Default: ready
+      setIsReady(true);
     }, 1);
 
     return () => clearTimeout(timeout);
   }, [user, token, segments, hasCompletedOnboarding, isHydrated, navigationState?.key, onboardingViewed]);
+
+  // Show loading indicator while computing redirects
+  if (!isReady) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}>
+        <ActivityIndicator size="large" color="#22c55e" />
+      </View>
+    );
+  }
 
   return <>{children}</>;
 }
