@@ -267,12 +267,32 @@ export default function Transactions() {
                     data={transactions}
                     renderItem={renderTransaction}
                     keyExtractor={(item) => item.id}
-                    contentContainerStyle={{ paddingTop: 16, paddingBottom: 24 }}
+                    contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#22c55e" />
                     }
                     showsVerticalScrollIndicator={false}
                 />
+            )}
+
+            {/* Floating Action Button - Quick Sale */}
+            {transactions.length > 0 && (
+                <Pressable
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        router.push('/(tabs)/pos');
+                    }}
+                    className="absolute bottom-6 right-6 w-16 h-16 bg-green-500 rounded-full items-center justify-center shadow-lg active:bg-green-600"
+                    style={{
+                        shadowColor: '#22c55e',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                        elevation: 8,
+                    }}
+                >
+                    <MaterialCommunityIcons name="cart-plus" size={28} color="white" />
+                </Pressable>
             )}
         </SafeAreaView>
     );

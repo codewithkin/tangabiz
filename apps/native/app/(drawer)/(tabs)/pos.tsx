@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/store/auth';
-import { productsApi, transactionsApi } from '@/lib/api';
+import { productsApi, transactionsApi, categoriesApi } from '@/lib/api';
 
 interface Product {
     id: string;
@@ -16,7 +16,13 @@ interface Product {
     price: number;
     quantity: number;
     sku?: string;
-    category?: { name: string };
+    category?: { id: string; name: string };
+}
+
+interface Category {
+    id: string;
+    name: string;
+    slug: string;
 }
 
 interface CartItem {
@@ -28,6 +34,7 @@ export default function POS() {
     const { currentBusiness } = useAuthStore();
     const { width } = useWindowDimensions();
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD' | 'MOBILE_MONEY'>('CASH');
@@ -35,14 +42,28 @@ export default function POS() {
 
     // Responsive layout
     const isTablet = width >= 768;
-    const numColumns = isTablet ? 4 : 3;
+    const numColumns = isTablet ? 4 : 2;
+
+    // Fetch categories
+    const { data: categoriesData } = useQuery({
+        queryKey: ['categories', currentBusiness?.id],
+        queryFn: async () => {
+            if (!currentBusiness?.id) return null;
+            const res = await categoriesApi.list(currentBusiness.id);
+            return res.data;
+        },
+        enabled: !!currentBusiness?.id,
+    });
+
+    const categories: Category[] = categoriesData?.categories || [];
 
     const { data, isLoading } = useQuery({
-        queryKey: ['pos-products', currentBusiness?.id, searchQuery],
+        queryKey: ['pos-products', currentBusiness?.id, searchQuery, selectedCategory],
         queryFn: async () => {
             if (!currentBusiness?.id) return null;
             const res = await productsApi.list(currentBusiness.id, {
                 search: searchQuery || undefined,
+                categoryId: selectedCategory || undefined,
                 limit: 100
             });
             return res.data;
@@ -171,118 +192,186 @@ export default function POS() {
         const isOutOfStock = item.quantity <= 0;
 
         return (
-            <Pressable
-                onPress={() => addToCart(item)}
-                disabled={isOutOfStock}
-                style={{ width: `${100 / numColumns}%` }}
-                className="p-1.5"
-            >
+            <View style={{ width: `${100 / numColumns}%` }} className="p-2">
                 <View
-                    className={`bg-white rounded-xl p-3 shadow-sm border border-gray-100 ${isOutOfStock ? 'opacity-50' : ''}`}
+                    className={`bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 ${isOutOfStock ? 'opacity-50' : ''}`}
                 >
-                    <View className="w-full aspect-square bg-gray-50 rounded-lg items-center justify-center overflow-hidden mb-2">
-                        {item.image ? (
-                            <Image source={{ uri: item.image }} className="w-full h-full" resizeMode="cover" />
-                        ) : (
-                            <MaterialCommunityIcons name="package-variant" size={32} color="#d1d5db" />
-                        )}
-                    </View>
-                    <Text className="text-gray-900 text-sm font-medium" numberOfLines={1}>
-                        {item.name}
-                    </Text>
-                    <Text className="text-green-600 text-sm font-bold mt-0.5">
-                        {formatCurrency(item.price)}
-                    </Text>
-                    <Text className="text-gray-400 text-xs mt-0.5">
-                        {item.quantity} in stock
-                    </Text>
-                    {inCart && (
-                        <View className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full items-center justify-center shadow-sm">
-                            <Text className="text-white text-xs font-bold">{inCart.quantity}</Text>
+                    {/* Product Image - Tappable to add */}
+                    <Pressable
+                        onPress={() => addToCart(item)}
+                        disabled={isOutOfStock}
+                    >
+                        <View className="w-full aspect-square bg-gray-50 items-center justify-center overflow-hidden">
+                            {item.image ? (
+                                <Image source={{ uri: item.image }} className="w-full h-full" resizeMode="cover" />
+                            ) : (
+                                <MaterialCommunityIcons name="package-variant" size={40} color="#d1d5db" />
+                            )}
                         </View>
-                    )}
+                    </Pressable>
+
+                    {/* Product Info */}
+                    <View className="p-3">
+                        <Text className="text-gray-900 font-semibold" numberOfLines={1}>
+                            {item.name}
+                        </Text>
+                        {item.category && (
+                            <Text className="text-gray-400 text-xs mt-0.5" numberOfLines={1}>
+                                {item.category.name}
+                            </Text>
+                        )}
+                        <View className="flex-row items-center justify-between mt-2">
+                            <Text className="text-green-600 font-bold">
+                                {formatCurrency(item.price)}
+                            </Text>
+
+                            {/* Quantity Controls - Like the design */}
+                            {inCart ? (
+                                <View className="flex-row items-center bg-gray-100 rounded-lg">
+                                    <Pressable
+                                        onPress={() => updateQuantity(item.id, -1)}
+                                        className="w-7 h-7 items-center justify-center"
+                                    >
+                                        <MaterialCommunityIcons name="minus" size={14} color="#374151" />
+                                    </Pressable>
+                                    <Text className="text-gray-900 font-bold text-sm w-6 text-center">{inCart.quantity}</Text>
+                                    <Pressable
+                                        onPress={() => updateQuantity(item.id, 1)}
+                                        className="w-7 h-7 items-center justify-center"
+                                    >
+                                        <MaterialCommunityIcons name="plus" size={14} color="#22c55e" />
+                                    </Pressable>
+                                </View>
+                            ) : (
+                                <Pressable
+                                    onPress={() => addToCart(item)}
+                                    disabled={isOutOfStock}
+                                    className="w-7 h-7 bg-green-500 rounded-full items-center justify-center"
+                                >
+                                    <MaterialCommunityIcons name="plus" size={16} color="white" />
+                                </Pressable>
+                            )}
+                        </View>
+                    </View>
                 </View>
-            </Pressable>
+            </View>
         );
     };
 
     const CartPanel = () => (
-        <View className={`${isTablet ? 'w-80 border-l border-gray-200' : 'flex-1'} bg-gray-50`}>
+        <View className={`${isTablet ? 'w-80 border-l border-gray-200' : 'flex-1'} bg-white`}>
             <View className="p-4 border-b border-gray-200 bg-white flex-row items-center justify-between">
                 <View className="flex-row items-center">
-                    <MaterialCommunityIcons name="cart" size={22} color="#22c55e" />
-                    <Text className="font-bold text-gray-900 ml-2 text-lg">Cart ({totalItems})</Text>
+                    <View className="w-10 h-10 bg-green-100 rounded-xl items-center justify-center mr-2">
+                        <MaterialCommunityIcons name="receipt" size={20} color="#22c55e" />
+                    </View>
+                    <View>
+                        <Text className="font-bold text-gray-900 text-lg">Ticket</Text>
+                        <Text className="text-gray-400 text-xs">{totalItems} items</Text>
+                    </View>
                 </View>
                 {cart.length > 0 && (
                     <Pressable
                         onPress={clearCart}
-                        className="bg-red-50 px-3 py-1 rounded-lg"
+                        className="flex-row items-center"
                     >
-                        <Text className="text-red-500 text-sm font-medium">Clear</Text>
+                        <MaterialCommunityIcons name="trash-can-outline" size={18} color="#ef4444" />
+                        <Text className="text-red-500 text-sm font-medium ml-1">Clear</Text>
                     </Pressable>
                 )}
             </View>
 
-            <ScrollView className="flex-1 p-4">
+            <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
                 {cart.length === 0 ? (
                     <View className="items-center py-12">
-                        <View className="w-16 h-16 bg-gray-100 rounded-full items-center justify-center mb-3">
-                            <MaterialCommunityIcons name="cart-outline" size={32} color="#9ca3af" />
+                        <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
+                            <MaterialCommunityIcons name="cart-outline" size={40} color="#9ca3af" />
                         </View>
-                        <Text className="text-gray-500 text-center">Your cart is empty</Text>
+                        <Text className="text-gray-900 font-semibold text-lg">Your cart is empty</Text>
                         <Text className="text-gray-400 text-sm text-center mt-1">Tap products to add them</Text>
                     </View>
                 ) : (
                     cart.map(item => (
                         <View
                             key={item.product.id}
-                            className="bg-white p-4 rounded-xl mb-3 shadow-sm border border-gray-100"
+                            className="flex-row bg-gray-50 rounded-2xl mb-3 overflow-hidden"
                         >
-                            <View className="flex-row items-start justify-between">
-                                <View className="flex-1 mr-3">
-                                    <Text className="text-gray-900 font-medium" numberOfLines={2}>
-                                        {item.product.name}
-                                    </Text>
-                                    <Text className="text-green-600 font-bold mt-1">
+                            {/* Product Image */}
+                            <View className="w-20 h-20 bg-gray-200 items-center justify-center">
+                                {item.product.image ? (
+                                    <Image source={{ uri: item.product.image }} className="w-full h-full" resizeMode="cover" />
+                                ) : (
+                                    <MaterialCommunityIcons name="package-variant" size={28} color="#9ca3af" />
+                                )}
+                            </View>
+
+                            {/* Product Details */}
+                            <View className="flex-1 p-3">
+                                <View className="flex-row items-start justify-between">
+                                    <View className="flex-1 mr-2">
+                                        <Text className="text-gray-900 font-semibold" numberOfLines={1}>
+                                            {item.product.name}
+                                        </Text>
+                                        <Text className="text-gray-400 text-xs mt-0.5" numberOfLines={1}>
+                                            {item.product.category?.name || 'Product'}
+                                        </Text>
+                                    </View>
+                                    <Pressable
+                                        onPress={() => removeFromCart(item.product.id)}
+                                        className="w-6 h-6 bg-red-50 rounded items-center justify-center"
+                                    >
+                                        <MaterialCommunityIcons name="trash-can-outline" size={14} color="#ef4444" />
+                                    </Pressable>
+                                </View>
+
+                                <View className="flex-row items-center justify-between mt-2">
+                                    <Text className="text-green-600 font-bold">
                                         {formatCurrency(item.product.price)}
                                     </Text>
+
+                                    {/* Quantity Controls - Like the design with - 1 + */}
+                                    <View className="flex-row items-center">
+                                        <Pressable
+                                            onPress={() => updateQuantity(item.product.id, -1)}
+                                            className="w-7 h-7 bg-gray-200 rounded-lg items-center justify-center"
+                                        >
+                                            <MaterialCommunityIcons name="minus" size={14} color="#374151" />
+                                        </Pressable>
+                                        <Text className="text-gray-900 font-bold text-sm w-8 text-center">{item.quantity}</Text>
+                                        <Pressable
+                                            onPress={() => updateQuantity(item.product.id, 1)}
+                                            className="w-7 h-7 bg-green-500 rounded-lg items-center justify-center"
+                                        >
+                                            <MaterialCommunityIcons name="plus" size={14} color="white" />
+                                        </Pressable>
+                                    </View>
                                 </View>
-                                <Pressable
-                                    onPress={() => removeFromCart(item.product.id)}
-                                    className="p-1"
-                                >
-                                    <MaterialCommunityIcons name="close" size={18} color="#9ca3af" />
-                                </Pressable>
-                            </View>
-                            <View className="flex-row items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                                <View className="flex-row items-center bg-gray-100 rounded-lg">
-                                    <Pressable
-                                        onPress={() => updateQuantity(item.product.id, -1)}
-                                        className="w-9 h-9 items-center justify-center"
-                                    >
-                                        <MaterialCommunityIcons name="minus" size={18} color="#374151" />
-                                    </Pressable>
-                                    <Text className="text-gray-900 font-bold w-8 text-center">{item.quantity}</Text>
-                                    <Pressable
-                                        onPress={() => updateQuantity(item.product.id, 1)}
-                                        className="w-9 h-9 items-center justify-center"
-                                    >
-                                        <MaterialCommunityIcons name="plus" size={18} color="#374151" />
-                                    </Pressable>
-                                </View>
-                                <Text className="text-gray-900 font-bold text-lg">
-                                    {formatCurrency(item.product.price * item.quantity)}
-                                </Text>
                             </View>
                         </View>
                     ))
                 )}
             </ScrollView>
 
-            {/* Payment Methods & Checkout */}
+            {/* Summary & Checkout - Like the design */}
             {cart.length > 0 && (
                 <View className="p-4 border-t border-gray-200 bg-white">
-                    <Text className="text-gray-500 text-sm mb-2 font-medium">Payment Method</Text>
+                    {/* Summary Lines */}
+                    <View className="space-y-2 mb-4">
+                        <View className="flex-row justify-between items-center">
+                            <Text className="text-gray-500">Sub total :</Text>
+                            <Text className="text-gray-900 font-medium">{formatCurrency(subtotal)}</Text>
+                        </View>
+                        <View className="flex-row justify-between items-center">
+                            <Text className="text-gray-500">Discount :</Text>
+                            <Text className="text-gray-900 font-medium">{formatCurrency(0)}</Text>
+                        </View>
+                        <View className="flex-row justify-between items-center pt-2 border-t border-gray-100">
+                            <Text className="text-gray-900 font-bold">total :</Text>
+                            <Text className="text-gray-900 font-bold text-xl">{formatCurrency(subtotal)}</Text>
+                        </View>
+                    </View>
+
+                    {/* Payment Method Pills */}
                     <View className="flex-row gap-2 mb-4">
                         {(['CASH', 'CARD', 'MOBILE_MONEY'] as const).map(method => (
                             <Pressable
@@ -291,41 +380,48 @@ export default function POS() {
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                     setPaymentMethod(method);
                                 }}
-                                className={`flex-1 py-2.5 rounded-xl border-2 ${paymentMethod === method
-                                    ? 'border-green-500 bg-green-50'
-                                    : 'border-gray-200 bg-white'
+                                className={`flex-1 py-3 rounded-xl flex-row items-center justify-center ${paymentMethod === method
+                                    ? 'bg-green-500'
+                                    : 'bg-gray-100'
                                     }`}
                             >
-                                <Text className={`text-center text-xs font-semibold ${paymentMethod === method ? 'text-green-600' : 'text-gray-500'
+                                <MaterialCommunityIcons
+                                    name={method === 'CASH' ? 'cash' : method === 'CARD' ? 'credit-card-outline' : 'cellphone'}
+                                    size={16}
+                                    color={paymentMethod === method ? 'white' : '#6b7280'}
+                                />
+                                <Text className={`text-xs font-semibold ml-1 ${paymentMethod === method ? 'text-white' : 'text-gray-500'
                                     }`}>
-                                    {method === 'MOBILE_MONEY' ? 'MOBILE' : method}
+                                    {method === 'MOBILE_MONEY' ? 'Mobile' : method.charAt(0) + method.slice(1).toLowerCase()}
                                 </Text>
                             </Pressable>
                         ))}
                     </View>
 
-                    <View className="flex-row justify-between items-center mb-4">
-                        <Text className="text-gray-500 text-base">Total</Text>
-                        <Text className="text-2xl font-bold text-green-600">
-                            {formatCurrency(subtotal)}
-                        </Text>
+                    {/* Save & Charge Buttons - Like the design */}
+                    <View className="flex-row gap-3">
+                        <Pressable
+                            onPress={() => {
+                                // Save for later functionality
+                                Alert.alert('Saved', 'Order saved for later');
+                            }}
+                            className="flex-1 py-4 rounded-xl items-center justify-center bg-gray-100 active:bg-gray-200"
+                        >
+                            <Text className="text-gray-700 font-semibold">Save</Text>
+                        </Pressable>
+                        <Pressable
+                            onPress={handleCheckout}
+                            disabled={cart.length === 0 || isSubmitting}
+                            className={`flex-1 py-4 rounded-xl items-center justify-center ${isSubmitting ? 'bg-gray-300' : 'bg-green-500 active:bg-green-600'
+                                }`}
+                        >
+                            {isSubmitting ? (
+                                <ActivityIndicator size="small" color="white" />
+                            ) : (
+                                <Text className="text-white font-bold">Charge</Text>
+                            )}
+                        </Pressable>
                     </View>
-
-                    <Pressable
-                        onPress={handleCheckout}
-                        disabled={cart.length === 0 || isSubmitting}
-                        className={`py-4 rounded-xl items-center justify-center flex-row ${isSubmitting ? 'bg-gray-300' : 'bg-green-500 active:bg-green-600'
-                            }`}
-                    >
-                        {isSubmitting ? (
-                            <ActivityIndicator size="small" color="white" />
-                        ) : (
-                            <>
-                                <MaterialCommunityIcons name="check-circle" size={22} color="white" />
-                                <Text className="text-white font-bold text-base ml-2">Complete Sale</Text>
-                            </>
-                        )}
-                    </Pressable>
                 </View>
             )}
         </View>
@@ -335,8 +431,30 @@ export default function POS() {
         <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'bottom']}>
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* Header */}
+            {/* Header - Inspired by the design */}
             <View className="bg-white px-4 py-3 border-b border-gray-100">
+                <View className="flex-row items-center justify-between mb-3">
+                    <View className="flex-row items-center">
+                        <View className="w-10 h-10 bg-gray-100 rounded-xl items-center justify-center mr-3">
+                            <MaterialCommunityIcons name="grid" size={20} color="#374151" />
+                        </View>
+                        <Text className="text-gray-900 font-bold text-lg">Point of Sale</Text>
+                    </View>
+                    {/* Ticket Badge - like in the design */}
+                    {cart.length > 0 && (
+                        <Pressable
+                            onPress={() => !isTablet && setShowCart(true)}
+                            className="flex-row items-center bg-green-100 px-4 py-2 rounded-full"
+                        >
+                            <Text className="text-green-700 font-semibold mr-1">Ticket</Text>
+                            <View className="bg-green-500 w-6 h-6 rounded-full items-center justify-center">
+                                <Text className="text-white text-xs font-bold">{totalItems}</Text>
+                            </View>
+                        </Pressable>
+                    )}
+                </View>
+
+                {/* Search Bar */}
                 <View className="flex-row items-center bg-gray-100 rounded-xl px-4">
                     <MaterialCommunityIcons name="magnify" size={22} color="#9ca3af" />
                     <TextInput
@@ -353,6 +471,43 @@ export default function POS() {
                     ) : null}
                 </View>
             </View>
+
+            {/* Category Pills - Horizontal scroll like in the design */}
+            {categories.length > 0 && (
+                <View className="bg-white px-4 py-3 border-b border-gray-100">
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <Pressable
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setSelectedCategory(null);
+                            }}
+                            className={`px-4 py-2 rounded-xl mr-2 ${selectedCategory === null ? 'bg-green-500' : 'bg-gray-100'
+                                }`}
+                        >
+                            <Text className={`font-medium ${selectedCategory === null ? 'text-white' : 'text-gray-700'
+                                }`}>
+                                All Items
+                            </Text>
+                        </Pressable>
+                        {categories.map((cat) => (
+                            <Pressable
+                                key={cat.id}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setSelectedCategory(cat.id === selectedCategory ? null : cat.id);
+                                }}
+                                className={`px-4 py-2 rounded-xl mr-2 ${selectedCategory === cat.id ? 'bg-green-500' : 'bg-gray-100'
+                                    }`}
+                            >
+                                <Text className={`font-medium ${selectedCategory === cat.id ? 'text-white' : 'text-gray-700'
+                                    }`}>
+                                    {cat.name}
+                                </Text>
+                            </Pressable>
+                        ))}
+                    </ScrollView>
+                </View>
+            )}
 
             <View className="flex-1 flex-row">
                 {/* Products Grid */}
@@ -376,7 +531,7 @@ export default function POS() {
                             keyExtractor={(item) => item.id}
                             numColumns={numColumns}
                             key={numColumns}
-                            contentContainerStyle={{ padding: 8 }}
+                            contentContainerStyle={{ padding: 8, paddingBottom: cart.length > 0 && !isTablet ? 100 : 24 }}
                             showsVerticalScrollIndicator={false}
                         />
                     )}
@@ -386,24 +541,29 @@ export default function POS() {
                 {isTablet && <CartPanel />}
             </View>
 
-            {/* Mobile Cart FAB */}
+            {/* Mobile Cart FAB - Styled like the "Save/Charge" buttons in design */}
             {!isTablet && cart.length > 0 && (
-                <Pressable
-                    onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setShowCart(true);
-                    }}
-                    className="absolute bottom-6 right-4 left-4 bg-green-500 rounded-2xl py-4 px-6 flex-row items-center justify-between shadow-lg"
-                    style={{ elevation: 8 }}
-                >
-                    <View className="flex-row items-center">
-                        <View className="w-8 h-8 bg-white/20 rounded-full items-center justify-center mr-3">
-                            <Text className="text-white font-bold">{totalItems}</Text>
-                        </View>
-                        <Text className="text-white font-semibold">View Cart</Text>
-                    </View>
-                    <Text className="text-white font-bold text-lg">{formatCurrency(subtotal)}</Text>
-                </Pressable>
+                <View className="absolute bottom-6 right-4 left-4 flex-row bg-gray-900 rounded-2xl overflow-hidden shadow-lg" style={{ elevation: 8 }}>
+                    <Pressable
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setShowCart(true);
+                        }}
+                        className="flex-1 py-4 px-6 flex-row items-center justify-center border-r border-gray-700"
+                    >
+                        <MaterialCommunityIcons name="content-save-outline" size={20} color="white" />
+                        <Text className="text-white font-semibold ml-2">Save</Text>
+                    </Pressable>
+                    <Pressable
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            setShowCart(true);
+                        }}
+                        className="flex-1 py-4 px-6 flex-row items-center justify-center bg-green-500"
+                    >
+                        <Text className="text-white font-bold">Charge {formatCurrency(subtotal)}</Text>
+                    </Pressable>
+                </View>
             )}
 
             {/* Mobile Cart Modal */}

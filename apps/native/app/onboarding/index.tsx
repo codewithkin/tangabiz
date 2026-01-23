@@ -4,6 +4,7 @@ import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useOnboardingStore } from '@/store/onboarding';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated';
@@ -73,6 +74,8 @@ export default function OnboardingIndex() {
     const handleGetStarted = () => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setOnboardingComplete();
+        // Mark onboarding as viewed in AsyncStorage
+        AsyncStorage.setItem('onboardingViewed', 'true');
         router.replace('/sign-in');
     };
 

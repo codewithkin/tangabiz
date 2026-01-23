@@ -1,8 +1,11 @@
 import { Tabs } from 'expo-router';
-import { Platform, View } from 'react-native';
+import { Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { DrawerActions } from '@react-navigation/native';
 
 export default function TabLayout() {
+    const navigation = useNavigation();
     const activeColor = '#22c55e';
     const inactiveColor = '#9ca3af';
 

@@ -45,13 +45,13 @@ function DrawerLayout() {
       <Drawer.Screen
         name="(tabs)"
         options={{
-          headerTitle: "Tabs",
+          headerTitle: "Dashboard",
           drawerLabel: ({ color, focused }) => (
-            <Text style={{ color: focused ? color : themeColorForeground }}>Tabs</Text>
+            <Text style={{ color: focused ? color : themeColorForeground }}>Dashboard</Text>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <MaterialIcons
-              name="border-bottom"
+              name="dashboard"
               size={size}
               color={focused ? color : themeColorForeground}
             />
@@ -62,6 +62,54 @@ function DrawerLayout() {
                 <Ionicons name="add-outline" size={24} color={themeColorForeground} />
               </Pressable>
             </Link>
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="organisation"
+        options={{
+          headerTitle: "Organisation",
+          drawerLabel: ({ color, focused }) => (
+            <Text style={{ color: focused ? color : themeColorForeground }}>Organisation</Text>
+          ),
+          drawerIcon: ({ size, color, focused }) => (
+            <Ionicons
+              name="business-outline"
+              size={size}
+              color={focused ? color : themeColorForeground}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="billing"
+        options={{
+          headerTitle: "Billing",
+          drawerLabel: ({ color, focused }) => (
+            <Text style={{ color: focused ? color : themeColorForeground }}>Billing</Text>
+          ),
+          drawerIcon: ({ size, color, focused }) => (
+            <Ionicons
+              name="card-outline"
+              size={size}
+              color={focused ? color : themeColorForeground}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="about"
+        options={{
+          headerTitle: "About",
+          drawerLabel: ({ color, focused }) => (
+            <Text style={{ color: focused ? color : themeColorForeground }}>About</Text>
+          ),
+          drawerIcon: ({ size, color, focused }) => (
+            <Ionicons
+              name="information-circle-outline"
+              size={size}
+              color={focused ? color : themeColorForeground}
+            />
           ),
         }}
       />

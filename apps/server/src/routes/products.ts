@@ -277,22 +277,22 @@ productRoutes.get("/alerts/low-stock", requireAuth, async (c) => {
     return c.json({ error: "businessId is required" }, 400);
   }
 
-  const products = await db.product.findMany({
-    where: {
-      businessId,
-      isActive: true,
-      quantity: { lte: db.$queryRaw`"minQuantity"` },
-    },
-    select: {
-      id: true,
-      name: true,
-      sku: true,
-      quantity: true,
-      minQuantity: true,
-      image: true,
-    },
-    orderBy: { quantity: "asc" },
-  });
+  // Use raw SQL to compare quantity with minQuantity column
+  const products = await db.$queryRaw<Array<{
+    id: string;
+    name: string;
+    sku: string | null;
+    quantity: number;
+    minQuantity: number;
+    image: string | null;
+  }>>`
+    SELECT id, name, sku, quantity, "minQuantity", image
+    FROM "Product"
+    WHERE "businessId" = ${businessId}
+      AND "isActive" = true
+      AND quantity <= "minQuantity"
+    ORDER BY quantity ASC
+  `;
 
   return c.json({ products });
 });

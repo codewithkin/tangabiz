@@ -242,12 +242,32 @@ export default function Products() {
                     keyExtractor={(item) => item.id}
                     numColumns={viewMode === 'grid' ? numColumns : 1}
                     key={viewMode === 'grid' ? `grid-${numColumns}` : 'list'}
-                    contentContainerStyle={{ padding: viewMode === 'grid' ? 8 : 0, paddingTop: 16 }}
+                    contentContainerStyle={{ padding: viewMode === 'grid' ? 8 : 0, paddingTop: 16, paddingBottom: 100 }}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#22c55e" />
                     }
                     showsVerticalScrollIndicator={false}
                 />
+            )}
+
+            {/* Floating Action Button */}
+            {products.length > 0 && (
+                <Pressable
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        router.push('/products/create');
+                    }}
+                    className="absolute bottom-6 right-6 w-16 h-16 bg-green-500 rounded-full items-center justify-center shadow-lg active:bg-green-600"
+                    style={{
+                        shadowColor: '#22c55e',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                        elevation: 8,
+                    }}
+                >
+                    <MaterialCommunityIcons name="plus" size={28} color="white" />
+                </Pressable>
             )}
         </SafeAreaView>
     );
