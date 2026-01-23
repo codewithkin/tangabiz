@@ -207,7 +207,7 @@ export default function Dashboard() {
                     </Card>
 
                     {/* Quick Actions Grid */}
-                    <View className="flex flex-row gap-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                    <View className="flex flex-row gap-4">
                         {/* View Report */}
                         <Pressable onPress={() => router.push('/(drawer)/reports')} className="flex-1 flex flex-col items-center justify-center gap-1">
                             <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">

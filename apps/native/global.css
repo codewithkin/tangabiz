@@ -5,6 +5,7 @@
 @source './node_modules/heroui-native/lib';
 
 @theme {
+  --font-family-base: 'Satoshi-Regular', system-ui, -apple-system, sans-serif;
   --color-background: #ffffff;
   --color-foreground: #0f172a;
   --color-card: #ffffff;
@@ -27,7 +28,35 @@
   --radius: 0.5rem;
 }
 
+/* Base text styles with Satoshi font */
+* {
+  font-family: 'Satoshi-Regular', system-ui, -apple-system, sans-serif;
+}
 
+/* Font weight utilities */
+.font-light {
+  font-family: 'Satoshi-Light';
+}
+
+.font-normal {
+  font-family: 'Satoshi-Regular';
+}
+
+.font-medium {
+  font-family: 'Satoshi-Medium';
+}
+
+.font-semibold {
+  font-family: 'Satoshi-Bold';
+}
+
+.font-bold {
+  font-family: 'Satoshi-Bold';
+}
+
+.font-black {
+  font-family: 'Satoshi-Black';
+}
 
 .dark {
   --color-background: #0f172a;

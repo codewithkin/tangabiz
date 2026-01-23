@@ -7,6 +7,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View, ActivityIndicator } from "react-native";
+import { useFonts } from "expo-font";
 
 import { AppThemeProvider } from "@/contexts/app-theme-context";
 import { useAuthStore } from "@/store/auth";
@@ -109,6 +110,22 @@ function AuthProtection({ children }: { children: React.ReactNode }) {
 }
 
 export default function Layout() {
+  const [fontsLoaded] = useFonts({
+    'Satoshi-Black': require('@/assets/fonts/Satoshi/OTF/Satoshi-Black.otf'),
+    'Satoshi-Bold': require('@/assets/fonts/Satoshi/OTF/Satoshi-Bold.otf'),
+    'Satoshi-Medium': require('@/assets/fonts/Satoshi/OTF/Satoshi-Medium.otf'),
+    'Satoshi-Regular': require('@/assets/fonts/Satoshi/OTF/Satoshi-Regular.otf'),
+    'Satoshi-Light': require('@/assets/fonts/Satoshi/OTF/Satoshi-Light.otf'),
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}>
+        <ActivityIndicator size="large" color="#22c55e" />
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
