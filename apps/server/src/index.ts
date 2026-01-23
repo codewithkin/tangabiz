@@ -26,6 +26,26 @@ import {
 // Create Hono app
 const app = new Hono();
 
+// Enhanced logging middleware
+app.use("*", async (c, next) => {
+  const start = Date.now();
+  const method = c.req.method;
+  const path = c.req.path;
+  const query = c.req.query();
+  
+  console.log(`\n📨 [${new Date().toISOString()}] ${method.toUpperCase()} ${path}`);
+  if (Object.keys(query).length > 0) {
+    console.log(`   Query Params:`, query);
+  }
+  
+  await next();
+  
+  const duration = Date.now() - start;
+  const status = c.res.status;
+  const statusEmoji = status >= 200 && status < 300 ? '✅' : status >= 300 && status < 400 ? '↩️' : '❌';
+  console.log(`   ${statusEmoji} Status: ${status} | Duration: ${duration}ms\n`);
+});
+
 // Global middleware
 app.use("*", logger());
 app.use("*", prettyJSON());
@@ -33,7 +53,7 @@ app.use("*", secureHeaders());
 app.use(
   "*",
   cors({
-    origin: ["http://localhost:3000", "http://localhost:8081"],
+    origin: ["http://localhost:3000", "http://localhost:8081", "http://192.168.1.4:8081", "http://192.168.1.4:3000"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,

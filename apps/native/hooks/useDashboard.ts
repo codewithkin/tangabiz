@@ -9,27 +9,39 @@ export const useRecentSales = (businessId: string | null, limit: number = 5) => 
   return useQuery({
     queryKey: ['sales', businessId, limit],
     queryFn: async () => {
-      if (!businessId) return [];
+      if (!businessId) {
+        console.log('[useRecentSales] No businessId provided, returning empty array');
+        return [];
+      }
       try {
+        console.log('[useRecentSales] Fetching with businessId:', businessId);
         const response = await transactionsApi.list(businessId, {
           page: 1,
           limit,
           type: 'SALE',
         });
         
-        if (!response.success || !response.data) return [];
+        console.log('[useRecentSales] API Response:', response);
+        
+        if (!response.success || !response.data) {
+          console.warn('[useRecentSales] API call failed or returned no data');
+          return [];
+        }
         
         // Map transactions to SaleExtract format
         const transactions = response.data.transactions || [];
-        return transactions.map((tx: any) => ({
+        const mappedSales = transactions.map((tx: any) => ({
           id: tx.id,
           customerName: tx.customer?.name || 'Walk-in Customer',
           amount: Number(tx.total || 0),
           date: tx.createdAt,
           method: mapPaymentMethod(tx.paymentMethod),
         })) as SaleExtract[];
+        
+        console.log('[useRecentSales] Mapped sales:', mappedSales);
+        return mappedSales;
       } catch (error) {
-        console.error('Failed to fetch recent sales:', error);
+        console.error('[useRecentSales] Error fetching recent sales:', error);
         return [];
       }
     },
@@ -45,20 +57,29 @@ export const useBestPerformingProducts = (businessId: string | null, limit: numb
   return useQuery({
     queryKey: ['products', businessId, 'best-performing', limit],
     queryFn: async () => {
-      if (!businessId) return [];
+      if (!businessId) {
+        console.log('[useBestPerformingProducts] No businessId provided, returning empty array');
+        return [];
+      }
       
       try {
+        console.log('[useBestPerformingProducts] Fetching with businessId:', businessId);
         // Get products - assuming the API returns products sorted by sales/units
         const productsResponse = await productsApi.list(businessId, {
           page: 1,
           limit,
         });
         
-        if (!productsResponse.success || !productsResponse.data) return [];
+        console.log('[useBestPerformingProducts] API Response:', productsResponse);
+        
+        if (!productsResponse.success || !productsResponse.data) {
+          console.warn('[useBestPerformingProducts] API call failed or returned no data');
+          return [];
+        }
         
         // Map products to ProductExtact format
         const products = productsResponse.data.products || [];
-        return products.map((p: any) => ({
+        const mappedProducts = products.map((p: any) => ({
           productName: p.name,
           unitsSold: p.quantity || 0,
           totalRevenue: (p.price || 0) * (p.soldUnits || p.quantity || 0),
@@ -66,8 +87,11 @@ export const useBestPerformingProducts = (businessId: string | null, limit: numb
           hasRemovedBackground: !!p.image,
           price: p.price || 0,
         })) as ProductExtact[];
+        
+        console.log('[useBestPerformingProducts] Mapped products:', mappedProducts);
+        return mappedProducts;
       } catch (error) {
-        console.error('Failed to fetch best performing products:', error);
+        console.error('[useBestPerformingProducts] Error fetching best performing products:', error);
         return [];
       }
     },
@@ -83,25 +107,35 @@ export const useRevenueSummary = (businessId: string | null) => {
   return useQuery({
     queryKey: ['revenue', businessId],
     queryFn: async () => {
-      if (!businessId) return { totalRevenue: 0, totalTransactions: 0 };
+      if (!businessId) {
+        console.log('[useRevenueSummary] No businessId provided, returning defaults');
+        return { totalRevenue: 0, totalTransactions: 0 };
+      }
       
       try {
+        console.log('[useRevenueSummary] Fetching with businessId:', businessId);
         const response = await reportsApi.getSummary(
           businessId,
           getStartOfDay(),
           new Date().toISOString()
         );
         
+        console.log('[useRevenueSummary] API Response:', response);
+        
         if (!response.success || !response.data) {
+          console.warn('[useRevenueSummary] API call failed or returned no data');
           return { totalRevenue: 0, totalTransactions: 0 };
         }
         
-        return {
+        const summary = {
           totalRevenue: Number(response.data.totalSales || 0),
           totalTransactions: response.data.totalTransactions || 0,
         };
+        
+        console.log('[useRevenueSummary] Mapped summary:', summary);
+        return summary;
       } catch (error) {
-        console.error('Failed to fetch revenue summary:', error);
+        console.error('[useRevenueSummary] Error fetching revenue summary:', error);
         return { totalRevenue: 0, totalTransactions: 0 };
       }
     },

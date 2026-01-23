@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Pressable, View, Image, ActivityIndicator } from "react-native";
 import { useRouter } from 'expo-router';
+import React from 'react';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import {
@@ -123,15 +124,34 @@ function Product({ data }: { data: ProductExtact }) {
 
 export default function Dashboard() {
     const router = useRouter();
-    const { currentBusinessId, user } = useAuthStore();
-    
-    // Fetch data from backend
-    const { data: recentSales = [], isLoading: salesLoading } = useRecentSales(currentBusinessId);
-    const { data: bestProducts = [], isLoading: productsLoading } = useBestPerformingProducts(currentBusinessId);
-    const { data: revenue = { totalRevenue: 0, totalTransactions: 0 }, isLoading: revenueLoading } = useRevenueSummary(currentBusinessId);
-    const { data: notificationCount = 0 } = useNotificationsCount(currentBusinessId);
+    const { currentBusiness, user } = useAuthStore();
+    const businessId = currentBusiness?.id || null;
 
-    return (
+    // Fetch data from backend
+    const { data: recentSales = [], isLoading: salesLoading } = useRecentSales(businessId);
+    const { data: bestProducts = [], isLoading: productsLoading } = useBestPerformingProducts(businessId);
+    const { data: revenue = { totalRevenue: 0, totalTransactions: 0 }, isLoading: revenueLoading } = useRevenueSummary(businessId);
+    const { data: notificationCount = 0 } = useNotificationsCount(businessId);
+
+    // Log auth store and API data
+    React.useEffect(() => {
+        console.log('=== DASHBOARD AUTH & DATA ===');
+        console.log('Auth Store:', {
+            user: user?.name,
+            currentBusiness: currentBusiness?.name,
+            businessId,
+        });
+        console.log('Recent Sales:', recentSales);
+        console.log('Best Products:', bestProducts);
+        console.log('Revenue Summary:', revenue);
+        console.log('Notification Count:', notificationCount);
+        console.log('Loading States:', {
+            salesLoading,
+            productsLoading,
+            revenueLoading,
+        });
+        console.log('============================');
+    }, [user, currentBusiness, businessId, recentSales, bestProducts, revenue, notificationCount, salesLoading, productsLoading, revenueLoading]);
         <ScrollView>
             <View className="px-4 py-10 flex flex-col gap-10">
                 {/* Header Section */}
