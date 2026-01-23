@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Pressable, View, Image } from "react-native";
+import { Pressable, View, Image, ActivityIndicator } from "react-native";
 import { useRouter } from 'expo-router';
 import Fontisto from '@expo/vector-icons/Fontisto';
-import { LinearGradient } from 'expo-linear-gradient';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import {
     Card,
     CardDescription,
@@ -17,6 +17,8 @@ import { Link } from "expo-router";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Entypo from '@expo/vector-icons/Entypo';
 import { format } from "date-fns";
+import { useRecentSales, useBestPerformingProducts, useRevenueSummary, useNotificationsCount } from '@/hooks/useDashboard';
+import { useAuthStore } from '@/store/auth';
 
 // Reusable currency formatter
 function formatCurrency(amount: number, decimals = 2, currency = 'USD') {
@@ -34,6 +36,15 @@ export type SaleExtract = {
     amount: number;
     date: string;
     method: 'cash' | 'card' | 'ecocash';
+}
+
+export type ProductExtact = {
+    productName: string,
+    unitsSold: number,
+    totalRevenue: number,
+    productImage?: string,
+    hasRemovedBackground: boolean,
+    price: number
 }
 
 export type ExpenseExract = {
@@ -77,118 +88,170 @@ function Sale({ data }: { data: SaleExtract }) {
     );
 }
 
+function Product({ data }: { data: ProductExtact }) {
+    return (
+        <View className="flex flex-col gap-2">
+            {/* Product image */}
+            <Image
+                source={{ uri: data.productImage }}
+                style={{ width: '100%', height: 150, borderRadius: 12 }}
+            />
+
+            <View className="flex-1">
+                <View className="flex flex-row justify-between items-center">
+                    {/* Product name */}
+                    <Text className="font-semibold text-sm">{data.productName}</Text>
+                </View>
+
+                <View className="flex flex-row gap-2 mt-1">
+                    {/* Revenue */}
+                    <Text className="text-xs text-gray-600">
+                        Revenue: {formatCurrency(data.totalRevenue)}
+                    </Text>
+                </View>
+
+                <View className="flex flex-row gap-2 mt-1">
+                    {/* Units Sold */}
+                    <Text className="text-xs text-gray-600">
+                        Sold: {data.unitsSold} units
+                    </Text>
+                </View>
+            </View>
+        </View>
+    )
+}
+
 export default function Dashboard() {
-    const dummySales: SaleExtract[] = [
-        {
-            id: 's_1',
-            customerName: "John Doe",
-            amount: 150.75,
-            date: "2026-01-22",
-            method: "cash",
-        },
-        {
-            id: 's_2',
-            customerName: "Jane Smith",
-            amount: 320.00,
-            date: "2026-01-21",
-            method: "card",
-        },
-        {
-            id: 's_3',
-            customerName: "Michael Brown",
-            amount: 50.25,
-            date: "2026-01-20",
-            method: "ecocash",
-        },
-        {
-            id: 's_4',
-            customerName: "Emily Davis",
-            amount: 200.00,
-            date: "2026-01-19",
-            method: "cash",
-        },
-        {
-            id: 's_5',
-            customerName: "Chris Wilson",
-            amount: 75.50,
-            date: "2026-01-18",
-            method: "card",
-        },
-    ]
+    const router = useRouter();
+    const { currentBusinessId, user } = useAuthStore();
+    
+    // Fetch data from backend
+    const { data: recentSales = [], isLoading: salesLoading } = useRecentSales(currentBusinessId);
+    const { data: bestProducts = [], isLoading: productsLoading } = useBestPerformingProducts(currentBusinessId);
+    const { data: revenue = { totalRevenue: 0, totalTransactions: 0 }, isLoading: revenueLoading } = useRevenueSummary(currentBusinessId);
+    const { data: notificationCount = 0 } = useNotificationsCount(currentBusinessId);
 
     return (
         <ScrollView>
             <View className="px-4 py-10 flex flex-col gap-10">
-                <View className="flex flex-col gap-4">
+                {/* Header Section */}
+                <View className="flex flex-col gap-4 animate-fade-in">
                     <View className="flex flex-row justify-between items-center">
                         <View className="flex flex-col">
-                            <Text className="text-2xl font-semibold">Good morning, name</Text>
+                            <Text className="text-2xl font-semibold">Good morning, {user?.name?.split(' ')[0] || 'User'}</Text>
                             <Text className="text-gray-400 text-sm">Welcome back to <Text className="text-yellow-500">Tanga<Text className="text-green-500">Biz</Text></Text></Text>
                         </View>
 
-                        <Button size="icon" variant="outline" className="p-2">
-                            <Fontisto name="bell" size={20} color="black" />
-                        </Button>
+                        <Pressable onPress={() => router.push('/(drawer)/notifications')}>
+                            <View className="relative">
+                                <Button size="icon" variant="outline" className="p-2">
+                                    <Fontisto name="bell" size={20} color="black" />
+                                </Button>
+                                {notificationCount > 0 && (
+                                    <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
+                                        <Text className="text-white text-xs font-bold">{notificationCount > 9 ? '9+' : notificationCount}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        </Pressable>
                     </View>
 
-                    {/* Card showing balance */}
-                    <Card className="rounded-2xl px-4 flex flex-col gap-1 p-8">
-                        <Text className="text-gray-400 text-sm">Total Received</Text>
-
-                        {/* Amount with 2 DP */}
-                        <Text className="text-4xl font-semibold">$3,000.00</Text>
-
-                        {/* redirect to the new sale page */}
+                    {/* Revenue Card */}
+                    <Card className="rounded-2xl px-4 flex flex-col gap-1 p-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                        <Text className="text-gray-400 text-sm">Total Revenue</Text>
+                        {revenueLoading ? (
+                            <ActivityIndicator size="large" color="#3b82f6" />
+                        ) : (
+                            <>
+                                <Text className="text-4xl font-semibold">{formatCurrency(revenue.totalRevenue)}</Text>
+                                <Text className="text-xs text-gray-500 mt-1">{revenue.totalTransactions} transactions</Text>
+                            </>
+                        )}
                         <Button className="rounded-full bg-yellow-500 py-4 h-auto mt-2">
                             <Text className="font-bold">Add new Sale</Text>
                         </Button>
                     </Card>
 
-                    <View className="rounded-2xl overflow-hidden relative h-48">
-                        <LinearGradient
-                            colors={['#3b82f6', '#6b21a8']}
-                            start={{ x: 0, y: 1 }}
-                            end={{ x: 1, y: 0 }}
-                            className="flex-1 p-8 justify-between"
-                        >
-                            <Text className="text-white text-base font-semibold">Explore your business financial reports, see expenses, sales and net profit !</Text>
-                            
-                            <Button className="self-start rounded-full bg-white">
-                                <Text className="text-blue-600 font-bold" onPress={() => useRouter().push('/(drawer)/reports')}>See reports</Text>
-                            </Button>
+                    {/* Quick Actions Grid */}
+                    <View className="flex flex-row gap-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                        {/* View Report */}
+                        <Pressable onPress={() => router.push('/(drawer)/reports')} className="flex-1 flex flex-col items-center justify-center gap-1">
+                            <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                                <MaterialCommunityIcons name="chart-line" size={24} color="white" />
+                            </View>
+                            <Text className="text-xs text-center font-semibold">View report</Text>
+                        </Pressable>
 
-                            <Image
-                                source={require('@/assets/send_money.svg')}
-                                style={{
-                                    position: 'absolute',
-                                    bottom: 0,
-                                    right: 0,
-                                    width: 120,
-                                    height: 120,
-                                    opacity: 0.3,
-                                }}
-                            />
-                        </LinearGradient>
+                        {/* Add Customer */}
+                        <Pressable onPress={() => router.push('/(drawer)/customers/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
+                            <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                                <MaterialCommunityIcons name="user-plus" size={24} color="white" />
+                            </View>
+                            <Text className="text-xs text-center font-semibold">Add customer</Text>
+                        </Pressable>
+
+                        {/* New Product */}
+                        <Pressable onPress={() => router.push('/(drawer)/products/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
+                            <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                                <Entypo name="shopping-bag" size={24} color="white" />
+                            </View>
+                            <Text className="text-xs text-center font-semibold">New product</Text>
+                        </Pressable>
+
+                        {/* New Expenses */}
+                        <Pressable onPress={() => router.push('/(drawer)/expenses/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
+                            <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                                <FontAwesome6 name="receipt" size={24} color="white" />
+                            </View>
+                            <Text className="text-xs text-center font-semibold">New expense</Text>
+                        </Pressable>
                     </View>
-
                 </View>
 
-                {/* Recent sales section - Take the most recent 5 sales from the db */}
-                <View className="flex flex-col gap-2">
+                {/* Recent Sales Section */}
+                <View className="flex flex-col gap-2 animate-slide-up" style={{ animationDelay: '0.3s' }}>
                     <View className="flex flex-row justify-between items-center">
-                        <Text className="text-lg">Recent Sales</Text>
+                        <Text className="text-lg font-semibold">Recent Sales</Text>
 
-                        <Link href="#" className="text-gray-400 text-sm">See All</Link>
+                        <Link href="/(drawer)/transactions" className="text-blue-500 text-sm font-semibold">See All</Link>
                     </View>
 
-                    {/* Map the recent Sales (5 latest ones from the db) */}
-                    <View className="flex flex-col gap-4 w-full mt-2">
-                        {
-                            dummySales.map((sale: SaleExtract, index: number) => (
+                    {/* Sales List */}
+                    {salesLoading ? (
+                        <ActivityIndicator size="small" color="#3b82f6" />
+                    ) : recentSales.length > 0 ? (
+                        <View className="flex flex-col gap-4 w-full mt-2">
+                            {recentSales.map((sale: SaleExtract, index: number) => (
                                 <Sale key={index} data={sale} />
-                            ))
-                        }
+                            ))}
+                        </View>
+                    ) : (
+                        <Text className="text-gray-500 text-sm text-center py-4">No recent sales</Text>
+                    )}
+                </View>
+
+                {/* Best Performing Products Section */}
+                <View className="flex flex-col gap-2 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                    <View className="flex flex-row justify-between items-center">
+                        <Text className="text-lg font-semibold">Best Performing Products</Text>
+
+                        <Link href="/(drawer)/products" className="text-blue-500 text-sm font-semibold">See All</Link>
                     </View>
+
+                    {/* Products Grid */}
+                    {productsLoading ? (
+                        <ActivityIndicator size="small" color="#3b82f6" />
+                    ) : bestProducts.length > 0 ? (
+                        <View className="flex flex-row flex-wrap -mx-2 mt-2">
+                            {bestProducts.map((product: ProductExtact, index: number) => (
+                                <View key={index} className="w-1/2 px-2 mb-4">
+                                    <Product data={product} />
+                                </View>
+                            ))}
+                        </View>
+                    ) : (
+                        <Text className="text-gray-500 text-sm text-center py-4">No products yet</Text>
+                    )}
                 </View>
             </View>
         </ScrollView>
