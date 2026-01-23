@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { transactionsApi, productsApi, reportsApi, notificationsApi } from '@/lib/api';
-import type { SaleExtract, ProductExtact } from '@/app/(drawer)/(tabs)/index';
+import type { SaleExtract, ProductExtact } from '@/app/(drawer)/index';
 
 /**
  * Fetches recent sales (transactions) for the dashboard

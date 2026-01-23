@@ -17,13 +17,18 @@ function DrawerLayout() {
     <Drawer
       screenOptions={{
         headerTintColor: themeColorForeground,
-        headerStyle: { backgroundColor: themeColorBackground },
+        headerStyle: {
+          backgroundColor: 'transparent',
+          elevation: 0,
+          shadowOpacity: 0,
+        },
         headerTitleStyle: {
           fontWeight: "600",
           fontFamily: 'Satoshi-Bold',
           color: themeColorForeground,
         },
         drawerStyle: { backgroundColor: themeColorBackground },
+        headerRight: renderThemeToggle,
       }}
     >
       <Drawer.Screen
@@ -31,7 +36,7 @@ function DrawerLayout() {
         options={{
           headerTitle: "Home",
           drawerLabel: ({ color, focused }) => (
-            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>Home</RNText>
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: focused ? 'Satoshi-Bold' : 'Satoshi-Regular' }}>Home</RNText>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
@@ -43,25 +48,18 @@ function DrawerLayout() {
         }}
       />
       <Drawer.Screen
-        name="(tabs)/index"
+        name="products"
         options={{
-          headerTitle: "Dashboard",
+          headerTitle: "Products",
           drawerLabel: ({ color, focused }) => (
-            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>Dashboard</RNText>
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: focused ? 'Satoshi-Bold' : 'Satoshi-Regular' }}>Products</RNText>
           ),
           drawerIcon: ({ size, color, focused }) => (
-            <MaterialIcons
-              name="dashboard"
+            <Ionicons
+              name="cube-outline"
               size={size}
               color={focused ? color : themeColorForeground}
             />
-          ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable className="mr-4">
-                <Ionicons name="add-outline" size={24} color={themeColorForeground} />
-              </Pressable>
-            </Link>
           ),
         }}
       />
@@ -70,7 +68,7 @@ function DrawerLayout() {
         options={{
           headerTitle: "Organisation",
           drawerLabel: ({ color, focused }) => (
-            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>Organisation</RNText>
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: focused ? 'Satoshi-Bold' : 'Satoshi-Regular' }}>Organisation</RNText>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
@@ -86,7 +84,7 @@ function DrawerLayout() {
         options={{
           headerTitle: "Customers",
           drawerLabel: ({ color, focused }) => (
-            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>Customers</RNText>
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: focused ? 'Satoshi-Bold' : 'Satoshi-Regular' }}>Customers</RNText>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
@@ -102,7 +100,7 @@ function DrawerLayout() {
         options={{
           headerTitle: "Billing",
           drawerLabel: ({ color, focused }) => (
-            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>Billing</RNText>
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: focused ? 'Satoshi-Bold' : 'Satoshi-Regular' }}>Billing</RNText>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
@@ -118,7 +116,7 @@ function DrawerLayout() {
         options={{
           headerTitle: "About",
           drawerLabel: ({ color, focused }) => (
-            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>About</RNText>
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: focused ? 'Satoshi-Bold' : 'Satoshi-Regular' }}>About</RNText>
           ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons

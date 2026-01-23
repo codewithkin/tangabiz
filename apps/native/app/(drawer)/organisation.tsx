@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useConnection } from '@/hooks/useConnection';
 
+// Organisation management screen displaying current business details, team members, settings, and business switcher for users with multiple organisations.
 export default function OrganisationPage() {
     const { currentBusiness, businesses, setCurrentBusiness } = useAuthStore();
     const [showBusinessSelector, setShowBusinessSelector] = useState(false);

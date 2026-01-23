@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, RefreshControl, Pressable, FlatList, Image, TextInput, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import * as Haptics from 'expo-haptics';
 
 import { useAuthStore } from '@/store/auth';
 import { productsApi } from '@/lib/api';
+import { useConnection } from '@/hooks/useConnection';
 
 interface Product {
     id: string;
@@ -30,6 +31,7 @@ interface Product {
     };
 }
 
+// Products management screen showing searchable product catalog with images, pricing, stock levels, and filtering. Supports grid/list views with pull-to-refresh functionality.
 export default function Products() {
     const { currentBusiness } = useAuthStore();
     const router = useRouter();
@@ -37,6 +39,14 @@ export default function Products() {
     const [searchQuery, setSearchQuery] = useState('');
     const [refreshing, setRefreshing] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+    const { isLoading: connectionLoading, isConnected } = useConnection();
+
+    // Check connection and redirect if offline
+    useEffect(() => {
+        if (!connectionLoading && !isConnected) {
+            router.push('/offline');
+        }
+    }, [connectionLoading, isConnected]);
 
     // Responsive columns
     const isTablet = width >= 768;

@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Container } from '@/components/container';
 
+// Customers overview screen showing system connection status and providing navigation to full customer management features with real-time API health monitoring.
 export default function CustomersDrawer() {
   const { isLoading, isConnected } = useConnection();
   const successColor = useThemeColor('success');

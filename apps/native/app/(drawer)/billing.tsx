@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { useAuthStore, CVT_URLS } from '@/store/auth';
 import { useConnection } from '@/hooks/useConnection';
 
+// Billing and subscription management screen showing TangaBiz service status, payment information, billing cycle, and links to CVT platform for payment management.
 export default function BillingPage() {
     const { service, user } = useAuthStore();
     const { isLoading, isConnected } = useConnection();

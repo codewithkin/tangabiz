@@ -7,6 +7,7 @@ import { CVT_URLS } from '@/store/auth';
 import AppName from '@/components/app-name';
 import { useConnection } from '@/hooks/useConnection';
 
+// About page displaying app information, version details, developer credits, links to CVT platform, support resources, and legal information for TangaBiz POS system.
 export default function AboutPage() {
     const APP_VERSION = '1.0.0';
     const BUILD_NUMBER = '1';
