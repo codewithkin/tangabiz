@@ -220,7 +220,7 @@ export default function Dashboard() {
           <View className="flex flex-row gap-4">
             {/* View Report */}
             <Pressable onPress={() => router.push('/(drawer)/reports')} className="flex-1 flex flex-col items-center justify-center gap-1">
-              <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+              <View className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
                 <MaterialCommunityIcons name="chart-line" size={24} color="white" />
               </View>
               <Text className="text-xs text-center font-semibold">View reports</Text>
@@ -228,7 +228,7 @@ export default function Dashboard() {
 
             {/* Add Customer */}
             <Pressable onPress={() => router.push('/(drawer)/customers/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
-              <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+              <View className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
                 <MaterialCommunityIcons name="user-plus" size={24} color="white" />
               </View>
               <Text className="text-xs text-center font-semibold">Add customer</Text>
@@ -236,7 +236,7 @@ export default function Dashboard() {
 
             {/* New Product */}
             <Pressable onPress={() => router.push('/(drawer)/products/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
-              <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+              <View className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
                 <Entypo name="shopping-bag" size={24} color="white" />
               </View>
               <Text className="text-xs text-center font-semibold">New product</Text>
@@ -244,7 +244,7 @@ export default function Dashboard() {
 
             {/* New Expenses */}
             <Pressable onPress={() => router.push('/(drawer)/expenses/create')} className="flex-1 flex flex-col items-center justify-center gap-1">
-              <View className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+              <View className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
                 <FontAwesome6 name="receipt" size={24} color="white" />
               </View>
               <Text className="text-xs text-center font-semibold">New expense</Text>
@@ -257,7 +257,7 @@ export default function Dashboard() {
           <View className="flex flex-row justify-between items-center">
             <Text className="text-lg font-semibold">Recent Sales</Text>
 
-            <Link href="/(drawer)/transactions" className="text-blue-500 text-sm font-semibold">See All</Link>
+            <Link href="/(drawer)/transactions" className="text-green-500 text-sm font-semibold">See All</Link>
           </View>
 
           {/* Sales List */}
@@ -279,7 +279,7 @@ export default function Dashboard() {
           <View className="flex flex-row justify-between items-center">
             <Text className="text-lg font-semibold">Best Performing Products</Text>
 
-            <Link href="/(drawer)/products" className="text-blue-500 text-sm font-semibold">See All</Link>
+            <Link href="/(drawer)/products" className="text-green-500 text-sm font-semibold">See All</Link>
           </View>
 
           {/* Products Grid */}

@@ -65,7 +65,7 @@ function AuthProtection({ children }: { children: React.ReactNode }) {
 
       // If user is signed in and on onboarding/sign-in, redirect to dashboard
       if (token && (inOnboarding || inSignIn)) {
-        router.replace('/(drawer)/index');
+        router.replace('/(drawer)');
         setIsReady(true);
         return;
       }
