@@ -519,11 +519,13 @@ export default function NewSaleScreen() {
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Add Product Section */}
                                 <Animated.View entering={SlideInUp.duration(500).delay(200)} className="mb-4">
-                                    <CardItem>
-                                        <Text className="text-lg font-bold text-gray-900 ">Add Product</Text>
-
+                                    <CollapsibleSection
+                                        title="Add Product"
+                                        isOpen={isProductOpen}
+                                        onToggle={() => setIsProductOpen(!isProductOpen)}
+                                    >
                                         {/* Mode Toggle */}
-                                        <View className="flex-row gap-2 ">
+                                        <View className="flex-row gap-2 mb-3">
                                             <Pressable
                                                 className={`flex-1 py-2 rounded-xl items-center ${productMode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
                                                 onPress={() => setProductMode('search')}
@@ -647,7 +649,7 @@ export default function NewSaleScreen() {
                                                 <Text className="text-white font-bold">Add Item</Text>
                                             </Pressable>
                                         </View>
-                                    </CardItem>
+                                    </CollapsibleSection>
                                 </Animated.View>
                             </View>
                         </View>
