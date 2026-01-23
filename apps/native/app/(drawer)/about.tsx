@@ -1,12 +1,23 @@
 import { View, Text, ScrollView, Pressable, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { CVT_URLS } from '@/store/auth';
 import AppName from '@/components/app-name';
+import { useConnection } from '@/hooks/useConnection';
 
 export default function AboutPage() {
     const APP_VERSION = '1.0.0';
     const BUILD_NUMBER = '1';
+    const { isLoading, isConnected } = useConnection();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && !isConnected) {
+            router.push('/offline');
+        }
+    }, [isLoading, isConnected]);
 
     const openLink = (url: string) => {
         Linking.openURL(url);

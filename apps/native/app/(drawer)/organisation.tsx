@@ -1,12 +1,22 @@
 import { View, Text, ScrollView, Image, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { useState } from 'react';
+import { useConnection } from '@/hooks/useConnection';
 
 export default function OrganisationPage() {
     const { currentBusiness, businesses, setCurrentBusiness } = useAuthStore();
     const [showBusinessSelector, setShowBusinessSelector] = useState(false);
+    const { isLoading, isConnected } = useConnection();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && !isConnected) {
+            router.push('/offline');
+        }
+    }, [isLoading, isConnected]);
 
     if (!currentBusiness) {
         return (

@@ -23,7 +23,6 @@ function DrawerLayout() {
           fontFamily: 'Satoshi-Bold',
           color: themeColorForeground,
         },
-        headerRight: renderThemeToggle,
         drawerStyle: { backgroundColor: themeColorBackground },
       }}
     >
@@ -76,6 +75,22 @@ function DrawerLayout() {
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
               name="business-outline"
+              size={size}
+              color={focused ? color : themeColorForeground}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="customers"
+        options={{
+          headerTitle: "Customers",
+          drawerLabel: ({ color, focused }) => (
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: 'Satoshi-Regular' }}>Customers</RNText>
+          ),
+          drawerIcon: ({ size, color, focused }) => (
+            <Ionicons
+              name="people-outline"
               size={size}
               color={focused ? color : themeColorForeground}
             />

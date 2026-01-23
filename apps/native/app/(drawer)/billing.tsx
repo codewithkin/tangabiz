@@ -1,10 +1,21 @@
 import { View, Text, ScrollView, Pressable, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { useAuthStore, CVT_URLS } from '@/store/auth';
+import { useConnection } from '@/hooks/useConnection';
 
 export default function BillingPage() {
     const { service, user } = useAuthStore();
+    const { isLoading, isConnected } = useConnection();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && !isConnected) {
+            router.push('/offline');
+        }
+    }, [isLoading, isConnected]);
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);

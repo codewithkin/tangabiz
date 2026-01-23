@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Pressable, View, Image, ActivityIndicator } from "react-native";
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import Animated, { FadeIn, SlideInUp } from 'react-native-reanimated';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -21,6 +21,7 @@ import Entypo from '@expo/vector-icons/Entypo';
 import { format } from "date-fns";
 import { useRecentSales, useBestPerformingProducts, useRevenueSummary, useNotificationsCount } from '@/hooks/useDashboard';
 import { useAuthStore } from '@/store/auth';
+import { useConnection } from '@/hooks/useConnection';
 
 // Reusable currency formatter
 function formatCurrency(amount: number, decimals = 2, currency = 'USD') {
@@ -127,6 +128,14 @@ export default function Dashboard() {
     const router = useRouter();
     const { currentBusiness, user } = useAuthStore();
     const businessId = currentBusiness?.id || null;
+    const { isLoading: connectionLoading, isConnected } = useConnection();
+
+    // Check connection and redirect if offline
+    useEffect(() => {
+        if (!connectionLoading && !isConnected) {
+            router.push('/offline');
+        }
+    }, [connectionLoading, isConnected]);
 
     // Fetch data from backend
     const { data: recentSales = [], isLoading: salesLoading } = useRecentSales(businessId);
