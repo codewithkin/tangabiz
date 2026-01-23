@@ -88,6 +88,12 @@ export default function NewSaleScreen() {
     const [trackChange, setTrackChange] = useState(false);
     const [selectedNote, setSelectedNote] = useState<number | null>(null);
 
+    // Accordion states for collapsible sections
+    const [isCustomerOpen, setIsCustomerOpen] = useState(true);
+    const [isPaymentOpen, setIsPaymentOpen] = useState(true);
+    const [isProductOpen, setIsProductOpen] = useState(true);
+    const [isTransactionOpen, setIsTransactionOpen] = useState(true);
+
     // Calculate totals
     const subtotal = useMemo(() => {
         return items.reduce((sum, item) => sum + item.total, 0);
@@ -303,6 +309,49 @@ export default function NewSaleScreen() {
     const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
         <Surface className={`p-4 rounded-2xl ${className}`}>
             {children}
+        </Surface>
+    );
+
+    // Collapsible section component
+    const CollapsibleSection = ({ 
+        title, 
+        isOpen, 
+        onToggle, 
+        children,
+        className = '',
+        hasError = false
+    }: { 
+        title: string; 
+        isOpen: boolean; 
+        onToggle: () => void; 
+        children: React.ReactNode;
+        className?: string;
+        hasError?: boolean;
+    }) => (
+        <Surface className={`rounded-2xl ${hasError ? 'border-2 border-red-500' : ''} ${className}`}>
+            <Pressable 
+                className="p-4 flex-row items-center justify-between active:opacity-70"
+                onPress={onToggle}
+            >
+                <Text className={`text-lg font-bold ${hasError ? 'text-red-600' : 'text-gray-900'}`}>
+                    {title}
+                </Text>
+                <MaterialCommunityIcons 
+                    name={isOpen ? 'chevron-up' : 'chevron-down'} 
+                    size={24} 
+                    color={hasError ? '#dc2626' : '#6b7280'}
+                />
+            </Pressable>
+            {isOpen && (
+                <Animated.View entering={FadeIn.duration(200)} className="px-4 pb-4">
+                    {children}
+                </Animated.View>
+            )}
+            {hasError && !isOpen && (
+                <Text className="px-4 pb-3 text-sm text-red-600">
+                    Please fill in the missing details
+                </Text>
+            )}
         </Surface>
     );
 
