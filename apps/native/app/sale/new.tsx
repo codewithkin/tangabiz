@@ -120,8 +120,10 @@ export default function NewSaleScreen() {
             setProductsLoading(true);
             productsApi.list(currentBusiness.id, { search: productSearchQuery, limit: 10 })
                 .then((res) => {
-                    setProducts(res.data?.products || []);
-                    setShowProductDropdown(true);
+                    const productList = res.data?.products || [];
+                    setProducts(productList);
+                    // Only show dropdown if there are results
+                    setShowProductDropdown(productList.length > 0);
                 })
                 .catch(console.error)
                 .finally(() => setProductsLoading(false));
@@ -137,8 +139,10 @@ export default function NewSaleScreen() {
             setCustomersLoading(true);
             customersApi.list(currentBusiness.id, { search: customerSearchQuery, limit: 10 })
                 .then((res) => {
-                    setCustomers(res.data?.customers || []);
-                    setShowCustomerDropdown(true);
+                    const customerList = res.data?.customers || [];
+                    setCustomers(customerList);
+                    // Only show dropdown if there are results
+                    setShowCustomerDropdown(customerList.length > 0);
                 })
                 .catch(console.error)
                 .finally(() => setCustomersLoading(false));
