@@ -525,7 +525,10 @@ export default function NewSaleScreen() {
                             {/* Left Column on Tablet */}
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Customer Details Section */}
-                                <View className="mb-4">
+                                <View className="mb-4 bg-white rounded-2xl border border-gray-200 p-4">
+                                    <Text className="text-lg font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Satoshi-Bold' }}>
+                                        Customer Details
+                                    </Text>
                                     <View className="flex-row gap-2 mb-3">
                                         <Pressable
                                             className={`flex-1 py-2 rounded-xl items-center ${state.customer.mode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
@@ -621,7 +624,10 @@ export default function NewSaleScreen() {
                                 </View>
 
                                 {/* Payment Method Selection */}
-                                <View className="mb-4">
+                                <View className="mb-4 bg-white rounded-2xl border border-gray-200 p-4">
+                                    <Text className="text-lg font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Satoshi-Bold' }}>
+                                        Payment Method
+                                    </Text>
                                     <View className="flex-row flex-wrap gap-2">
                                         {(['CASH', 'CARD', 'BANK_TRANSFER', 'MOBILE_MONEY', 'OTHER'] as PaymentMethod[]).map((method) => (
                                             <Pressable
@@ -641,122 +647,125 @@ export default function NewSaleScreen() {
                             {/* Right Column on Tablet */}
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Add Product Section */}
-                                <View className="mb-4">
+                                <View className="mb-4 bg-white rounded-2xl border border-gray-200 p-4">
+                                    <Text className="text-lg font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Satoshi-Bold' }}>
+                                        Add Product
+                                    </Text>
                                     <View className="flex-row gap-2 mb-3">
-                                            <Pressable
-                                                className={`flex-1 py-2 rounded-xl items-center ${state.product.mode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
-                                                onPress={() => dispatch({ type: 'SET_PRODUCT_MODE', payload: 'search' })}
-                                            >
-                                                <Text className={state.product.mode === 'search' ? 'text-white font-medium' : 'text-gray-700'}>
-                                                    Select Product
-                                                </Text>
-                                            </Pressable>
-                                            <Pressable
-                                                className={`flex-1 py-2 rounded-xl items-center ${state.product.mode === 'manual' ? 'bg-green-500' : 'bg-gray-100'}`}
-                                                onPress={() => dispatch({ type: 'SET_PRODUCT_MODE', payload: 'manual' })}
-                                            >
-                                                <Text className={state.product.mode === 'manual' ? 'text-white font-medium' : 'text-gray-700'}>
-                                                    Enter Manually
-                                                </Text>
-                                            </Pressable>
-                                        </View>
+                                        <Pressable
+                                            className={`flex-1 py-2 rounded-xl items-center ${state.product.mode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
+                                            onPress={() => dispatch({ type: 'SET_PRODUCT_MODE', payload: 'search' })}
+                                        >
+                                            <Text className={state.product.mode === 'search' ? 'text-white font-medium' : 'text-gray-700'}>
+                                                Select Product
+                                            </Text>
+                                        </Pressable>
+                                        <Pressable
+                                            className={`flex-1 py-2 rounded-xl items-center ${state.product.mode === 'manual' ? 'bg-green-500' : 'bg-gray-100'}`}
+                                            onPress={() => dispatch({ type: 'SET_PRODUCT_MODE', payload: 'manual' })}
+                                        >
+                                            <Text className={state.product.mode === 'manual' ? 'text-white font-medium' : 'text-gray-700'}>
+                                                Enter Manually
+                                            </Text>
+                                        </Pressable>
+                                    </View>
 
-                                        <View className="gap-3">
-                                            {state.product.mode === 'search' ? (
-                                                <View>
-                                                    <TextInput
-                                                        className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                                        placeholder="Search products..."
-                                                        placeholderTextColor="#9ca3af"
-                                                        value={state.product.searchText}
-                                                        onChangeText={(text) => dispatch({ type: 'SET_PRODUCT_SEARCH', payload: text })}
-                                                    />
-                                                    {productSearch.results.length > 0 && (
-                                                        <View className="bg-gray-50 rounded-xl mt-2 max-h-40 overflow-hidden">
-                                                            {productSearch.loading ? (
-                                                                <View className="p-4 items-center">
-                                                                    <ActivityIndicator size="small" color="#22c55e" />
-                                                                </View>
-                                                            ) : (
-                                                                productSearch.results.map((product) => (
-                                                                    <Pressable
-                                                                        key={product.id}
-                                                                        className="p-3 border-b border-gray-200 active:bg-gray-100 flex-row justify-between"
-                                                                        onPress={() => dispatch({ type: 'SELECT_PRODUCT', payload: product })}
-                                                                    >
-                                                                        <Text className="font-medium text-gray-900 flex-1 mr-2" numberOfLines={1} ellipsizeMode="tail">
-                                                                            {product.name}
-                                                                        </Text>
-                                                                        <Text className="font-bold text-green-600">{formatCurrency(product.price)}</Text>
-                                                                    </Pressable>
-                                                                ))
-                                                            )}
-                                                        </View>
-                                                    )}
-                                                    {state.product.selected && (
-                                                        <View className="mt-2 p-3 bg-green-50 rounded-xl flex-row items-center justify-between">
-                                                            <View className="flex-1 mr-2">
-                                                                <Text className="font-medium text-green-800" numberOfLines={1} ellipsizeMode="tail">
-                                                                    {state.product.selected.name}
-                                                                </Text>
-                                                                <Text className="text-sm text-green-600">{formatCurrency(state.product.selected.price)}</Text>
-                                                            </View>
-                                                            <Pressable onPress={() => dispatch({ type: 'CLEAR_PRODUCT' })}>
-                                                                <MaterialCommunityIcons name="close-circle" size={20} color="#22c55e" />
-                                                            </Pressable>
-                                                        </View>
-                                                    )}
-                                                </View>
-                                            ) : (
-                                                <View className="gap-3">
-                                                    <TextInput
-                                                        className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                                        placeholder="Product name"
-                                                        placeholderTextColor="#9ca3af"
-                                                        value={state.product.manualData.name}
-                                                        onChangeText={(text) => dispatch({ type: 'SET_MANUAL_PRODUCT', payload: { field: 'name', value: text } })}
-                                                    />
-                                                    <TextInput
-                                                        className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                                        placeholder="Price"
-                                                        placeholderTextColor="#9ca3af"
-                                                        value={state.product.manualData.price}
-                                                        onChangeText={(text) => dispatch({ type: 'SET_MANUAL_PRODUCT', payload: { field: 'price', value: text } })}
-                                                        keyboardType="decimal-pad"
-                                                    />
-                                                </View>
-                                            )}
-
-                                            {/* Quantity Selector */}
+                                    <View className="gap-3">
+                                        {state.product.mode === 'search' ? (
                                             <View>
-                                                <Text className="text-sm font-medium text-gray-700 mb-2">Quantity</Text>
-                                                <View className="flex-row items-center gap-3">
-                                                    <Pressable
-                                                        className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center active:bg-gray-200"
-                                                        onPress={() => dispatch({ type: 'SET_ITEM_QTY', payload: Math.max(1, state.product.quantity - 1) })}
-                                                    >
-                                                        <MaterialCommunityIcons name="minus" size={20} color="#374151" />
-                                                    </Pressable>
-                                                    <View className="flex-1 bg-gray-100 px-4 py-3 rounded-xl items-center">
-                                                        <Text className="text-lg font-bold text-gray-900">{state.product.quantity}</Text>
+                                                <TextInput
+                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                    placeholder="Search products..."
+                                                    placeholderTextColor="#9ca3af"
+                                                    value={state.product.searchText}
+                                                    onChangeText={(text) => dispatch({ type: 'SET_PRODUCT_SEARCH', payload: text })}
+                                                />
+                                                {productSearch.results.length > 0 && (
+                                                    <View className="bg-gray-50 rounded-xl mt-2 max-h-40 overflow-hidden">
+                                                        {productSearch.loading ? (
+                                                            <View className="p-4 items-center">
+                                                                <ActivityIndicator size="small" color="#22c55e" />
+                                                            </View>
+                                                        ) : (
+                                                            productSearch.results.map((product) => (
+                                                                <Pressable
+                                                                    key={product.id}
+                                                                    className="p-3 border-b border-gray-200 active:bg-gray-100 flex-row justify-between"
+                                                                    onPress={() => dispatch({ type: 'SELECT_PRODUCT', payload: product })}
+                                                                >
+                                                                    <Text className="font-medium text-gray-900 flex-1 mr-2" numberOfLines={1} ellipsizeMode="tail">
+                                                                        {product.name}
+                                                                    </Text>
+                                                                    <Text className="font-bold text-green-600">{formatCurrency(product.price)}</Text>
+                                                                </Pressable>
+                                                            ))
+                                                        )}
                                                     </View>
-                                                    <Pressable
-                                                        className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center active:bg-gray-200"
-                                                        onPress={() => dispatch({ type: 'SET_ITEM_QTY', payload: state.product.quantity + 1 })}
-                                                    >
-                                                        <MaterialCommunityIcons name="plus" size={20} color="#374151" />
-                                                    </Pressable>
-                                                </View>
+                                                )}
+                                                {state.product.selected && (
+                                                    <View className="mt-2 p-3 bg-green-50 rounded-xl flex-row items-center justify-between">
+                                                        <View className="flex-1 mr-2">
+                                                            <Text className="font-medium text-green-800" numberOfLines={1} ellipsizeMode="tail">
+                                                                {state.product.selected.name}
+                                                            </Text>
+                                                            <Text className="text-sm text-green-600">{formatCurrency(state.product.selected.price)}</Text>
+                                                        </View>
+                                                        <Pressable onPress={() => dispatch({ type: 'CLEAR_PRODUCT' })}>
+                                                            <MaterialCommunityIcons name="close-circle" size={20} color="#22c55e" />
+                                                        </Pressable>
+                                                    </View>
+                                                )}
                                             </View>
+                                        ) : (
+                                            <View className="gap-3">
+                                                <TextInput
+                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                    placeholder="Product name"
+                                                    placeholderTextColor="#9ca3af"
+                                                    value={state.product.manualData.name}
+                                                    onChangeText={(text) => dispatch({ type: 'SET_MANUAL_PRODUCT', payload: { field: 'name', value: text } })}
+                                                />
+                                                <TextInput
+                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                    placeholder="Price"
+                                                    placeholderTextColor="#9ca3af"
+                                                    value={state.product.manualData.price}
+                                                    onChangeText={(text) => dispatch({ type: 'SET_MANUAL_PRODUCT', payload: { field: 'price', value: text } })}
+                                                    keyboardType="decimal-pad"
+                                                />
+                                            </View>
+                                        )}
 
-                                            <Pressable
-                                                className="bg-green-500 py-3 rounded-xl flex-row items-center justify-center gap-2 active:opacity-80"
-                                                onPress={addItemToCart}
-                                            >
-                                                <MaterialCommunityIcons name="plus" size={20} color="white" />
-                                                <Text className="text-white font-bold">Add Item</Text>
-                                            </Pressable>
+                                        {/* Quantity Selector */}
+                                        <View>
+                                            <Text className="text-sm font-medium text-gray-700 mb-2">Quantity</Text>
+                                            <View className="flex-row items-center gap-3">
+                                                <Pressable
+                                                    className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center active:bg-gray-200"
+                                                    onPress={() => dispatch({ type: 'SET_ITEM_QTY', payload: Math.max(1, state.product.quantity - 1) })}
+                                                >
+                                                    <MaterialCommunityIcons name="minus" size={20} color="#374151" />
+                                                </Pressable>
+                                                <View className="flex-1 bg-gray-100 px-4 py-3 rounded-xl items-center">
+                                                    <Text className="text-lg font-bold text-gray-900">{state.product.quantity}</Text>
+                                                </View>
+                                                <Pressable
+                                                    className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center active:bg-gray-200"
+                                                    onPress={() => dispatch({ type: 'SET_ITEM_QTY', payload: state.product.quantity + 1 })}
+                                                >
+                                                    <MaterialCommunityIcons name="plus" size={20} color="#374151" />
+                                                </Pressable>
+                                            </View>
                                         </View>
+
+                                        <Pressable
+                                            className="bg-green-500 py-3 rounded-xl flex-row items-center justify-center gap-2 active:opacity-80"
+                                            onPress={addItemToCart}
+                                        >
+                                            <MaterialCommunityIcons name="plus" size={20} color="white" />
+                                            <Text className="text-white font-bold">Add Item</Text>
+                                        </Pressable>
+                                    </View>
                                 </View>
                             </View>
                         </View>
