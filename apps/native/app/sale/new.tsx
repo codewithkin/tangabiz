@@ -87,13 +87,13 @@ export default function NewSaleScreen() {
     // Change tracking states
     const [trackChange, setTrackChange] = useState(false);
     const [selectedNote, setSelectedNote] = useState<number | null>(null);
-    const [noteQuantities, setNoteQuantities] = useState<{[key: number]: number}>({});
+    const [noteQuantities, setNoteQuantities] = useState<{ [key: number]: number }>({});
 
     // Accordion states for collapsible sections
     const [isCustomerOpen, setIsCustomerOpen] = useState(true);
-    const [isPaymentOpen, setIsPaymentOpen] = useState(true);
-    const [isProductOpen, setIsProductOpen] = useState(true);
-    const [isTransactionOpen, setIsTransactionOpen] = useState(true);
+    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+    const [isProductOpen, setIsProductOpen] = useState(false);
+    const [isTransactionOpen, setIsTransactionOpen] = useState(false);
 
     // Calculate totals
     const subtotal = useMemo(() => {
@@ -314,32 +314,32 @@ export default function NewSaleScreen() {
     );
 
     // Collapsible section component
-    const CollapsibleSection = ({ 
-        title, 
-        isOpen, 
-        onToggle, 
+    const CollapsibleSection = ({
+        title,
+        isOpen,
+        onToggle,
         children,
         className = '',
         hasError = false
-    }: { 
-        title: string; 
-        isOpen: boolean; 
-        onToggle: () => void; 
+    }: {
+        title: string;
+        isOpen: boolean;
+        onToggle: () => void;
         children: React.ReactNode;
         className?: string;
         hasError?: boolean;
     }) => (
-        <Surface className={`rounded-2xl ${hasError ? 'border-2 border-red-500' : ''} ${className}`}>
-            <Pressable 
+        <Surface className={`rounded-2xl bg-white ${hasError ? 'border-2 border-red-500' : 'border border-gray-200'} ${className}`}>
+            <Pressable
                 className="p-4 flex-row items-center justify-between active:opacity-70"
                 onPress={onToggle}
             >
                 <Text className={`text-lg font-bold ${hasError ? 'text-red-600' : 'text-gray-900'}`}>
                     {title}
                 </Text>
-                <MaterialCommunityIcons 
-                    name={isOpen ? 'chevron-up' : 'chevron-down'} 
-                    size={24} 
+                <MaterialCommunityIcons
+                    name={isOpen ? 'chevron-up' : 'chevron-down'}
+                    size={24}
                     color={hasError ? '#dc2626' : '#6b7280'}
                 />
             </Pressable>
