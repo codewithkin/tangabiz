@@ -3,17 +3,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Surface } from 'heroui-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState, useMemo, useEffect } from 'react';
+import { useReducer, useMemo, useCallback, useEffect, useRef } from 'react';
 import { api, productsApi, customersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
 import { Card as CardItem } from '@/components/ui/card';
-import { formatCurrency, formatPhoneNumber, parseCurrencyValue } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
+import { formatCurrency, parseCurrencyValue } from '@/lib/utils';
 
 /**
- * New sale creation screen with comprehensive form for recording transactions. Includes customer selection, product items with quantity and pricing, payment method options, discount management, and automatic total calculation with real-time validation.
+ * New sale creation screen - Refactored with reducer pattern and custom hooks
  */
 
 type TransactionItem = {
@@ -43,287 +42,465 @@ type Customer = {
 
 const NOTE_DENOMINATIONS = [1, 2, 5, 10, 20, 50, 100];
 
+// State shape
+type SaleState = {
+    cart: TransactionItem[];
+    customer: {
+        mode: 'search' | 'manual';
+        selectedId: string | null;
+        selected: Customer | null;
+        searchText: string;
+        manualData: { name: string; email: string; phone: string };
+    };
+    product: {
+        mode: 'search' | 'manual';
+        selected: Product | null;
+        searchText: string;
+        manualData: { name: string; price: string };
+        quantity: number;
+    };
+    payment: {
+        method: PaymentMethod;
+        discount: string;
+        amountPaid: string;
+        trackChange: boolean;
+        notes: Map<number, number>;
+        memo: string;
+    };
+    ui: {
+        isSubmitting: boolean;
+        errorMsg: string | null;
+    };
+};
+
+// Action types
+type Action =
+    | { type: 'ADD_CART_ITEM'; payload: TransactionItem }
+    | { type: 'REMOVE_CART_ITEM'; payload: number }
+    | { type: 'UPDATE_ITEM_QTY'; payload: { index: number; delta: number } }
+    | { type: 'SET_CUSTOMER_MODE'; payload: 'search' | 'manual' }
+    | { type: 'SET_CUSTOMER_SEARCH'; payload: string }
+    | { type: 'SELECT_CUSTOMER'; payload: Customer }
+    | { type: 'CLEAR_CUSTOMER' }
+    | { type: 'SET_MANUAL_CUSTOMER'; payload: { field: 'name' | 'email' | 'phone'; value: string } }
+    | { type: 'SET_PRODUCT_MODE'; payload: 'search' | 'manual' }
+    | { type: 'SET_PRODUCT_SEARCH'; payload: string }
+    | { type: 'SELECT_PRODUCT'; payload: Product }
+    | { type: 'CLEAR_PRODUCT' }
+    | { type: 'SET_MANUAL_PRODUCT'; payload: { field: 'name' | 'price'; value: string } }
+    | { type: 'SET_ITEM_QTY'; payload: number }
+    | { type: 'SET_PAYMENT_METHOD'; payload: PaymentMethod }
+    | { type: 'SET_DISCOUNT'; payload: string }
+    | { type: 'SET_AMOUNT_PAID'; payload: string }
+    | { type: 'TOGGLE_TRACK_CHANGE' }
+    | { type: 'UPDATE_NOTE_QTY'; payload: { note: number; delta: number } }
+    | { type: 'SET_MEMO'; payload: string }
+    | { type: 'SET_ERROR'; payload: string | null }
+    | { type: 'SET_SUBMITTING'; payload: boolean }
+    | { type: 'RESET_PRODUCT_FORM' };
+
+// Initial state
+const initialState: SaleState = {
+    cart: [],
+    customer: {
+        mode: 'search',
+        selectedId: null,
+        selected: null,
+        searchText: '',
+        manualData: { name: '', email: '', phone: '' },
+    },
+    product: {
+        mode: 'search',
+        selected: null,
+        searchText: '',
+        manualData: { name: '', price: '' },
+        quantity: 1,
+    },
+    payment: {
+        method: 'CASH',
+        discount: '0',
+        amountPaid: '0',
+        trackChange: false,
+        notes: new Map(),
+        memo: '',
+    },
+    ui: {
+        isSubmitting: false,
+        errorMsg: null,
+    },
+};
+
+// Reducer function
+function saleReducer(state: SaleState, action: Action): SaleState {
+    switch (action.type) {
+        case 'ADD_CART_ITEM':
+            return { ...state, cart: [...state.cart, action.payload] };
+        case 'REMOVE_CART_ITEM':
+            return { ...state, cart: state.cart.filter((_, idx) => idx !== action.payload) };
+        case 'UPDATE_ITEM_QTY': {
+            const updatedCart = state.cart.map((item, idx) => {
+                if (idx === action.payload.index) {
+                    const qty = Math.max(1, item.quantity + action.payload.delta);
+                    return { ...item, quantity: qty, total: qty * item.unitPrice - item.discount };
+                }
+                return item;
+            });
+            return { ...state, cart: updatedCart };
+        }
+        case 'SET_CUSTOMER_MODE':
+            return { ...state, customer: { ...state.customer, mode: action.payload } };
+        case 'SET_CUSTOMER_SEARCH':
+            return { ...state, customer: { ...state.customer, searchText: action.payload } };
+        case 'SELECT_CUSTOMER':
+            return {
+                ...state,
+                customer: {
+                    ...state.customer,
+                    selected: action.payload,
+                    selectedId: action.payload.id,
+                    searchText: action.payload.name,
+                },
+            };
+        case 'CLEAR_CUSTOMER':
+            return {
+                ...state,
+                customer: { ...state.customer, selected: null, selectedId: null, searchText: '' },
+            };
+        case 'SET_MANUAL_CUSTOMER':
+            return {
+                ...state,
+                customer: {
+                    ...state.customer,
+                    manualData: { ...state.customer.manualData, [action.payload.field]: action.payload.value },
+                },
+            };
+        case 'SET_PRODUCT_MODE':
+            return { ...state, product: { ...state.product, mode: action.payload } };
+        case 'SET_PRODUCT_SEARCH':
+            return { ...state, product: { ...state.product, searchText: action.payload } };
+        case 'SELECT_PRODUCT':
+            return {
+                ...state,
+                product: { ...state.product, selected: action.payload, searchText: action.payload.name },
+            };
+        case 'CLEAR_PRODUCT':
+            return { ...state, product: { ...state.product, selected: null, searchText: '' } };
+        case 'SET_MANUAL_PRODUCT':
+            return {
+                ...state,
+                product: {
+                    ...state.product,
+                    manualData: { ...state.product.manualData, [action.payload.field]: action.payload.value },
+                },
+            };
+        case 'SET_ITEM_QTY':
+            return { ...state, product: { ...state.product, quantity: action.payload } };
+        case 'SET_PAYMENT_METHOD':
+            return { ...state, payment: { ...state.payment, method: action.payload } };
+        case 'SET_DISCOUNT':
+            return { ...state, payment: { ...state.payment, discount: action.payload } };
+        case 'SET_AMOUNT_PAID':
+            return { ...state, payment: { ...state.payment, amountPaid: action.payload } };
+        case 'TOGGLE_TRACK_CHANGE':
+            return { ...state, payment: { ...state.payment, trackChange: !state.payment.trackChange } };
+        case 'UPDATE_NOTE_QTY': {
+            const newNotes = new Map(state.payment.notes);
+            const currentQty = newNotes.get(action.payload.note) || 0;
+            const newQty = Math.max(0, currentQty + action.payload.delta);
+            if (newQty === 0) {
+                newNotes.delete(action.payload.note);
+            } else {
+                newNotes.set(action.payload.note, newQty);
+            }
+            return { ...state, payment: { ...state.payment, notes: newNotes } };
+        }
+        case 'SET_MEMO':
+            return { ...state, payment: { ...state.payment, memo: action.payload } };
+        case 'SET_ERROR':
+            return { ...state, ui: { ...state.ui, errorMsg: action.payload } };
+        case 'SET_SUBMITTING':
+            return { ...state, ui: { ...state.ui, isSubmitting: action.payload } };
+        case 'RESET_PRODUCT_FORM':
+            return {
+                ...state,
+                product: {
+                    ...state.product,
+                    selected: null,
+                    searchText: '',
+                    manualData: { name: '', price: '' },
+                    quantity: 1,
+                },
+            };
+        default:
+            return state;
+    }
+}
+
+// Custom hook for product search
+function useProductSearch(businessId: string | undefined, query: string, mode: 'search' | 'manual') {
+    const [results, setResults] = useReducer((state: Product[], action: Product[]) => action, []);
+    const [loading, setLoading] = useReducer((state: boolean, action: boolean) => action, false);
+    const abortRef = useRef<AbortController | null>(null);
+
+    useEffect(() => {
+        if (mode !== 'search' || !query || query.length === 0 || !businessId) {
+            setResults([]);
+            setLoading(false);
+            return;
+        }
+
+        if (abortRef.current) abortRef.current.abort();
+        abortRef.current = new AbortController();
+
+        setLoading(true);
+        const timer = setTimeout(() => {
+            productsApi
+                .list(businessId, { search: query, limit: 10 })
+                .then((res) => setResults(res.data?.products || []))
+                .catch((err) => {
+                    if (err.name !== 'AbortError') setResults([]);
+                })
+                .finally(() => setLoading(false));
+        }, 300);
+
+        return () => {
+            clearTimeout(timer);
+            if (abortRef.current) abortRef.current.abort();
+        };
+    }, [query, mode, businessId]);
+
+    return { results, loading };
+}
+
+// Custom hook for customer search
+function useCustomerSearch(businessId: string | undefined, query: string, mode: 'search' | 'manual') {
+    const [results, setResults] = useReducer((state: Customer[], action: Customer[]) => action, []);
+    const [loading, setLoading] = useReducer((state: boolean, action: boolean) => action, false);
+    const abortRef = useRef<AbortController | null>(null);
+
+    useEffect(() => {
+        if (mode !== 'search' || !query || query.length === 0 || !businessId) {
+            setResults([]);
+            setLoading(false);
+            return;
+        }
+
+        if (abortRef.current) abortRef.current.abort();
+        abortRef.current = new AbortController();
+
+        setLoading(true);
+        const timer = setTimeout(() => {
+            customersApi
+                .list(businessId, { search: query, limit: 10 })
+                .then((res) => setResults(res.data?.customers || []))
+                .catch((err) => {
+                    if (err.name !== 'AbortError') setResults([]);
+                })
+                .finally(() => setLoading(false));
+        }, 300);
+
+        return () => {
+            clearTimeout(timer);
+            if (abortRef.current) abortRef.current.abort();
+        };
+    }, [query, mode, businessId]);
+
+    return { results, loading };
+}
+
+// Calculation utilities
+const computeSubtotal = (items: TransactionItem[]): number => {
+    return items.reduce((acc, item) => acc + item.total, 0);
+};
+
+const computeNotesTotal = (notes: Map<number, number>): number => {
+    let sum = 0;
+    notes.forEach((qty, denomination) => {
+        sum += denomination * qty;
+    });
+    return sum;
+};
+
+const computeFinalTotal = (subtotal: number, discountStr: string): number => {
+    const discountVal = parseCurrencyValue(discountStr);
+    return subtotal - discountVal;
+};
+
+const computeChange = (paid: number, total: number): number => {
+    return paid - total;
+};
+
 export default function NewSaleScreen() {
     const router = useRouter();
-    const { currentBusiness, user } = useAuthStore();
+    const { currentBusiness } = useAuthStore();
     const queryClient = useQueryClient();
     const { width } = useWindowDimensions();
 
-    // Responsive layout
     const isTablet = width >= 768;
     const isLargeScreen = width >= 1024;
 
-    const [items, setItems] = useState<TransactionItem[]>([]);
-    const [customerId, setCustomerId] = useState<string | null>(null);
-    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
-    const [discount, setDiscount] = useState<string>('0');
-    const [amountPaid, setAmountPaid] = useState<string>('0');
-    const [notes, setNotes] = useState<string>('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [state, dispatch] = useReducer(saleReducer, initialState);
 
-    // Product selection states
-    const [productMode, setProductMode] = useState<'search' | 'manual'>('search');
-    const [productSearchQuery, setProductSearchQuery] = useState('');
-    const [products, setProducts] = useState<Product[]>([]);
-    const [productsLoading, setProductsLoading] = useState(false);
-    const [showProductDropdown, setShowProductDropdown] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-    const [manualProductName, setManualProductName] = useState('');
-    const [manualProductPrice, setManualProductPrice] = useState('');
-    const [itemQuantity, setItemQuantity] = useState<number>(1);
+    const productSearch = useProductSearch(
+        currentBusiness?.id,
+        state.product.searchText,
+        state.product.mode
+    );
+    const customerSearch = useCustomerSearch(
+        currentBusiness?.id,
+        state.customer.searchText,
+        state.customer.mode
+    );
 
-    // Customer selection states
-    const [customerMode, setCustomerMode] = useState<'search' | 'manual'>('search');
-    const [customerSearchQuery, setCustomerSearchQuery] = useState('');
-    const [customers, setCustomers] = useState<Customer[]>([]);
-    const [customersLoading, setCustomersLoading] = useState(false);
-    const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-    const [manualCustomerName, setManualCustomerName] = useState('');
-    const [manualCustomerEmail, setManualCustomerEmail] = useState('');
-    const [manualCustomerPhone, setManualCustomerPhone] = useState('');
+    // Memoized calculations
+    const subtotal = useMemo(() => computeSubtotal(state.cart), [state.cart]);
+    const finalTotal = useMemo(() => computeFinalTotal(subtotal, state.payment.discount), [subtotal, state.payment.discount]);
+    const amountPaid = useMemo(() => {
+        return state.payment.trackChange
+            ? computeNotesTotal(state.payment.notes)
+            : parseCurrencyValue(state.payment.amountPaid);
+    }, [state.payment.trackChange, state.payment.notes, state.payment.amountPaid]);
+    const changeAmount = useMemo(() => computeChange(amountPaid, finalTotal), [amountPaid, finalTotal]);
 
-    // Change tracking states
-    const [trackChange, setTrackChange] = useState(false);
-    const [noteQuantities, setNoteQuantities] = useState<{ [key: number]: number }>({});
-
-    // Calculate totals
-    const subtotal = useMemo(() => {
-        return items.reduce((sum, item) => sum + item.total, 0);
-    }, [items]);
-
-    const discountAmount = parseCurrencyValue(discount);
-    const total = subtotal - discountAmount;
-
-    // Calculate amount paid from note quantities if tracking change
-    const calculateAmountFromNotes = () => {
-        let total = 0;
-        Object.entries(noteQuantities).forEach(([noteValue, quantity]) => {
-            total += parseInt(noteValue) * quantity;
-        });
-        return total;
-    };
-
-    // Calculate amount paid and change based on tracking mode
-    const amountPaidValue = trackChange ? calculateAmountFromNotes() : parseCurrencyValue(amountPaid);
-    const change = amountPaidValue - total;
-
-    // Fetch products when searching
-    useEffect(() => {
-        if (productMode === 'search' && productSearchQuery.length >= 1 && currentBusiness?.id) {
-            setProductsLoading(true);
-            productsApi.list(currentBusiness.id, { search: productSearchQuery, limit: 10 })
-                .then((res) => {
-                    const productList = res.data?.products || [];
-                    setProducts(productList);
-                    // Only show dropdown if there are results
-                    setShowProductDropdown(productList.length > 0);
-                })
-                .catch(console.error)
-                .finally(() => setProductsLoading(false));
-        } else {
-            setProducts([]);
-            setShowProductDropdown(false);
-        }
-    }, [productSearchQuery, productMode, currentBusiness?.id]);
-
-    // Fetch customers when searching
-    useEffect(() => {
-        if (customerMode === 'search' && customerSearchQuery.length >= 1 && currentBusiness?.id) {
-            setCustomersLoading(true);
-            customersApi.list(currentBusiness.id, { search: customerSearchQuery, limit: 10 })
-                .then((res) => {
-                    const customerList = res.data?.customers || [];
-                    setCustomers(customerList);
-                    // Only show dropdown if there are results
-                    setShowCustomerDropdown(customerList.length > 0);
-                })
-                .catch(console.error)
-                .finally(() => setCustomersLoading(false));
-        } else {
-            setCustomers([]);
-            setShowCustomerDropdown(false);
-        }
-    }, [customerSearchQuery, customerMode, currentBusiness?.id]);
-
-    const handleSelectProduct = (product: Product) => {
-        setSelectedProduct(product);
-        setProductSearchQuery(product.name);
-        setShowProductDropdown(false);
-    };
-
-    const handleSelectCustomer = (customer: Customer) => {
-        setSelectedCustomer(customer);
-        setCustomerId(customer.id);
-        setCustomerSearchQuery(customer.name);
-        setShowCustomerDropdown(false);
-    };
-
-    const handleAddItem = () => {
+    // Add item to cart handler
+    const addItemToCart = useCallback(() => {
         let productId = '';
         let productName = '';
         let unitPrice = 0;
 
-        if (productMode === 'search') {
-            if (!selectedProduct) {
-                setError('Please select a product');
+        if (state.product.mode === 'search') {
+            if (!state.product.selected) {
+                dispatch({ type: 'SET_ERROR', payload: 'Please select a product' });
                 return;
             }
-            productId = selectedProduct.id;
-            productName = selectedProduct.name;
-            unitPrice = selectedProduct.price;
+            productId = state.product.selected.id;
+            productName = state.product.selected.name;
+            unitPrice = state.product.selected.price;
         } else {
-            if (!manualProductName.trim()) {
-                setError('Please enter a product name');
+            if (!state.product.manualData.name.trim()) {
+                dispatch({ type: 'SET_ERROR', payload: 'Please enter a product name' });
                 return;
             }
-            const price = parseCurrencyValue(manualProductPrice);
+            const price = parseCurrencyValue(state.product.manualData.price);
             if (!price || price <= 0) {
-                setError('Please enter a valid price');
+                dispatch({ type: 'SET_ERROR', payload: 'Please enter a valid price' });
                 return;
             }
             productId = `manual-${Date.now()}`;
-            productName = manualProductName.trim();
+            productName = state.product.manualData.name.trim();
             unitPrice = price;
         }
 
-        if (itemQuantity < 1) {
-            setError('Quantity must be at least 1');
+        if (state.product.quantity < 1) {
+            dispatch({ type: 'SET_ERROR', payload: 'Quantity must be at least 1' });
             return;
         }
-
-        const itemTotal = itemQuantity * unitPrice;
 
         const newItem: TransactionItem = {
             productId,
             productName,
-            quantity: itemQuantity,
+            quantity: state.product.quantity,
             unitPrice,
             discount: 0,
-            total: itemTotal,
+            total: state.product.quantity * unitPrice,
         };
 
-        setItems([...items, newItem]);
+        dispatch({ type: 'ADD_CART_ITEM', payload: newItem });
+        dispatch({ type: 'RESET_PRODUCT_FORM' });
+        dispatch({ type: 'SET_ERROR', payload: null });
+    }, [state.product]);
 
-        // Reset item inputs
-        setSelectedProduct(null);
-        setProductSearchQuery('');
-        setManualProductName('');
-        setManualProductPrice('');
-        setItemQuantity(1);
-        setError(null);
-    };
-
-    const handleRemoveItem = (index: number) => {
-        setItems(items.filter((_, i) => i !== index));
-    };
-
-    const handleUpdateQuantity = (index: number, delta: number) => {
-        setItems(items.map((item, i) => {
-            if (i === index) {
-                const newQuantity = Math.max(1, item.quantity + delta);
-                return {
-                    ...item,
-                    quantity: newQuantity,
-                    total: newQuantity * item.unitPrice - item.discount,
-                };
-            }
-            return item;
-        }));
-    };
-
-    const handleSaveSale = async () => {
+    // Submit sale handler
+    const submitSale = useCallback(async () => {
         if (!currentBusiness?.id) {
-            setError('No business selected');
+            dispatch({ type: 'SET_ERROR', payload: 'No business selected' });
             return;
         }
 
-        if (items.length === 0) {
-            setError('Please add at least one item');
+        if (state.cart.length === 0) {
+            dispatch({ type: 'SET_ERROR', payload: 'Please add at least one item' });
             return;
         }
 
-        if (total <= 0) {
-            setError('Total must be greater than 0');
+        if (finalTotal <= 0) {
+            dispatch({ type: 'SET_ERROR', payload: 'Total must be greater than 0' });
             return;
         }
 
-        if (amountPaidValue < total) {
-            setError('Amount paid must be at least the total amount');
+        if (amountPaid < finalTotal) {
+            dispatch({ type: 'SET_ERROR', payload: 'Amount paid must be at least the total amount' });
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
+        dispatch({ type: 'SET_SUBMITTING', payload: true });
+        dispatch({ type: 'SET_ERROR', payload: null });
 
         try {
-            // Create customer if manual mode and data provided
-            let finalCustomerId = customerId;
-            if (customerMode === 'manual' && manualCustomerName.trim()) {
+            let finalCustomerId = state.customer.selectedId;
+
+            if (state.customer.mode === 'manual' && state.customer.manualData.name.trim()) {
                 const customerRes = await customersApi.create({
                     businessId: currentBusiness.id,
-                    name: manualCustomerName.trim(),
-                    email: manualCustomerEmail.trim() || null,
-                    phone: manualCustomerPhone.trim() || null,
+                    name: state.customer.manualData.name.trim(),
+                    email: state.customer.manualData.email.trim() || null,
+                    phone: state.customer.manualData.phone.trim() || null,
                 });
                 finalCustomerId = customerRes.data?.customer?.id || null;
             }
 
-            // Build notes with change tracking info
-            let finalNotes = notes.trim();
-            if (trackChange && Object.keys(noteQuantities).length > 0 && change > 0) {
-                const noteBreakdown = Object.entries(noteQuantities)
-                    .filter(([, quantity]) => quantity > 0)
-                    .map(([note, quantity]) => `${quantity}×$${note}`)
-                    .join(' + ');
-                const changeNote = `Payment: ${noteBreakdown}, Change: ${formatCurrency(change)}`;
-                finalNotes = finalNotes ? `${finalNotes}\n${changeNote}` : changeNote;
+            let finalMemo = state.payment.memo.trim();
+            if (state.payment.trackChange && state.payment.notes.size > 0 && changeAmount > 0) {
+                const noteBreakdown: string[] = [];
+                state.payment.notes.forEach((qty, denomination) => {
+                    if (qty > 0) noteBreakdown.push(`${qty}×$${denomination}`);
+                });
+                const changeNote = `Payment: ${noteBreakdown.join(' + ')}, Change: ${formatCurrency(changeAmount)}`;
+                finalMemo = finalMemo ? `${finalMemo}\n${changeNote}` : changeNote;
             }
 
             const saleData = {
                 businessId: currentBusiness.id,
                 customerId: finalCustomerId || null,
                 type: 'SALE' as const,
-                paymentMethod,
-                items: items.map(item => ({
+                paymentMethod: state.payment.method,
+                items: state.cart.map((item) => ({
                     productId: item.productId.startsWith('manual-') ? null : item.productId,
                     quantity: item.quantity,
                     unitPrice: item.unitPrice,
                     discount: item.discount,
                 })),
-                discount: discountAmount,
-                amountPaid: amountPaidValue,
-                notes: finalNotes || null,
+                discount: parseCurrencyValue(state.payment.discount),
+                amountPaid: amountPaid,
+                notes: finalMemo || null,
             };
 
             const response = await api.post('/api/transactions', saleData);
 
             if (response.data?.transaction?.id) {
-                // Invalidate relevant queries to refresh data
                 queryClient.invalidateQueries({ queryKey: ['transactions'] });
                 queryClient.invalidateQueries({ queryKey: ['revenue'] });
                 queryClient.invalidateQueries({ queryKey: ['sales'] });
 
-                // Navigate to sale details page
                 router.replace(`/sale/${response.data.transaction.id}` as any);
             }
         } catch (err: any) {
             console.error('Failed to create sale:', err);
-            setError(err.response?.data?.error || 'Failed to create sale. Please try again.');
+            dispatch({
+                type: 'SET_ERROR',
+                payload: err.response?.data?.error || 'Failed to create sale. Please try again.',
+            });
         } finally {
-            setIsLoading(false);
+            dispatch({ type: 'SET_SUBMITTING', payload: false });
         }
-    };
+    }, [currentBusiness, state, finalTotal, amountPaid, changeAmount, queryClient, router]);
 
-    // Card wrapper for responsive layout
+    // Component helpers
     const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
         <Surface className={`p-4 rounded-2xl ${className}`}>
             {children}
         </Surface>
     );
 
-    // Section component - always open
     const Section = ({
         title,
         children,
@@ -371,47 +548,46 @@ export default function NewSaleScreen() {
                                 {/* Customer Details Section */}
                                 <View className="mb-4">
                                     <Section title="Customer Details">
-                                        {/* Mode Toggle */}
                                         <View className="flex-row gap-2 mb-3">
                                             <Pressable
-                                                className={`flex-1 py-2 rounded-xl items-center ${customerMode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
-                                                onPress={() => setCustomerMode('search')}
+                                                className={`flex-1 py-2 rounded-xl items-center ${state.customer.mode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
+                                                onPress={() => dispatch({ type: 'SET_CUSTOMER_MODE', payload: 'search' })}
                                             >
-                                                <Text className={customerMode === 'search' ? 'text-white font-medium' : 'text-gray-700'}>
+                                                <Text className={state.customer.mode === 'search' ? 'text-white font-medium' : 'text-gray-700'}>
                                                     Select Existing
                                                 </Text>
                                             </Pressable>
                                             <Pressable
-                                                className={`flex-1 py-2 rounded-xl items-center ${customerMode === 'manual' ? 'bg-green-500' : 'bg-gray-100'}`}
-                                                onPress={() => setCustomerMode('manual')}
+                                                className={`flex-1 py-2 rounded-xl items-center ${state.customer.mode === 'manual' ? 'bg-green-500' : 'bg-gray-100'}`}
+                                                onPress={() => dispatch({ type: 'SET_CUSTOMER_MODE', payload: 'manual' })}
                                             >
-                                                <Text className={customerMode === 'manual' ? 'text-white font-medium' : 'text-gray-700'}>
+                                                <Text className={state.customer.mode === 'manual' ? 'text-white font-medium' : 'text-gray-700'}>
                                                     Add New
                                                 </Text>
                                             </Pressable>
                                         </View>
 
-                                        {customerMode === 'search' ? (
+                                        {state.customer.mode === 'search' ? (
                                             <View>
                                                 <TextInput
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Search customers..."
                                                     placeholderTextColor="#9ca3af"
-                                                    value={customerSearchQuery}
-                                                    onChangeText={setCustomerSearchQuery}
+                                                    value={state.customer.searchText}
+                                                    onChangeText={(text) => dispatch({ type: 'SET_CUSTOMER_SEARCH', payload: text })}
                                                 />
-                                                {showCustomerDropdown && (
+                                                {customerSearch.results.length > 0 && (
                                                     <View className="bg-gray-50 rounded-xl mt-2 max-h-40 overflow-hidden">
-                                                        {customersLoading ? (
+                                                        {customerSearch.loading ? (
                                                             <View className="p-4 items-center">
                                                                 <ActivityIndicator size="small" color="#22c55e" />
                                                             </View>
-                                                        ) : customers.length > 0 ? (
-                                                            customers.map((customer) => (
+                                                        ) : (
+                                                            customerSearch.results.map((customer) => (
                                                                 <Pressable
                                                                     key={customer.id}
                                                                     className="p-3 border-b border-gray-200 active:bg-gray-100"
-                                                                    onPress={() => handleSelectCustomer(customer)}
+                                                                    onPress={() => dispatch({ type: 'SELECT_CUSTOMER', payload: customer })}
                                                                 >
                                                                     <Text className="font-medium text-gray-900">{customer.name}</Text>
                                                                     {customer.email && (
@@ -419,28 +595,18 @@ export default function NewSaleScreen() {
                                                                     )}
                                                                 </Pressable>
                                                             ))
-                                                        ) : (
-                                                            <View className="p-4">
-                                                                <Text className="text-gray-500 text-center text-sm">
-                                                                    You don't have any customers yet
-                                                                </Text>
-                                                            </View>
                                                         )}
                                                     </View>
                                                 )}
-                                                {selectedCustomer && (
+                                                {state.customer.selected && (
                                                     <View className="mt-2 p-3 bg-green-50 rounded-xl flex-row items-center justify-between">
                                                         <View>
-                                                            <Text className="font-medium text-green-800">{selectedCustomer.name}</Text>
-                                                            {selectedCustomer.email && (
-                                                                <Text className="text-sm text-green-600">{selectedCustomer.email}</Text>
+                                                            <Text className="font-medium text-green-800">{state.customer.selected.name}</Text>
+                                                            {state.customer.selected.email && (
+                                                                <Text className="text-sm text-green-600">{state.customer.selected.email}</Text>
                                                             )}
                                                         </View>
-                                                        <Pressable onPress={() => {
-                                                            setSelectedCustomer(null);
-                                                            setCustomerId(null);
-                                                            setCustomerSearchQuery('');
-                                                        }}>
+                                                        <Pressable onPress={() => dispatch({ type: 'CLEAR_CUSTOMER' })}>
                                                             <MaterialCommunityIcons name="close-circle" size={20} color="#22c55e" />
                                                         </Pressable>
                                                     </View>
@@ -452,15 +618,15 @@ export default function NewSaleScreen() {
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Customer name *"
                                                     placeholderTextColor="#9ca3af"
-                                                    value={manualCustomerName}
-                                                    onChangeText={setManualCustomerName}
+                                                    value={state.customer.manualData.name}
+                                                    onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'name', value: text } })}
                                                 />
                                                 <TextInput
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Email (optional)"
                                                     placeholderTextColor="#9ca3af"
-                                                    value={manualCustomerEmail}
-                                                    onChangeText={setManualCustomerEmail}
+                                                    value={state.customer.manualData.email}
+                                                    onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'email', value: text } })}
                                                     keyboardType="email-address"
                                                     autoCapitalize="none"
                                                 />
@@ -468,8 +634,8 @@ export default function NewSaleScreen() {
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Phone (optional)"
                                                     placeholderTextColor="#9ca3af"
-                                                    value={manualCustomerPhone}
-                                                    onChangeText={(text) => setManualCustomerPhone(text)}
+                                                    value={state.customer.manualData.phone}
+                                                    onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'phone', value: text } })}
                                                     keyboardType="phone-pad"
                                                 />
                                             </View>
@@ -484,10 +650,10 @@ export default function NewSaleScreen() {
                                             {(['CASH', 'CARD', 'BANK_TRANSFER', 'MOBILE_MONEY', 'OTHER'] as PaymentMethod[]).map((method) => (
                                                 <Pressable
                                                     key={method}
-                                                    className={`px-4 py-2 rounded-xl ${paymentMethod === method ? 'bg-green-500' : 'bg-gray-100'}`}
-                                                    onPress={() => setPaymentMethod(method)}
+                                                    className={`px-4 py-2 rounded-xl ${state.payment.method === method ? 'bg-green-500' : 'bg-gray-100'}`}
+                                                    onPress={() => dispatch({ type: 'SET_PAYMENT_METHOD', payload: method })}
                                                 >
-                                                    <Text className={`font-medium ${paymentMethod === method ? 'text-white' : 'text-gray-700'}`}>
+                                                    <Text className={`font-medium ${state.payment.method === method ? 'text-white' : 'text-gray-700'}`}>
                                                         {method.replace(/_/g, ' ')}
                                                     </Text>
                                                 </Pressable>
@@ -502,48 +668,47 @@ export default function NewSaleScreen() {
                                 {/* Add Product Section */}
                                 <View className="mb-4">
                                     <Section title="Add Product">
-                                        {/* Mode Toggle */}
                                         <View className="flex-row gap-2 mb-3">
                                             <Pressable
-                                                className={`flex-1 py-2 rounded-xl items-center ${productMode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
-                                                onPress={() => setProductMode('search')}
+                                                className={`flex-1 py-2 rounded-xl items-center ${state.product.mode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
+                                                onPress={() => dispatch({ type: 'SET_PRODUCT_MODE', payload: 'search' })}
                                             >
-                                                <Text className={productMode === 'search' ? 'text-white font-medium' : 'text-gray-700'}>
+                                                <Text className={state.product.mode === 'search' ? 'text-white font-medium' : 'text-gray-700'}>
                                                     Select Product
                                                 </Text>
                                             </Pressable>
                                             <Pressable
-                                                className={`flex-1 py-2 rounded-xl items-center ${productMode === 'manual' ? 'bg-green-500' : 'bg-gray-100'}`}
-                                                onPress={() => setProductMode('manual')}
+                                                className={`flex-1 py-2 rounded-xl items-center ${state.product.mode === 'manual' ? 'bg-green-500' : 'bg-gray-100'}`}
+                                                onPress={() => dispatch({ type: 'SET_PRODUCT_MODE', payload: 'manual' })}
                                             >
-                                                <Text className={productMode === 'manual' ? 'text-white font-medium' : 'text-gray-700'}>
+                                                <Text className={state.product.mode === 'manual' ? 'text-white font-medium' : 'text-gray-700'}>
                                                     Enter Manually
                                                 </Text>
                                             </Pressable>
                                         </View>
 
                                         <View className="gap-3">
-                                            {productMode === 'search' ? (
+                                            {state.product.mode === 'search' ? (
                                                 <View>
                                                     <TextInput
                                                         className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                         placeholder="Search products..."
                                                         placeholderTextColor="#9ca3af"
-                                                        value={productSearchQuery}
-                                                        onChangeText={setProductSearchQuery}
+                                                        value={state.product.searchText}
+                                                        onChangeText={(text) => dispatch({ type: 'SET_PRODUCT_SEARCH', payload: text })}
                                                     />
-                                                    {showProductDropdown && (
+                                                    {productSearch.results.length > 0 && (
                                                         <View className="bg-gray-50 rounded-xl mt-2 max-h-40 overflow-hidden">
-                                                            {productsLoading ? (
+                                                            {productSearch.loading ? (
                                                                 <View className="p-4 items-center">
                                                                     <ActivityIndicator size="small" color="#22c55e" />
                                                                 </View>
-                                                            ) : products.length > 0 ? (
-                                                                products.map((product) => (
+                                                            ) : (
+                                                                productSearch.results.map((product) => (
                                                                     <Pressable
                                                                         key={product.id}
                                                                         className="p-3 border-b border-gray-200 active:bg-gray-100 flex-row justify-between"
-                                                                        onPress={() => handleSelectProduct(product)}
+                                                                        onPress={() => dispatch({ type: 'SELECT_PRODUCT', payload: product })}
                                                                     >
                                                                         <Text className="font-medium text-gray-900 flex-1 mr-2" numberOfLines={1} ellipsizeMode="tail">
                                                                             {product.name}
@@ -551,27 +716,18 @@ export default function NewSaleScreen() {
                                                                         <Text className="font-bold text-green-600">{formatCurrency(product.price)}</Text>
                                                                     </Pressable>
                                                                 ))
-                                                            ) : (
-                                                                <View className="p-4">
-                                                                    <Text className="text-gray-500 text-center text-sm">
-                                                                        You don't have any products yet
-                                                                    </Text>
-                                                                </View>
                                                             )}
                                                         </View>
                                                     )}
-                                                    {selectedProduct && (
+                                                    {state.product.selected && (
                                                         <View className="mt-2 p-3 bg-green-50 rounded-xl flex-row items-center justify-between">
                                                             <View className="flex-1 mr-2">
                                                                 <Text className="font-medium text-green-800" numberOfLines={1} ellipsizeMode="tail">
-                                                                    {selectedProduct.name}
+                                                                    {state.product.selected.name}
                                                                 </Text>
-                                                                <Text className="text-sm text-green-600">{formatCurrency(selectedProduct.price)}</Text>
+                                                                <Text className="text-sm text-green-600">{formatCurrency(state.product.selected.price)}</Text>
                                                             </View>
-                                                            <Pressable onPress={() => {
-                                                                setSelectedProduct(null);
-                                                                setProductSearchQuery('');
-                                                            }}>
+                                                            <Pressable onPress={() => dispatch({ type: 'CLEAR_PRODUCT' })}>
                                                                 <MaterialCommunityIcons name="close-circle" size={20} color="#22c55e" />
                                                             </Pressable>
                                                         </View>
@@ -583,15 +739,15 @@ export default function NewSaleScreen() {
                                                         className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                         placeholder="Product name"
                                                         placeholderTextColor="#9ca3af"
-                                                        value={manualProductName}
-                                                        onChangeText={setManualProductName}
+                                                        value={state.product.manualData.name}
+                                                        onChangeText={(text) => dispatch({ type: 'SET_MANUAL_PRODUCT', payload: { field: 'name', value: text } })}
                                                     />
                                                     <TextInput
                                                         className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                         placeholder="Price"
                                                         placeholderTextColor="#9ca3af"
-                                                        value={manualProductPrice}
-                                                        onChangeText={(text) => setManualProductPrice(text)}
+                                                        value={state.product.manualData.price}
+                                                        onChangeText={(text) => dispatch({ type: 'SET_MANUAL_PRODUCT', payload: { field: 'price', value: text } })}
                                                         keyboardType="decimal-pad"
                                                     />
                                                 </View>
@@ -603,16 +759,16 @@ export default function NewSaleScreen() {
                                                 <View className="flex-row items-center gap-3">
                                                     <Pressable
                                                         className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center active:bg-gray-200"
-                                                        onPress={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
+                                                        onPress={() => dispatch({ type: 'SET_ITEM_QTY', payload: Math.max(1, state.product.quantity - 1) })}
                                                     >
                                                         <MaterialCommunityIcons name="minus" size={20} color="#374151" />
                                                     </Pressable>
                                                     <View className="flex-1 bg-gray-100 px-4 py-3 rounded-xl items-center">
-                                                        <Text className="text-lg font-bold text-gray-900">{itemQuantity}</Text>
+                                                        <Text className="text-lg font-bold text-gray-900">{state.product.quantity}</Text>
                                                     </View>
                                                     <Pressable
                                                         className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center active:bg-gray-200"
-                                                        onPress={() => setItemQuantity(itemQuantity + 1)}
+                                                        onPress={() => dispatch({ type: 'SET_ITEM_QTY', payload: state.product.quantity + 1 })}
                                                     >
                                                         <MaterialCommunityIcons name="plus" size={20} color="#374151" />
                                                     </Pressable>
@@ -621,7 +777,7 @@ export default function NewSaleScreen() {
 
                                             <Pressable
                                                 className="bg-green-500 py-3 rounded-xl flex-row items-center justify-center gap-2 active:opacity-80"
-                                                onPress={handleAddItem}
+                                                onPress={addItemToCart}
                                             >
                                                 <MaterialCommunityIcons name="plus" size={20} color="white" />
                                                 <Text className="text-white font-bold">Add Item</Text>
@@ -633,12 +789,12 @@ export default function NewSaleScreen() {
                         </View>
 
                         {/* Items List - Full Width */}
-                        {items.length > 0 && (
+                        {state.cart.length > 0 && (
                             <View>
                                 <CardItem>
-                                    <Text className="text-lg font-bold text-gray-900 ">Items ({items.length})</Text>
+                                    <Text className="text-lg font-bold text-gray-900 ">Items ({state.cart.length})</Text>
                                     <View className="gap-2">
-                                        {items.map((item, index) => (
+                                        {state.cart.map((item, index) => (
                                             <View
                                                 key={index}
                                                 className="bg-gray-50 p-3 rounded-xl flex-row items-center justify-between"
@@ -654,19 +810,19 @@ export default function NewSaleScreen() {
                                                 <View className="flex-row items-center gap-2">
                                                     <Pressable
                                                         className="w-8 h-8 rounded-lg bg-gray-200 items-center justify-center"
-                                                        onPress={() => handleUpdateQuantity(index, -1)}
+                                                        onPress={() => dispatch({ type: 'UPDATE_ITEM_QTY', payload: { index, delta: -1 } })}
                                                     >
                                                         <MaterialCommunityIcons name="minus" size={16} color="#374151" />
                                                     </Pressable>
                                                     <Text className="font-bold text-gray-900 w-8 text-center">{item.quantity}</Text>
                                                     <Pressable
                                                         className="w-8 h-8 rounded-lg bg-gray-200 items-center justify-center"
-                                                        onPress={() => handleUpdateQuantity(index, 1)}
+                                                        onPress={() => dispatch({ type: 'UPDATE_ITEM_QTY', payload: { index, delta: 1 } })}
                                                     >
                                                         <MaterialCommunityIcons name="plus" size={16} color="#374151" />
                                                     </Pressable>
                                                     <Text className="font-bold text-gray-900 ml-2 w-20 text-right">{formatCurrency(item.total)}</Text>
-                                                    <Pressable onPress={() => handleRemoveItem(index)}>
+                                                    <Pressable onPress={() => dispatch({ type: 'REMOVE_CART_ITEM', payload: index })}>
                                                         <MaterialCommunityIcons name="delete-outline" size={20} color="#ef4444" />
                                                     </Pressable>
                                                 </View>
@@ -689,30 +845,29 @@ export default function NewSaleScreen() {
                                                 className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                 placeholder="0.00"
                                                 placeholderTextColor="#9ca3af"
-                                                value={discount}
-                                                onChangeText={(text) => setDiscount(text)}
+                                                value={state.payment.discount}
+                                                onChangeText={(text) => dispatch({ type: 'SET_DISCOUNT', payload: text })}
                                                 keyboardType="decimal-pad"
                                             />
                                         </View>
 
-                                        {/* Track Change Toggle */}
                                         <View className="flex-row items-center justify-between py-2">
                                             <Text className="text-gray-700 font-medium">
                                                 Track cash change
                                             </Text>
                                             <Switch
-                                                checked={trackChange}
-                                                onCheckedChange={setTrackChange}
+                                                checked={state.payment.trackChange}
+                                                onCheckedChange={() => dispatch({ type: 'TOGGLE_TRACK_CHANGE' })}
                                                 nativeID="track-change"
                                             />
                                         </View>
 
-                                        {trackChange ? (
+                                        {state.payment.trackChange ? (
                                             <View>
                                                 <Text className="text-sm font-medium text-gray-700 mb-2">Note Denominations</Text>
                                                 <View className="flex-row flex-wrap gap-2">
                                                     {NOTE_DENOMINATIONS.map((note) => {
-                                                        const quantity = noteQuantities[note] || 0;
+                                                        const quantity = state.payment.notes.get(note) || 0;
                                                         return (
                                                             <View
                                                                 key={note}
@@ -720,14 +875,7 @@ export default function NewSaleScreen() {
                                                             >
                                                                 <Pressable
                                                                     className="px-2 py-2 active:bg-gray-200"
-                                                                    onPress={() => {
-                                                                        if (quantity > 0) {
-                                                                            setNoteQuantities({
-                                                                                ...noteQuantities,
-                                                                                [note]: quantity - 1
-                                                                            });
-                                                                        }
-                                                                    }}
+                                                                    onPress={() => dispatch({ type: 'UPDATE_NOTE_QTY', payload: { note, delta: -1 } })}
                                                                 >
                                                                     <MaterialCommunityIcons name="minus" size={16} color="#374151" />
                                                                 </Pressable>
@@ -739,12 +887,7 @@ export default function NewSaleScreen() {
                                                                 </View>
                                                                 <Pressable
                                                                     className="px-2 py-2 active:bg-gray-200"
-                                                                    onPress={() => {
-                                                                        setNoteQuantities({
-                                                                            ...noteQuantities,
-                                                                            [note]: quantity + 1
-                                                                        });
-                                                                    }}
+                                                                    onPress={() => dispatch({ type: 'UPDATE_NOTE_QTY', payload: { note, delta: 1 } })}
                                                                 >
                                                                     <MaterialCommunityIcons name="plus" size={16} color="#374151" />
                                                                 </Pressable>
@@ -760,8 +903,8 @@ export default function NewSaleScreen() {
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="0.00"
                                                     placeholderTextColor="#9ca3af"
-                                                    value={amountPaid}
-                                                    onChangeText={(text) => setAmountPaid(text)}
+                                                    value={state.payment.amountPaid}
+                                                    onChangeText={(text) => dispatch({ type: 'SET_AMOUNT_PAID', payload: text })}
                                                     keyboardType="decimal-pad"
                                                 />
                                             </View>
@@ -773,15 +916,15 @@ export default function NewSaleScreen() {
                                                 className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                 placeholder="Add notes..."
                                                 placeholderTextColor="#9ca3af"
-                                                value={notes}
-                                                onChangeText={setNotes}
+                                                value={state.payment.memo}
+                                                onChangeText={(text) => dispatch({ type: 'SET_MEMO', payload: text })}
                                                 multiline
                                                 numberOfLines={3}
                                                 textAlignVertical="top"
                                             />
                                         </View>
                                     </View>
-                                    </Section>
+                                </Section>
                             </View>
 
                             {/* Summary Card */}
@@ -793,28 +936,28 @@ export default function NewSaleScreen() {
                                             <Text className="font-medium text-gray-700">Subtotal:</Text>
                                             <Text className="font-bold text-gray-900">{formatCurrency(subtotal)}</Text>
                                         </View>
-                                        {discountAmount > 0 && (
+                                        {parseCurrencyValue(state.payment.discount) > 0 && (
                                             <View className="flex-row justify-between">
                                                 <Text className="font-medium text-gray-700">Discount:</Text>
-                                                <Text className="font-bold text-red-600">-{formatCurrency(discountAmount)}</Text>
+                                                <Text className="font-bold text-red-600">-{formatCurrency(parseCurrencyValue(state.payment.discount))}</Text>
                                             </View>
                                         )}
                                         <View className="flex-row justify-between pt-2 border-t border-green-200">
                                             <Text className="text-lg font-black text-gray-900">Total:</Text>
-                                            <Text className="text-lg font-black text-green-600">{formatCurrency(total)}</Text>
+                                            <Text className="text-lg font-black text-green-600">{formatCurrency(finalTotal)}</Text>
                                         </View>
-                                        {amountPaidValue > 0 && (
+                                        {amountPaid > 0 && (
                                             <>
                                                 <View className="flex-row justify-between">
                                                     <Text className="font-medium text-gray-700">
-                                                        {trackChange && Object.keys(noteQuantities).some(note => (noteQuantities[parseInt(note)] || 0) > 0) ? 'Notes Breakdown:' : 'Amount Paid:'}
+                                                        {state.payment.trackChange && state.payment.notes.size > 0 ? 'Notes Breakdown:' : 'Amount Paid:'}
                                                     </Text>
-                                                    <Text className="font-bold text-gray-900">{formatCurrency(amountPaidValue)}</Text>
+                                                    <Text className="font-bold text-gray-900">{formatCurrency(amountPaid)}</Text>
                                                 </View>
-                                                {change > 0 && (
+                                                {changeAmount > 0 && (
                                                     <View className="flex-row justify-between">
                                                         <Text className="font-medium text-gray-700">Change:</Text>
-                                                        <Text className="font-bold text-green-600">{formatCurrency(change)}</Text>
+                                                        <Text className="font-bold text-green-600">{formatCurrency(changeAmount)}</Text>
                                                     </View>
                                                 )}
                                             </>
@@ -825,12 +968,12 @@ export default function NewSaleScreen() {
                         </View>
 
                         {/* Error Message */}
-                        {error && (
+                        {state.ui.errorMsg && (
                             <View>
                                 <Surface className="p-4 rounded-xl bg-red-50 border border-red-200">
                                     <View className="flex-row items-center gap-2">
                                         <MaterialCommunityIcons name="alert-circle" size={20} color="#ef4444" />
-                                        <Text className="flex-1 text-sm font-medium text-red-700">{error}</Text>
+                                        <Text className="flex-1 text-sm font-medium text-red-700">{state.ui.errorMsg}</Text>
                                     </View>
                                 </Surface>
                             </View>
@@ -839,11 +982,11 @@ export default function NewSaleScreen() {
                         {/* Save Button */}
                         <View className={isTablet ? 'items-end' : ''}>
                             <Pressable
-                                className={`bg-green-500 py-4 rounded-xl flex-row items-center justify-center gap-2 active:opacity-80 ${isTablet ? 'w-fit px-8' : 'w-full'} ${isLoading ? 'opacity-70' : ''}`}
-                                onPress={handleSaveSale}
-                                disabled={isLoading}
+                                className={`bg-green-500 py-4 rounded-xl flex-row items-center justify-center gap-2 active:opacity-80 ${isTablet ? 'w-fit px-8' : 'w-full'} ${state.ui.isSubmitting ? 'opacity-70' : ''}`}
+                                onPress={submitSale}
+                                disabled={state.ui.isSubmitting}
                             >
-                                {isLoading ? (
+                                {state.ui.isSubmitting ? (
                                     <ActivityIndicator size="small" color="white" />
                                 ) : (
                                     <>
@@ -853,12 +996,6 @@ export default function NewSaleScreen() {
                                 )}
                             </Pressable>
                         </View>
-
-                        <TextInput
-                            className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                            value={manualCustomerName}
-                            onChangeText={setManualCustomerName}
-                        />
 
                         {/* Bottom padding for mobile */}
                         <View className="h-8" />
