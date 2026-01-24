@@ -357,9 +357,9 @@ export default function NewSaleScreen() {
                 />
             </Pressable>
             {isOpen && (
-                <Animated.View entering={SlideInUp.duration(300)} className="px-4 pb-4">
+                <View className="px-4 pb-4">
                     {children}
-                </Animated.View>
+                </View>
             )}
             {hasError && !isOpen && (
                 <Text className="px-4 pb-3 text-sm text-red-600">
@@ -864,39 +864,39 @@ export default function NewSaleScreen() {
                             </View>
                         </View>
 
-                            {/* Error Message */}
-                            {error && (
-                                <View>
-                                    <Surface className="p-4 rounded-xl bg-red-50 border border-red-200">
-                                        <View className="flex-row items-center gap-2">
-                                            <MaterialCommunityIcons name="alert-circle" size={20} color="#ef4444" />
-                                            <Text className="flex-1 text-sm font-medium text-red-700">{error}</Text>
-                                        </View>
-                                    </Surface>
-                                </View>
-                            )}
-
-                            {/* Save Button */}
-                            <View className={isTablet ? 'items-end' : ''}>
-                                <Pressable
-                                    className={`bg-green-500 py-4 rounded-xl flex-row items-center justify-center gap-2 active:opacity-80 ${isTablet ? 'w-fit px-8' : 'w-full'} ${isLoading ? 'opacity-70' : ''}`}
-                                    onPress={handleSaveSale}
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? (
-                                        <ActivityIndicator size="small" color="white" />
-                                    ) : (
-                                        <>
-                                            <MaterialCommunityIcons name="check" size={24} color="white" />
-                                            <Text className="text-white font-black text-lg">Save Sale</Text>
-                                        </>
-                                    )}
-                                </Pressable>
+                        {/* Error Message */}
+                        {error && (
+                            <View>
+                                <Surface className="p-4 rounded-xl bg-red-50 border border-red-200">
+                                    <View className="flex-row items-center gap-2">
+                                        <MaterialCommunityIcons name="alert-circle" size={20} color="#ef4444" />
+                                        <Text className="flex-1 text-sm font-medium text-red-700">{error}</Text>
+                                    </View>
+                                </Surface>
                             </View>
+                        )}
 
-                            {/* Bottom padding for mobile */}
-                            <View className="h-8" />
+                        {/* Save Button */}
+                        <View className={isTablet ? 'items-end' : ''}>
+                            <Pressable
+                                className={`bg-green-500 py-4 rounded-xl flex-row items-center justify-center gap-2 active:opacity-80 ${isTablet ? 'w-fit px-8' : 'w-full'} ${isLoading ? 'opacity-70' : ''}`}
+                                onPress={handleSaveSale}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <ActivityIndicator size="small" color="white" />
+                                ) : (
+                                    <>
+                                        <MaterialCommunityIcons name="check" size={24} color="white" />
+                                        <Text className="text-white font-black text-lg">Save Sale</Text>
+                                    </>
+                                )}
+                            </Pressable>
                         </View>
+
+                        {/* Bottom padding for mobile */}
+                        <View className="h-8" />
+                    </View>
                 </ScrollView>
             </View>
         </SafeAreaView>
