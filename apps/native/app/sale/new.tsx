@@ -10,6 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
 import { Card as CardItem } from '@/components/ui/card';
 import { formatCurrency, formatPhoneNumber, parseCurrencyValue } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 /**
  * New sale creation screen with comprehensive form for recording transactions. Includes customer selection, product items with quantity and pricing, payment method options, discount management, and automatic total calculation with real-time validation.
@@ -86,12 +87,6 @@ export default function NewSaleScreen() {
     // Change tracking states
     const [trackChange, setTrackChange] = useState(false);
     const [noteQuantities, setNoteQuantities] = useState<{ [key: number]: number }>({});
-
-    // Accordion states for collapsible sections
-    const [isCustomerOpen, setIsCustomerOpen] = useState(true);
-    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-    const [isProductOpen, setIsProductOpen] = useState(false);
-    const [isTransactionOpen, setIsTransactionOpen] = useState(false);
 
     // Calculate totals
     const subtotal = useMemo(() => {
@@ -328,46 +323,25 @@ export default function NewSaleScreen() {
         </Surface>
     );
 
-    // Collapsible section component
-    const CollapsibleSection = ({
+    // Section component - always open
+    const Section = ({
         title,
-        isOpen,
-        onToggle,
         children,
-        className = '',
-        hasError = false
+        className = ''
     }: {
         title: string;
-        isOpen: boolean;
-        onToggle: () => void;
         children: React.ReactNode;
         className?: string;
-        hasError?: boolean;
     }) => (
-        <Surface className={`rounded-2xl bg-white ${hasError ? 'border-2 border-red-500' : 'border border-gray-200'} ${className}`}>
-            <Pressable
-                className="p-4 flex-row items-center justify-between active:opacity-70"
-                onPress={onToggle}
-            >
-                <Text className={`text-lg font-semibold ${hasError ? 'text-red-600' : 'text-gray-900'}`} style={{ fontFamily: 'Satoshi-Bold' }}>
+        <Surface className={`rounded-2xl bg-white border border-gray-200 ${className}`}>
+            <View className="p-4 border-b border-gray-200">
+                <Text className="text-lg font-semibold text-gray-900" style={{ fontFamily: 'Satoshi-Bold' }}>
                     {title}
                 </Text>
-                <MaterialCommunityIcons
-                    name={isOpen ? 'chevron-up' : 'chevron-down'}
-                    size={24}
-                    color={hasError ? '#dc2626' : '#6b7280'}
-                />
-            </Pressable>
-            {isOpen && (
-                <View className="px-4 pb-4">
-                    {children}
-                </View>
-            )}
-            {hasError && !isOpen && (
-                <Text className="px-4 pb-3 text-sm text-red-600">
-                    Please fill in the missing details
-                </Text>
-            )}
+            </View>
+            <View className="px-4 py-4">
+                {children}
+            </View>
         </Surface>
     );
 
@@ -396,11 +370,7 @@ export default function NewSaleScreen() {
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Customer Details Section */}
                                 <View className="mb-4">
-                                    <CollapsibleSection
-                                        title="Customer Details"
-                                        isOpen={isCustomerOpen}
-                                        onToggle={() => setIsCustomerOpen(!isCustomerOpen)}
-                                    >
+                                    <Section title="Customer Details">
                                         {/* Mode Toggle */}
                                         <View className="flex-row gap-2 mb-3">
                                             <Pressable
@@ -504,16 +474,12 @@ export default function NewSaleScreen() {
                                                 />
                                             </View>
                                         )}
-                                    </CollapsibleSection>
+                                    </Section>
                                 </View>
 
                                 {/* Payment Method Selection */}
                                 <View className="mb-4">
-                                    <CollapsibleSection
-                                        title="Payment Method"
-                                        isOpen={isPaymentOpen}
-                                        onToggle={() => setIsPaymentOpen(!isPaymentOpen)}
-                                    >
+                                    <Section title="Payment Method">
                                         <View className="flex-row flex-wrap gap-2">
                                             {(['CASH', 'CARD', 'BANK_TRANSFER', 'MOBILE_MONEY', 'OTHER'] as PaymentMethod[]).map((method) => (
                                                 <Pressable
@@ -527,7 +493,7 @@ export default function NewSaleScreen() {
                                                 </Pressable>
                                             ))}
                                         </View>
-                                    </CollapsibleSection>
+                                    </Section>
                                 </View>
                             </View>
 
@@ -535,11 +501,7 @@ export default function NewSaleScreen() {
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Add Product Section */}
                                 <View className="mb-4">
-                                    <CollapsibleSection
-                                        title="Add Product"
-                                        isOpen={isProductOpen}
-                                        onToggle={() => setIsProductOpen(!isProductOpen)}
-                                    >
+                                    <Section title="Add Product">
                                         {/* Mode Toggle */}
                                         <View className="flex-row gap-2 mb-3">
                                             <Pressable
@@ -665,7 +627,7 @@ export default function NewSaleScreen() {
                                                 <Text className="text-white font-bold">Add Item</Text>
                                             </Pressable>
                                         </View>
-                                    </CollapsibleSection>
+                                    </Section>
                                 </View>
                             </View>
                         </View>
@@ -719,11 +681,7 @@ export default function NewSaleScreen() {
                         <View className={isTablet ? 'flex-row gap-4' : 'gap-6'}>
                             {/* Transaction Details */}
                             <View className={isTablet ? 'flex-1' : ''}>
-                                <CollapsibleSection
-                                    title="Transaction Details"
-                                    isOpen={isTransactionOpen}
-                                    onToggle={() => setIsTransactionOpen(!isTransactionOpen)}
-                                >
+                                <Section title="Transaction Details">
                                     <View className="gap-3">
                                         <View>
                                             <Text className="text-sm font-medium text-gray-700 mb-1">Total Discount</Text>
@@ -823,7 +781,7 @@ export default function NewSaleScreen() {
                                             />
                                         </View>
                                     </View>
-                                </CollapsibleSection>
+                                    </Section>
                             </View>
 
                             {/* Summary Card */}
@@ -895,6 +853,12 @@ export default function NewSaleScreen() {
                                 )}
                             </Pressable>
                         </View>
+
+                        <TextInput
+                            className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                            value={manualCustomerName}
+                            onChangeText={setManualCustomerName}
+                        />
 
                         {/* Bottom padding for mobile */}
                         <View className="h-8" />

@@ -22,6 +22,7 @@ import { format } from "date-fns";
 import { useRecentSales, useBestPerformingProducts, useRevenueSummary, useNotificationsCount } from '@/hooks/useDashboard';
 import { useAuthStore } from '@/store/auth';
 import { useConnection } from '@/hooks/useConnection';
+import { Input } from "@/components/ui/input";
 
 // Reusable currency formatter
 function formatCurrency(amount: number, decimals = 2, currency = 'USD') {
