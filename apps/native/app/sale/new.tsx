@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, ActivityIndicator, TextInput, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Surface } from 'heroui-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,6 +9,7 @@ import { api, productsApi, customersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { Card as CardItem } from '@/components/ui/card';
 import { formatCurrency, formatPhoneNumber, parseCurrencyValue } from '@/lib/utils';
 
@@ -392,11 +393,11 @@ export default function NewSaleScreen() {
                             {/* Left Column on Tablet */}
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Customer Details Section */}
-                            <View className="mb-4">
-                                <CollapsibleSection
-                                    title="Customer Details"
-                                    isOpen={isCustomerOpen}
-                                    onToggle={() => setIsCustomerOpen(!isCustomerOpen)}
+                                <View className="mb-4">
+                                    <CollapsibleSection
+                                        title="Customer Details"
+                                        isOpen={isCustomerOpen}
+                                        onToggle={() => setIsCustomerOpen(!isCustomerOpen)}
                                     >
                                         {/* Mode Toggle */}
                                         <View className="flex-row gap-2 mb-3">
@@ -420,7 +421,7 @@ export default function NewSaleScreen() {
 
                                         {customerMode === 'search' ? (
                                             <View>
-                                                <TextInput
+                                                <Input
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Search customers..."
                                                     placeholderTextColor="#9ca3af"
@@ -475,14 +476,14 @@ export default function NewSaleScreen() {
                                             </View>
                                         ) : (
                                             <View className="gap-3">
-                                                <TextInput
+                                                <Input
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Customer name *"
                                                     placeholderTextColor="#9ca3af"
                                                     value={manualCustomerName}
                                                     onChangeText={setManualCustomerName}
                                                 />
-                                                <TextInput
+                                                <Input
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Email (optional)"
                                                     placeholderTextColor="#9ca3af"
@@ -491,7 +492,7 @@ export default function NewSaleScreen() {
                                                     keyboardType="email-address"
                                                     autoCapitalize="none"
                                                 />
-                                                <TextInput
+                                                <Input
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Phone (optional)"
                                                     placeholderTextColor="#9ca3af"
@@ -502,7 +503,7 @@ export default function NewSaleScreen() {
                                             </View>
                                         )}
                                     </CollapsibleSection>
-                            </View>
+                                </View>
 
                                 {/* Payment Method Selection */}
                                 <View className="mb-4">
@@ -560,7 +561,7 @@ export default function NewSaleScreen() {
                                         <View className="gap-3">
                                             {productMode === 'search' ? (
                                                 <View>
-                                                    <TextInput
+                                                <Input
                                                         className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                         placeholder="Search products..."
                                                         placeholderTextColor="#9ca3af"
@@ -614,14 +615,14 @@ export default function NewSaleScreen() {
                                                 </View>
                                             ) : (
                                                 <View className="gap-3">
-                                                    <TextInput
+                                                    <Input
                                                         className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                         placeholder="Product name"
                                                         placeholderTextColor="#9ca3af"
                                                         value={manualProductName}
                                                         onChangeText={setManualProductName}
                                                     />
-                                                    <TextInput
+                                                    <Input
                                                         className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                         placeholder="Price"
                                                         placeholderTextColor="#9ca3af"
@@ -724,7 +725,7 @@ export default function NewSaleScreen() {
                                     <View className="gap-3">
                                         <View>
                                             <Text className="text-sm font-medium text-gray-700 mb-1">Total Discount</Text>
-                                            <TextInput
+                                            <Input
                                                 className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                 placeholder="0.00"
                                                 placeholderTextColor="#9ca3af"
@@ -795,7 +796,7 @@ export default function NewSaleScreen() {
                                         ) : (
                                             <View>
                                                 <Text className="text-sm font-medium text-gray-700 mb-1">Amount Paid</Text>
-                                                <TextInput
+                                                <Input
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="0.00"
                                                     placeholderTextColor="#9ca3af"
@@ -808,7 +809,7 @@ export default function NewSaleScreen() {
 
                                         <View>
                                             <Text className="text-sm font-medium text-gray-700 mb-1">Notes (Optional)</Text>
-                                            <TextInput
+                                            <Input
                                                 className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                 placeholder="Add notes..."
                                                 placeholderTextColor="#9ca3af"
@@ -863,39 +864,39 @@ export default function NewSaleScreen() {
                             </View>
                         )}
 
-                        {/* Error Message */}
-                        {error && (
-                            <View>
-                                <Surface className="p-4 rounded-xl bg-red-50 border border-red-200">
-                                    <View className="flex-row items-center gap-2">
-                                        <MaterialCommunityIcons name="alert-circle" size={20} color="#ef4444" />
-                                        <Text className="flex-1 text-sm font-medium text-red-700">{error}</Text>
-                                    </View>
-                                </Surface>
+                            {/* Error Message */}
+                            {error && (
+                                <View>
+                                    <Surface className="p-4 rounded-xl bg-red-50 border border-red-200">
+                                        <View className="flex-row items-center gap-2">
+                                            <MaterialCommunityIcons name="alert-circle" size={20} color="#ef4444" />
+                                            <Text className="flex-1 text-sm font-medium text-red-700">{error}</Text>
+                                        </View>
+                                    </Surface>
+                                </View>
+                            )}
+
+                            {/* Save Button */}
+                            <View className={isTablet ? 'items-end' : ''}>
+                                <Pressable
+                                    className={`bg-green-500 py-4 rounded-xl flex-row items-center justify-center gap-2 active:opacity-80 ${isTablet ? 'w-fit px-8' : 'w-full'} ${isLoading ? 'opacity-70' : ''}`}
+                                    onPress={handleSaveSale}
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? (
+                                        <ActivityIndicator size="small" color="white" />
+                                    ) : (
+                                        <>
+                                            <MaterialCommunityIcons name="check" size={24} color="white" />
+                                            <Text className="text-white font-black text-lg">Save Sale</Text>
+                                        </>
+                                    )}
+                                </Pressable>
                             </View>
-                        )}
 
-                        {/* Save Button */}
-                        <View className={isTablet ? 'items-end' : ''}>
-                            <Pressable
-                                className={`bg-green-500 py-4 rounded-xl flex-row items-center justify-center gap-2 active:opacity-80 ${isTablet ? 'w-fit px-8' : 'w-full'} ${isLoading ? 'opacity-70' : ''}`}
-                                onPress={handleSaveSale}
-                                disabled={isLoading}
-                            >
-                                {isLoading ? (
-                                    <ActivityIndicator size="small" color="white" />
-                                ) : (
-                                    <>
-                                        <MaterialCommunityIcons name="check" size={24} color="white" />
-                                        <Text className="text-white font-black text-lg">Save Sale</Text>
-                                    </>
-                                )}
-                            </Pressable>
+                            {/* Bottom padding for mobile */}
+                            <View className="h-8" />
                         </View>
-
-                        {/* Bottom padding for mobile */}
-                        <View className="h-8" />
-                    </View>
                 </ScrollView>
             </View>
         </SafeAreaView>
