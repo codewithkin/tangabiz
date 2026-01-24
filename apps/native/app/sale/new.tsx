@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, TextInput, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Surface } from 'heroui-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,7 +9,6 @@ import { api, productsApi, customersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
 import { Card as CardItem } from '@/components/ui/card';
 import { formatCurrency, formatPhoneNumber, parseCurrencyValue } from '@/lib/utils';
 
@@ -421,7 +420,7 @@ export default function NewSaleScreen() {
 
                                         {customerMode === 'search' ? (
                                             <View>
-                                                <Input
+                                                <TextInput
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Search customers..."
                                                     placeholderTextColor="#9ca3af"
@@ -476,14 +475,14 @@ export default function NewSaleScreen() {
                                             </View>
                                         ) : (
                                             <View className="gap-3">
-                                                <Input
+                                                <TextInput
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Customer name *"
                                                     placeholderTextColor="#9ca3af"
                                                     value={manualCustomerName}
                                                     onChangeText={setManualCustomerName}
                                                 />
-                                                <Input
+                                                <TextInput
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Email (optional)"
                                                     placeholderTextColor="#9ca3af"
@@ -492,7 +491,7 @@ export default function NewSaleScreen() {
                                                     keyboardType="email-address"
                                                     autoCapitalize="none"
                                                 />
-                                                <Input
+                                                <TextInput
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="Phone (optional)"
                                                     placeholderTextColor="#9ca3af"
@@ -561,7 +560,7 @@ export default function NewSaleScreen() {
                                         <View className="gap-3">
                                             {productMode === 'search' ? (
                                                 <View>
-                                                    <Input
+                                                    <TextInput
                                                         className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                         placeholder="Search products..."
                                                         placeholderTextColor="#9ca3af"
@@ -615,14 +614,14 @@ export default function NewSaleScreen() {
                                                 </View>
                                             ) : (
                                                 <View className="gap-3">
-                                                    <Input
+                                                    <TextInput
                                                         className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                         placeholder="Product name"
                                                         placeholderTextColor="#9ca3af"
                                                         value={manualProductName}
                                                         onChangeText={setManualProductName}
                                                     />
-                                                    <Input
+                                                    <TextInput
                                                         className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                         placeholder="Price"
                                                         placeholderTextColor="#9ca3af"
@@ -725,7 +724,7 @@ export default function NewSaleScreen() {
                                     <View className="gap-3">
                                         <View>
                                             <Text className="text-sm font-medium text-gray-700 mb-1">Total Discount</Text>
-                                            <Input
+                                            <TextInput
                                                 className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                 placeholder="0.00"
                                                 placeholderTextColor="#9ca3af"
@@ -796,7 +795,7 @@ export default function NewSaleScreen() {
                                         ) : (
                                             <View>
                                                 <Text className="text-sm font-medium text-gray-700 mb-1">Amount Paid</Text>
-                                                <Input
+                                                <TextInput
                                                     className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                     placeholder="0.00"
                                                     placeholderTextColor="#9ca3af"
@@ -809,7 +808,7 @@ export default function NewSaleScreen() {
 
                                         <View>
                                             <Text className="text-sm font-medium text-gray-700 mb-1">Notes (Optional)</Text>
-                                            <Input
+                                            <TextInput
                                                 className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                 placeholder="Add notes..."
                                                 placeholderTextColor="#9ca3af"
