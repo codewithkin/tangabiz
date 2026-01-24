@@ -501,27 +501,6 @@ export default function NewSaleScreen() {
         </Surface>
     );
 
-    const Section = ({
-        title,
-        children,
-        className = ''
-    }: {
-        title: string;
-        children: React.ReactNode;
-        className?: string;
-    }) => (
-        <Surface className={`rounded-2xl bg-white border border-gray-200 ${className}`}>
-            <View className="p-4 border-b border-gray-200">
-                <Text className="text-lg font-semibold text-gray-900" style={{ fontFamily: 'Satoshi-Bold' }}>
-                    {title}
-                </Text>
-            </View>
-            <View className="px-4 py-4">
-                {children}
-            </View>
-        </Surface>
-    );
-
     return (
         <SafeAreaView className="flex-1 bg-white" edges={['bottom']}>
             <View className="h-full mt-8">
@@ -547,119 +526,115 @@ export default function NewSaleScreen() {
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Customer Details Section */}
                                 <View className="mb-4">
-                                    <Section title="Customer Details">
-                                        <View className="flex-row gap-2 mb-3">
-                                            <Pressable
-                                                className={`flex-1 py-2 rounded-xl items-center ${state.customer.mode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
-                                                onPress={() => dispatch({ type: 'SET_CUSTOMER_MODE', payload: 'search' })}
-                                            >
-                                                <Text className={state.customer.mode === 'search' ? 'text-white font-medium' : 'text-gray-700'}>
-                                                    Select Existing
-                                                </Text>
-                                            </Pressable>
-                                            <Pressable
-                                                className={`flex-1 py-2 rounded-xl items-center ${state.customer.mode === 'manual' ? 'bg-green-500' : 'bg-gray-100'}`}
-                                                onPress={() => dispatch({ type: 'SET_CUSTOMER_MODE', payload: 'manual' })}
-                                            >
-                                                <Text className={state.customer.mode === 'manual' ? 'text-white font-medium' : 'text-gray-700'}>
-                                                    Add New
-                                                </Text>
-                                            </Pressable>
-                                        </View>
+                                    <View className="flex-row gap-2 mb-3">
+                                        <Pressable
+                                            className={`flex-1 py-2 rounded-xl items-center ${state.customer.mode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
+                                            onPress={() => dispatch({ type: 'SET_CUSTOMER_MODE', payload: 'search' })}
+                                        >
+                                            <Text className={state.customer.mode === 'search' ? 'text-white font-medium' : 'text-gray-700'}>
+                                                Select Existing
+                                            </Text>
+                                        </Pressable>
+                                        <Pressable
+                                            className={`flex-1 py-2 rounded-xl items-center ${state.customer.mode === 'manual' ? 'bg-green-500' : 'bg-gray-100'}`}
+                                            onPress={() => dispatch({ type: 'SET_CUSTOMER_MODE', payload: 'manual' })}
+                                        >
+                                            <Text className={state.customer.mode === 'manual' ? 'text-white font-medium' : 'text-gray-700'}>
+                                                Add New
+                                            </Text>
+                                        </Pressable>
+                                    </View>
 
-                                        {state.customer.mode === 'search' ? (
-                                            <View>
-                                                <TextInput
-                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                                    placeholder="Search customers..."
-                                                    placeholderTextColor="#9ca3af"
-                                                    value={state.customer.searchText}
-                                                    onChangeText={(text) => dispatch({ type: 'SET_CUSTOMER_SEARCH', payload: text })}
-                                                />
-                                                {customerSearch.results.length > 0 && (
-                                                    <View className="bg-gray-50 rounded-xl mt-2 max-h-40 overflow-hidden">
-                                                        {customerSearch.loading ? (
-                                                            <View className="p-4 items-center">
-                                                                <ActivityIndicator size="small" color="#22c55e" />
-                                                            </View>
-                                                        ) : (
-                                                            customerSearch.results.map((customer) => (
-                                                                <Pressable
-                                                                    key={customer.id}
-                                                                    className="p-3 border-b border-gray-200 active:bg-gray-100"
-                                                                    onPress={() => dispatch({ type: 'SELECT_CUSTOMER', payload: customer })}
-                                                                >
-                                                                    <Text className="font-medium text-gray-900">{customer.name}</Text>
-                                                                    {customer.email && (
-                                                                        <Text className="text-sm text-gray-500">{customer.email}</Text>
-                                                                    )}
-                                                                </Pressable>
-                                                            ))
+                                    {state.customer.mode === 'search' ? (
+                                        <View>
+                                            <TextInput
+                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                placeholder="Search customers..."
+                                                placeholderTextColor="#9ca3af"
+                                                value={state.customer.searchText}
+                                                onChangeText={(text) => dispatch({ type: 'SET_CUSTOMER_SEARCH', payload: text })}
+                                            />
+                                            {customerSearch.results.length > 0 && (
+                                                <View className="bg-gray-50 rounded-xl mt-2 max-h-40 overflow-hidden">
+                                                    {customerSearch.loading ? (
+                                                        <View className="p-4 items-center">
+                                                            <ActivityIndicator size="small" color="#22c55e" />
+                                                        </View>
+                                                    ) : (
+                                                        customerSearch.results.map((customer) => (
+                                                            <Pressable
+                                                                key={customer.id}
+                                                                className="p-3 border-b border-gray-200 active:bg-gray-100"
+                                                                onPress={() => dispatch({ type: 'SELECT_CUSTOMER', payload: customer })}
+                                                            >
+                                                                <Text className="font-medium text-gray-900">{customer.name}</Text>
+                                                                {customer.email && (
+                                                                    <Text className="text-sm text-gray-500">{customer.email}</Text>
+                                                                )}
+                                                            </Pressable>
+                                                        ))
+                                                    )}
+                                                </View>
+                                            )}
+                                            {state.customer.selected && (
+                                                <View className="mt-2 p-3 bg-green-50 rounded-xl flex-row items-center justify-between">
+                                                    <View>
+                                                        <Text className="font-medium text-green-800">{state.customer.selected.name}</Text>
+                                                        {state.customer.selected.email && (
+                                                            <Text className="text-sm text-green-600">{state.customer.selected.email}</Text>
                                                         )}
                                                     </View>
-                                                )}
-                                                {state.customer.selected && (
-                                                    <View className="mt-2 p-3 bg-green-50 rounded-xl flex-row items-center justify-between">
-                                                        <View>
-                                                            <Text className="font-medium text-green-800">{state.customer.selected.name}</Text>
-                                                            {state.customer.selected.email && (
-                                                                <Text className="text-sm text-green-600">{state.customer.selected.email}</Text>
-                                                            )}
-                                                        </View>
-                                                        <Pressable onPress={() => dispatch({ type: 'CLEAR_CUSTOMER' })}>
-                                                            <MaterialCommunityIcons name="close-circle" size={20} color="#22c55e" />
-                                                        </Pressable>
-                                                    </View>
-                                                )}
-                                            </View>
-                                        ) : (
-                                            <View className="gap-3">
-                                                <TextInput
-                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                                    placeholder="Customer name *"
-                                                    placeholderTextColor="#9ca3af"
-                                                    value={state.customer.manualData.name}
-                                                    onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'name', value: text } })}
-                                                />
-                                                <TextInput
-                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                                    placeholder="Email (optional)"
-                                                    placeholderTextColor="#9ca3af"
-                                                    value={state.customer.manualData.email}
-                                                    onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'email', value: text } })}
-                                                    keyboardType="email-address"
-                                                    autoCapitalize="none"
-                                                />
-                                                <TextInput
-                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                                    placeholder="Phone (optional)"
-                                                    placeholderTextColor="#9ca3af"
-                                                    value={state.customer.manualData.phone}
-                                                    onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'phone', value: text } })}
-                                                    keyboardType="phone-pad"
-                                                />
-                                            </View>
-                                        )}
-                                    </Section>
+                                                    <Pressable onPress={() => dispatch({ type: 'CLEAR_CUSTOMER' })}>
+                                                        <MaterialCommunityIcons name="close-circle" size={20} color="#22c55e" />
+                                                    </Pressable>
+                                                </View>
+                                            )}
+                                        </View>
+                                    ) : (
+                                        <View className="gap-3">
+                                            <TextInput
+                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                placeholder="Customer name *"
+                                                placeholderTextColor="#9ca3af"
+                                                value={state.customer.manualData.name}
+                                                onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'name', value: text } })}
+                                            />
+                                            <TextInput
+                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                placeholder="Email (optional)"
+                                                placeholderTextColor="#9ca3af"
+                                                value={state.customer.manualData.email}
+                                                onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'email', value: text } })}
+                                                keyboardType="email-address"
+                                                autoCapitalize="none"
+                                            />
+                                            <TextInput
+                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                placeholder="Phone (optional)"
+                                                placeholderTextColor="#9ca3af"
+                                                value={state.customer.manualData.phone}
+                                                onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'phone', value: text } })}
+                                                keyboardType="phone-pad"
+                                            />
+                                        </View>
+                                    )}
                                 </View>
 
                                 {/* Payment Method Selection */}
                                 <View className="mb-4">
-                                    <Section title="Payment Method">
-                                        <View className="flex-row flex-wrap gap-2">
-                                            {(['CASH', 'CARD', 'BANK_TRANSFER', 'MOBILE_MONEY', 'OTHER'] as PaymentMethod[]).map((method) => (
-                                                <Pressable
-                                                    key={method}
-                                                    className={`px-4 py-2 rounded-xl ${state.payment.method === method ? 'bg-green-500' : 'bg-gray-100'}`}
-                                                    onPress={() => dispatch({ type: 'SET_PAYMENT_METHOD', payload: method })}
-                                                >
-                                                    <Text className={`font-medium ${state.payment.method === method ? 'text-white' : 'text-gray-700'}`}>
-                                                        {method.replace(/_/g, ' ')}
-                                                    </Text>
-                                                </Pressable>
-                                            ))}
-                                        </View>
-                                    </Section>
+                                    <View className="flex-row flex-wrap gap-2">
+                                        {(['CASH', 'CARD', 'BANK_TRANSFER', 'MOBILE_MONEY', 'OTHER'] as PaymentMethod[]).map((method) => (
+                                            <Pressable
+                                                key={method}
+                                                className={`px-4 py-2 rounded-xl ${state.payment.method === method ? 'bg-green-500' : 'bg-gray-100'}`}
+                                                onPress={() => dispatch({ type: 'SET_PAYMENT_METHOD', payload: method })}
+                                            >
+                                                <Text className={`font-medium ${state.payment.method === method ? 'text-white' : 'text-gray-700'}`}>
+                                                    {method.replace(/_/g, ' ')}
+                                                </Text>
+                                            </Pressable>
+                                        ))}
+                                    </View>
                                 </View>
                             </View>
 
@@ -667,8 +642,7 @@ export default function NewSaleScreen() {
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Add Product Section */}
                                 <View className="mb-4">
-                                    <Section title="Add Product">
-                                        <View className="flex-row gap-2 mb-3">
+                                    <View className="flex-row gap-2 mb-3">
                                             <Pressable
                                                 className={`flex-1 py-2 rounded-xl items-center ${state.product.mode === 'search' ? 'bg-green-500' : 'bg-gray-100'}`}
                                                 onPress={() => dispatch({ type: 'SET_PRODUCT_MODE', payload: 'search' })}
@@ -783,7 +757,6 @@ export default function NewSaleScreen() {
                                                 <Text className="text-white font-bold">Add Item</Text>
                                             </Pressable>
                                         </View>
-                                    </Section>
                                 </View>
                             </View>
                         </View>
@@ -834,97 +807,105 @@ export default function NewSaleScreen() {
                         )}
 
                         {/* Transaction Details and Summary Row on Tablet */}
-                        <View className={isTablet ? 'flex-row gap-4' : 'gap-6'}>
+                        <View>
                             {/* Transaction Details */}
                             <View className={isTablet ? 'flex-1' : ''}>
-                                <Section title="Transaction Details">
-                                    <View className="gap-3">
+                                <TextInput
+                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                    placeholder="Add notes..."
+                                    placeholderTextColor="#9ca3af"
+                                    value={state.payment.memo}
+                                    onChangeText={(text) => dispatch({ type: 'SET_MEMO', payload: text })}
+                                    multiline
+                                    numberOfLines={3}
+                                    textAlignVertical="top"
+                                />
+                                <View className="gap-3">
+                                    <View>
+                                        <Text className="text-sm font-medium text-gray-700 mb-1">Total Discount</Text>
+                                        <TextInput
+                                            className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                            placeholder="0.00"
+                                            placeholderTextColor="#9ca3af"
+                                            value={state.payment.discount}
+                                            onChangeText={(text) => dispatch({ type: 'SET_DISCOUNT', payload: text })}
+                                            keyboardType="decimal-pad"
+                                        />
+                                    </View>
+
+                                    <View className="flex-row items-center justify-between py-2">
+                                        <Text className="text-gray-700 font-medium">
+                                            Track cash change
+                                        </Text>
+                                        <Switch
+                                            checked={state.payment.trackChange}
+                                            onCheckedChange={() => dispatch({ type: 'TOGGLE_TRACK_CHANGE' })}
+                                            nativeID="track-change"
+                                        />
+                                    </View>
+
+                                    {state.payment.trackChange ? (
                                         <View>
-                                            <Text className="text-sm font-medium text-gray-700 mb-1">Total Discount</Text>
+                                            <Text className="text-sm font-medium text-gray-700 mb-2">Note Denominations</Text>
+                                            <View className="flex-row flex-wrap gap-2">
+                                                {NOTE_DENOMINATIONS.map((note) => {
+                                                    const quantity = state.payment.notes.get(note) || 0;
+                                                    return (
+                                                        <View
+                                                            key={note}
+                                                            className="flex-row items-center gap-0 bg-gray-100 rounded-xl overflow-hidden"
+                                                        >
+                                                            <Pressable
+                                                                className="px-2 py-2 active:bg-gray-200"
+                                                                onPress={() => dispatch({ type: 'UPDATE_NOTE_QTY', payload: { note, delta: -1 } })}
+                                                            >
+                                                                <MaterialCommunityIcons name="minus" size={16} color="#374151" />
+                                                            </Pressable>
+                                                            <View className="px-3 py-2 items-center">
+                                                                <Text className="text-xs font-light text-gray-600">${note}</Text>
+                                                                {quantity > 0 && (
+                                                                    <Text className="text-sm font-bold text-gray-900">×{quantity}</Text>
+                                                                )}
+                                                            </View>
+                                                            <Pressable
+                                                                className="px-2 py-2 active:bg-gray-200"
+                                                                onPress={() => dispatch({ type: 'UPDATE_NOTE_QTY', payload: { note, delta: 1 } })}
+                                                            >
+                                                                <MaterialCommunityIcons name="plus" size={16} color="#374151" />
+                                                            </Pressable>
+                                                        </View>
+                                                    );
+                                                })}
+                                            </View>
+                                        </View>
+                                    ) : (
+                                        <View>
+                                            <Text className="text-sm font-medium text-gray-700 mb-1">Amount Paid</Text>
                                             <TextInput
                                                 className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                 placeholder="0.00"
                                                 placeholderTextColor="#9ca3af"
-                                                value={state.payment.discount}
-                                                onChangeText={(text) => dispatch({ type: 'SET_DISCOUNT', payload: text })}
+                                                value={state.payment.amountPaid}
+                                                onChangeText={(text) => dispatch({ type: 'SET_AMOUNT_PAID', payload: text })}
                                                 keyboardType="decimal-pad"
                                             />
                                         </View>
+                                    )}
 
-                                        <View className="flex-row items-center justify-between py-2">
-                                            <Text className="text-gray-700 font-medium">
-                                                Track cash change
-                                            </Text>
-                                            <Switch
-                                                checked={state.payment.trackChange}
-                                                onCheckedChange={() => dispatch({ type: 'TOGGLE_TRACK_CHANGE' })}
-                                                nativeID="track-change"
-                                            />
-                                        </View>
-
-                                        {state.payment.trackChange ? (
-                                            <View>
-                                                <Text className="text-sm font-medium text-gray-700 mb-2">Note Denominations</Text>
-                                                <View className="flex-row flex-wrap gap-2">
-                                                    {NOTE_DENOMINATIONS.map((note) => {
-                                                        const quantity = state.payment.notes.get(note) || 0;
-                                                        return (
-                                                            <View
-                                                                key={note}
-                                                                className="flex-row items-center gap-0 bg-gray-100 rounded-xl overflow-hidden"
-                                                            >
-                                                                <Pressable
-                                                                    className="px-2 py-2 active:bg-gray-200"
-                                                                    onPress={() => dispatch({ type: 'UPDATE_NOTE_QTY', payload: { note, delta: -1 } })}
-                                                                >
-                                                                    <MaterialCommunityIcons name="minus" size={16} color="#374151" />
-                                                                </Pressable>
-                                                                <View className="px-3 py-2 items-center">
-                                                                    <Text className="text-xs font-light text-gray-600">${note}</Text>
-                                                                    {quantity > 0 && (
-                                                                        <Text className="text-sm font-bold text-gray-900">×{quantity}</Text>
-                                                                    )}
-                                                                </View>
-                                                                <Pressable
-                                                                    className="px-2 py-2 active:bg-gray-200"
-                                                                    onPress={() => dispatch({ type: 'UPDATE_NOTE_QTY', payload: { note, delta: 1 } })}
-                                                                >
-                                                                    <MaterialCommunityIcons name="plus" size={16} color="#374151" />
-                                                                </Pressable>
-                                                            </View>
-                                                        );
-                                                    })}
-                                                </View>
-                                            </View>
-                                        ) : (
-                                            <View>
-                                                <Text className="text-sm font-medium text-gray-700 mb-1">Amount Paid</Text>
-                                                <TextInput
-                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                                    placeholder="0.00"
-                                                    placeholderTextColor="#9ca3af"
-                                                    value={state.payment.amountPaid}
-                                                    onChangeText={(text) => dispatch({ type: 'SET_AMOUNT_PAID', payload: text })}
-                                                    keyboardType="decimal-pad"
-                                                />
-                                            </View>
-                                        )}
-
-                                        <View>
-                                            <Text className="text-sm font-medium text-gray-700 mb-1">Notes (Optional)</Text>
-                                            <TextInput
-                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                                placeholder="Add notes..."
-                                                placeholderTextColor="#9ca3af"
-                                                value={state.payment.memo}
-                                                onChangeText={(text) => dispatch({ type: 'SET_MEMO', payload: text })}
-                                                multiline
-                                                numberOfLines={3}
-                                                textAlignVertical="top"
-                                            />
-                                        </View>
+                                    <View>
+                                        <Text className="text-sm font-medium text-gray-700 mb-1">Notes (Optional)</Text>
+                                        <TextInput
+                                            className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                            placeholder="Add notes..."
+                                            placeholderTextColor="#9ca3af"
+                                            value={state.payment.memo}
+                                            onChangeText={(text) => dispatch({ type: 'SET_MEMO', payload: text })}
+                                            multiline
+                                            numberOfLines={3}
+                                            textAlignVertical="top"
+                                        />
                                     </View>
-                                </Section>
+                                </View>
                             </View>
 
                             {/* Summary Card */}
@@ -978,6 +959,17 @@ export default function NewSaleScreen() {
                                 </Surface>
                             </View>
                         )}
+
+                        <TextInput
+                            className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                            placeholder="Add notes..."
+                            placeholderTextColor="#9ca3af"
+                            value={state.payment.memo}
+                            onChangeText={(text) => dispatch({ type: 'SET_MEMO', payload: text })}
+                            multiline
+                            numberOfLines={3}
+                            textAlignVertical="top"
+                        />
 
                         {/* Save Button */}
                         <View className={isTablet ? 'items-end' : ''}>
