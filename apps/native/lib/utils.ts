@@ -64,10 +64,12 @@ export function formatPhoneNumber(phone: string, countryCode?: string): string {
  * Supports both US and Zimbabwe formats
  */
 export function formatPhoneNumberAsYouType(value: string): string {
+  if (!value) return '';
+  
   // Remove all non-digit characters
   const cleaned = value.replace(/\D/g, '');
   
-  if (cleaned.length === 0) return '';
+  if (cleaned.length === 0) return value; // Return original if no digits (preserve user input)
   
   // Zimbabwe: +263 712 345 678
   if (cleaned.startsWith('263') || cleaned.length <= 11) {
@@ -90,10 +92,12 @@ export function formatPhoneNumberAsYouType(value: string): string {
  * Maintains proper decimal places and thousand separators
  */
 export function formatCurrencyAsYouType(value: string): string {
+  if (!value) return '';
+  
   // Remove everything except digits and decimal point
   const cleaned = value.replace(/[^\d.]/g, '');
   
-  if (!cleaned) return '';
+  if (!cleaned) return value; // Return original if no digits (preserve user input)
   
   // Ensure only one decimal point
   const parts = cleaned.split('.');

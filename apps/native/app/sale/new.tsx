@@ -86,7 +86,6 @@ export default function NewSaleScreen() {
 
     // Change tracking states
     const [trackChange, setTrackChange] = useState(false);
-    const [selectedNote, setSelectedNote] = useState<number | null>(null);
     const [noteQuantities, setNoteQuantities] = useState<{ [key: number]: number }>({});
 
     // Accordion states for collapsible sections
@@ -103,8 +102,17 @@ export default function NewSaleScreen() {
     const discountAmount = parseCurrencyValue(discount);
     const total = subtotal - discountAmount;
 
+    // Calculate amount paid from note quantities if tracking change
+    const calculateAmountFromNotes = () => {
+        let total = 0;
+        Object.entries(noteQuantities).forEach(([noteValue, quantity]) => {
+            total += parseInt(noteValue) * quantity;
+        });
+        return total;
+    };
+
     // Calculate amount paid and change based on tracking mode
-    const amountPaidValue = trackChange && selectedNote ? selectedNote : parseCurrencyValue(amountPaid);
+    const amountPaidValue = trackChange ? calculateAmountFromNotes() : parseCurrencyValue(amountPaid);
     const change = amountPaidValue - total;
 
     // Fetch products when searching
@@ -266,8 +274,12 @@ export default function NewSaleScreen() {
 
             // Build notes with change tracking info
             let finalNotes = notes.trim();
-            if (trackChange && selectedNote && change > 0) {
-                const changeNote = `Payment: ${formatCurrency(selectedNote)} note, Change: ${formatCurrency(change)}`;
+            if (trackChange && Object.keys(noteQuantities).length > 0 && change > 0) {
+                const noteBreakdown = Object.entries(noteQuantities)
+                    .filter(([, quantity]) => quantity > 0)
+                    .map(([note, quantity]) => `${quantity}×$${note}`)
+                    .join(' + ');
+                const changeNote = `Payment: ${noteBreakdown}, Change: ${formatCurrency(change)}`;
                 finalNotes = finalNotes ? `${finalNotes}\n${changeNote}` : changeNote;
             }
 
@@ -334,7 +346,7 @@ export default function NewSaleScreen() {
                 className="p-4 flex-row items-center justify-between active:opacity-70"
                 onPress={onToggle}
             >
-                <Text className={`text-lg font-bold ${hasError ? 'text-red-600' : 'text-gray-900'}`}>
+                <Text className={`text-lg font-semibold ${hasError ? 'text-red-600' : 'text-gray-900'}`} style={{ fontFamily: 'Satoshi-Bold' }}>
                     {title}
                 </Text>
                 <MaterialCommunityIcons
@@ -344,7 +356,7 @@ export default function NewSaleScreen() {
                 />
             </Pressable>
             {isOpen && (
-                <Animated.View entering={FadeIn.duration(200)} className="px-4 pb-4">
+                <Animated.View entering={SlideInUp.duration(300)} className="px-4 pb-4">
                     {children}
                 </Animated.View>
             )}
@@ -484,7 +496,8 @@ export default function NewSaleScreen() {
                                                     placeholder="Phone (optional)"
                                                     placeholderTextColor="#9ca3af"
                                                     value={manualCustomerPhone}
-                                                    onChangeText={(text) => setManualCustomerPhone(formatPhoneNumberAsYouType(text))}
+                                                    onChangeText={(text) => setManualCustomerPhone(text)}
+                                                    onBlur={() => setManualCustomerPhone(formatPhoneNumberAsYouType(manualCustomerPhone))}
                                                     keyboardType="phone-pad"
                                                 />
                                             </View>
@@ -614,7 +627,8 @@ export default function NewSaleScreen() {
                                                         placeholder="Price"
                                                         placeholderTextColor="#9ca3af"
                                                         value={manualProductPrice}
-                                                        onChangeText={(text) => setManualProductPrice(formatCurrencyAsYouType(text))}
+                                                        onChangeText={(text) => setManualProductPrice(text)}
+                                                        onBlur={() => setManualProductPrice(formatCurrencyAsYouType(manualProductPrice))}
                                                         keyboardType="decimal-pad"
                                                     />
                                                 </View>
@@ -717,7 +731,8 @@ export default function NewSaleScreen() {
                                                 placeholder="0.00"
                                                 placeholderTextColor="#9ca3af"
                                                 value={discount}
-                                                onChangeText={(text) => setDiscount(formatCurrencyAsYouType(text))}
+                                                onChangeText={(text) => setDiscount(text)}
+                                                onBlur={() => setDiscount(formatCurrencyAsYouType(discount))}
                                                 keyboardType="decimal-pad"
                                             />
                                         </View>
@@ -736,19 +751,48 @@ export default function NewSaleScreen() {
 
                                         {trackChange ? (
                                             <View>
-                                                <Text className="text-sm font-medium text-gray-700 mb-2">Select Note Denomination</Text>
+                                                <Text className="text-sm font-medium text-gray-700 mb-2">Note Denominations</Text>
                                                 <View className="flex-row flex-wrap gap-2">
-                                                    {NOTE_DENOMINATIONS.map((note) => (
-                                                        <Pressable
-                                                            key={note}
-                                                            className={`px-4 py-2 rounded-xl ${selectedNote === note ? 'bg-green-500' : 'bg-gray-100'}`}
-                                                            onPress={() => setSelectedNote(note)}
-                                                        >
-                                                            <Text className={`font-medium ${selectedNote === note ? 'text-white' : 'text-gray-700'}`}>
-                                                                ${note}
-                                                            </Text>
-                                                        </Pressable>
-                                                    ))}
+                                                    {NOTE_DENOMINATIONS.map((note) => {
+                                                        const quantity = noteQuantities[note] || 0;
+                                                        return (
+                                                            <View
+                                                                key={note}
+                                                                className="flex-row items-center gap-0 bg-gray-100 rounded-xl overflow-hidden"
+                                                            >
+                                                                <Pressable
+                                                                    className="px-2 py-2 active:bg-gray-200"
+                                                                    onPress={() => {
+                                                                        if (quantity > 0) {
+                                                                            setNoteQuantities({
+                                                                                ...noteQuantities,
+                                                                                [note]: quantity - 1
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <MaterialCommunityIcons name="minus" size={16} color="#374151" />
+                                                                </Pressable>
+                                                                <View className="px-3 py-2 items-center">
+                                                                    <Text className="text-xs font-light text-gray-600">${note}</Text>
+                                                                    {quantity > 0 && (
+                                                                        <Text className="text-sm font-bold text-gray-900">×{quantity}</Text>
+                                                                    )}
+                                                                </View>
+                                                                <Pressable
+                                                                    className="px-2 py-2 active:bg-gray-200"
+                                                                    onPress={() => {
+                                                                        setNoteQuantities({
+                                                                            ...noteQuantities,
+                                                                            [note]: quantity + 1
+                                                                        });
+                                                                    }}
+                                                                >
+                                                                    <MaterialCommunityIcons name="plus" size={16} color="#374151" />
+                                                                </Pressable>
+                                                            </View>
+                                                        );
+                                                    })}
                                                 </View>
                                             </View>
                                         ) : (
@@ -759,7 +803,8 @@ export default function NewSaleScreen() {
                                                     placeholder="0.00"
                                                     placeholderTextColor="#9ca3af"
                                                     value={amountPaid}
-                                                    onChangeText={(text) => setAmountPaid(formatCurrencyAsYouType(text))}
+                                                    onChangeText={(text) => setAmountPaid(text)}
+                                                    onBlur={() => setAmountPaid(formatCurrencyAsYouType(amountPaid))}
                                                     keyboardType="decimal-pad"
                                                 />
                                             </View>
@@ -805,7 +850,7 @@ export default function NewSaleScreen() {
                                             <>
                                                 <View className="flex-row justify-between">
                                                     <Text className="font-medium text-gray-700">
-                                                        {trackChange && selectedNote ? `$${selectedNote} Note:` : 'Amount Paid:'}
+                                                        {trackChange && Object.keys(noteQuantities).some(note => (noteQuantities[parseInt(note)] || 0) > 0) ? 'Notes Breakdown:' : 'Amount Paid:'}
                                                     </Text>
                                                     <Text className="font-bold text-gray-900">{formatCurrency(amountPaidValue)}</Text>
                                                 </View>
