@@ -10,7 +10,7 @@ import { useAuthStore } from '@/store/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
 import { Card as CardItem } from '@/components/ui/card';
-import { formatCurrency, formatCurrencyAsYouType, formatPhoneNumberAsYouType, formatPhoneNumber, parseCurrencyValue } from '@/lib/utils';
+import { formatCurrency, sanitizeCurrency, sanitizePhone, formatPhoneNumber, parseCurrencyValue } from '@/lib/utils';
 
 /**
  * New sale creation screen with comprehensive form for recording transactions. Includes customer selection, product items with quantity and pricing, payment method options, discount management, and automatic total calculation with real-time validation.
@@ -497,7 +497,7 @@ export default function NewSaleScreen() {
                                                     placeholderTextColor="#9ca3af"
                                                     value={manualCustomerPhone}
                                                     onChangeText={(text) => setManualCustomerPhone(text)}
-                                                    onBlur={() => setManualCustomerPhone(formatPhoneNumberAsYouType(manualCustomerPhone))}
+                                                    onBlur={() => setManualCustomerPhone(sanitizePhone(manualCustomerPhone))}
                                                     keyboardType="phone-pad"
                                                 />
                                             </View>
@@ -628,7 +628,7 @@ export default function NewSaleScreen() {
                                                         placeholderTextColor="#9ca3af"
                                                         value={manualProductPrice}
                                                         onChangeText={(text) => setManualProductPrice(text)}
-                                                        onBlur={() => setManualProductPrice(formatCurrencyAsYouType(manualProductPrice))}
+                                                        onBlur={() => setManualProductPrice(sanitizeCurrency(manualProductPrice))}
                                                         keyboardType="decimal-pad"
                                                     />
                                                 </View>
@@ -732,7 +732,7 @@ export default function NewSaleScreen() {
                                                 placeholderTextColor="#9ca3af"
                                                 value={discount}
                                                 onChangeText={(text) => setDiscount(text)}
-                                                onBlur={() => setDiscount(formatCurrencyAsYouType(discount))}
+                                                onBlur={() => setDiscount(sanitizeCurrency(discount))}
                                                 keyboardType="decimal-pad"
                                             />
                                         </View>
@@ -804,7 +804,7 @@ export default function NewSaleScreen() {
                                                     placeholderTextColor="#9ca3af"
                                                     value={amountPaid}
                                                     onChangeText={(text) => setAmountPaid(text)}
-                                                    onBlur={() => setAmountPaid(formatCurrencyAsYouType(amountPaid))}
+                                                    onBlur={() => setAmountPaid(sanitizeCurrency(amountPaid))}
                                                     keyboardType="decimal-pad"
                                                 />
                                             </View>
