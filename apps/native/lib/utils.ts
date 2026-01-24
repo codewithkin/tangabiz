@@ -270,21 +270,3 @@ export function formatEmail(email: string, maxLength = 30): string {
   
   return `${localPart.slice(0, availableLength)}...@${domain}`;
 }
-
-/**
- * Sanitize currency input - only keep digits and decimal point
- * Used for simple input cleanup without complex formatting
- */
-export function sanitizeCurrency(value: string): string {
-  if (!value) return '';
-  return value.replace(/[^\d.]/g, '');
-}
-
-/**
- * Sanitize phone input - only keep digits
- * Used for simple input cleanup without complex formatting
- */
-export function sanitizePhone(value: string): string {
-  if (!value) return '';
-  return value.replace(/[^\d]/g, '');
-}
