@@ -4,7 +4,6 @@ import { Surface } from 'heroui-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState, useMemo, useEffect } from 'react';
-import Animated, { FadeIn, SlideInUp } from 'react-native-reanimated';
 import { api, productsApi, customersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useQueryClient } from '@tanstack/react-query';
@@ -374,7 +373,7 @@ export default function NewSaleScreen() {
                 <ScrollView className="flex-1">
                     <View className="p-4 gap-6">
                         {/* Header */}
-                        <Animated.View entering={FadeIn.duration(400)} className="flex-row items-center gap-3">
+                        <View className="flex-row items-center gap-3">
                             <Pressable
                                 className="w-10 h-10 items-center justify-center rounded-full bg-gray-100 active:opacity-70"
                                 onPress={() => router.back()}
@@ -385,7 +384,7 @@ export default function NewSaleScreen() {
                                 <Text className="text-xl font-black text-gray-900">New Sale</Text>
                                 <Text className="text-sm font-light text-gray-500">Create a new transaction</Text>
                             </View>
-                        </Animated.View>
+                        </View>
 
                         {/* Responsive Grid Container */}
                         <View className={isTablet ? 'flex-row flex-wrap gap-4' : 'gap-6'}>
