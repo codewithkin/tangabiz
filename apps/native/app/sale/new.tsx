@@ -392,11 +392,11 @@ export default function NewSaleScreen() {
                             {/* Left Column on Tablet */}
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Customer Details Section */}
-                                <Animated.View entering={SlideInUp.duration(500).delay(50)} className="mb-4">
-                                    <CollapsibleSection
-                                        title="Customer Details"
-                                        isOpen={isCustomerOpen}
-                                        onToggle={() => setIsCustomerOpen(!isCustomerOpen)}
+                            <View className="mb-4">
+                                <CollapsibleSection
+                                    title="Customer Details"
+                                    isOpen={isCustomerOpen}
+                                    onToggle={() => setIsCustomerOpen(!isCustomerOpen)}
                                     >
                                         {/* Mode Toggle */}
                                         <View className="flex-row gap-2 mb-3">
@@ -502,10 +502,10 @@ export default function NewSaleScreen() {
                                             </View>
                                         )}
                                     </CollapsibleSection>
-                                </Animated.View>
+                            </View>
 
                                 {/* Payment Method Selection */}
-                                <Animated.View entering={SlideInUp.duration(500).delay(100)} className="mb-4">
+                                <View className="mb-4">
                                     <CollapsibleSection
                                         title="Payment Method"
                                         isOpen={isPaymentOpen}
@@ -525,13 +525,13 @@ export default function NewSaleScreen() {
                                             ))}
                                         </View>
                                     </CollapsibleSection>
-                                </Animated.View>
+                                </View>
                             </View>
 
                             {/* Right Column on Tablet */}
                             <View className={isTablet ? (isLargeScreen ? 'flex-1 min-w-100' : 'w-full') : ''}>
                                 {/* Add Product Section */}
-                                <Animated.View entering={SlideInUp.duration(500).delay(200)} className="mb-4">
+                                <View className="mb-4">
                                     <CollapsibleSection
                                         title="Add Product"
                                         isOpen={isProductOpen}
@@ -663,13 +663,13 @@ export default function NewSaleScreen() {
                                             </Pressable>
                                         </View>
                                     </CollapsibleSection>
-                                </Animated.View>
+                                </View>
                             </View>
                         </View>
 
                         {/* Items List - Full Width */}
                         {items.length > 0 && (
-                            <Animated.View entering={SlideInUp.duration(500).delay(300)}>
+                            <View>
                                 <CardItem>
                                     <Text className="text-lg font-bold text-gray-900 ">Items ({items.length})</Text>
                                     <View className="gap-2">
@@ -709,13 +709,13 @@ export default function NewSaleScreen() {
                                         ))}
                                     </View>
                                 </CardItem>
-                            </Animated.View>
+                            </View>
                         )}
 
                         {/* Transaction Details and Summary Row on Tablet */}
                         <View className={isTablet ? 'flex-row gap-4' : 'gap-6'}>
                             {/* Transaction Details */}
-                            <Animated.View entering={SlideInUp.duration(500).delay(400)} className={isTablet ? 'flex-1' : ''}>
+                            <View className={isTablet ? 'flex-1' : ''}>
                                 <CollapsibleSection
                                     title="Transaction Details"
                                     isOpen={isTransactionOpen}
@@ -821,10 +821,10 @@ export default function NewSaleScreen() {
                                         </View>
                                     </View>
                                 </CollapsibleSection>
-                            </Animated.View>
+                            </View>
 
-                            {/* Summary */}
-                            <Animated.View entering={SlideInUp.duration(500).delay(500)} className={isTablet ? 'flex-1' : ''}>
+                            {/* Summary Card */}
+                            <View className={isTablet ? 'flex-1' : ''}>
                                 <Surface className="p-4 rounded-2xl bg-green-50 border border-green-200">
                                     <Text className="text-lg font-bold text-gray-900 ">Summary</Text>
                                     <View className="gap-2">
@@ -860,23 +860,23 @@ export default function NewSaleScreen() {
                                         )}
                                     </View>
                                 </Surface>
-                            </Animated.View>
-                        </View>
+                            </View>
+                        )}
 
                         {/* Error Message */}
                         {error && (
-                            <Animated.View entering={SlideInUp.duration(300)}>
+                            <View>
                                 <Surface className="p-4 rounded-xl bg-red-50 border border-red-200">
                                     <View className="flex-row items-center gap-2">
                                         <MaterialCommunityIcons name="alert-circle" size={20} color="#ef4444" />
                                         <Text className="flex-1 text-sm font-medium text-red-700">{error}</Text>
                                     </View>
                                 </Surface>
-                            </Animated.View>
+                            </View>
                         )}
 
                         {/* Save Button */}
-                        <Animated.View entering={SlideInUp.duration(500).delay(600)} className={isTablet ? 'items-end' : ''}>
+                        <View className={isTablet ? 'items-end' : ''}>
                             <Pressable
                                 className={`bg-green-500 py-4 rounded-xl flex-row items-center justify-center gap-2 active:opacity-80 ${isTablet ? 'w-fit px-8' : 'w-full'} ${isLoading ? 'opacity-70' : ''}`}
                                 onPress={handleSaveSale}
@@ -891,7 +891,7 @@ export default function NewSaleScreen() {
                                     </>
                                 )}
                             </Pressable>
-                        </Animated.View>
+                        </View>
 
                         {/* Bottom padding for mobile */}
                         <View className="h-8" />
