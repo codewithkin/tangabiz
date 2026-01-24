@@ -816,20 +816,14 @@ export default function NewSaleScreen() {
                         )}
 
                         {/* Transaction Details and Summary Row on Tablet */}
-                        <View>
+                        <View className={isTablet ? 'flex-row gap-4' : 'gap-6'}>
                             {/* Transaction Details */}
                             <View className={isTablet ? 'flex-1' : ''}>
-                                <TextInput
-                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                    placeholder="Add notes..."
-                                    placeholderTextColor="#9ca3af"
-                                    value={state.payment.memo}
-                                    onChangeText={(text) => dispatch({ type: 'SET_MEMO', payload: text })}
-                                    multiline
-                                    numberOfLines={3}
-                                    textAlignVertical="top"
-                                />
-                                <View className="gap-3">
+                                <View className="mb-4 bg-white rounded-2xl border border-gray-200 p-4">
+                                    <Text className="text-lg font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Satoshi-Bold' }}>
+                                        Transaction Details
+                                    </Text>
+                                    <View className="gap-3">
                                     <View>
                                         <Text className="text-sm font-medium text-gray-700 mb-1">Total Discount</Text>
                                         <TextInput
@@ -915,6 +909,7 @@ export default function NewSaleScreen() {
                                         />
                                     </View>
                                 </View>
+                                </View>
                             </View>
 
                             {/* Summary Card */}
@@ -968,17 +963,6 @@ export default function NewSaleScreen() {
                                 </Surface>
                             </View>
                         )}
-
-                        <TextInput
-                            className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                            placeholder="Add notes..."
-                            placeholderTextColor="#9ca3af"
-                            value={state.payment.memo}
-                            onChangeText={(text) => dispatch({ type: 'SET_MEMO', payload: text })}
-                            multiline
-                            numberOfLines={3}
-                            textAlignVertical="top"
-                        />
 
                         {/* Save Button */}
                         <View className={isTablet ? 'items-end' : ''}>
