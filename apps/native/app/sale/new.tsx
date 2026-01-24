@@ -561,7 +561,7 @@ export default function NewSaleScreen() {
                                         <View className="gap-3">
                                             {productMode === 'search' ? (
                                                 <View>
-                                                <Input
+                                                    <Input
                                                         className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                         placeholder="Search products..."
                                                         placeholderTextColor="#9ca3af"
@@ -862,7 +862,7 @@ export default function NewSaleScreen() {
                                     </View>
                                 </Surface>
                             </View>
-                        )}
+                        </View>
 
                             {/* Error Message */}
                             {error && (
