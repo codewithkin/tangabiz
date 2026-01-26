@@ -6,8 +6,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { ActivityIndicator, Pressable, ScrollView, View, RefreshControl } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/api";
+import { apiRequest } from "@/lib/api";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -91,10 +90,10 @@ export default function Notifications() {
     const { data: notifications = [], isLoading, refetch, isRefetching } = useQuery({
         queryKey: ["notifications", businessId],
         queryFn: async () => {
-            const response = await axios.get(`${API_BASE_URL}/api/notifications?businessId=${businessId}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            return response.data.notifications || [];
+            const response = await apiRequest(
+                `/api/notifications?businessId=${businessId}`
+            );
+            return response.data?.notifications || [];
         },
         enabled: !!businessId && !!token,
     });
@@ -102,12 +101,9 @@ export default function Notifications() {
     // Mark as read mutation
     const markAsReadMutation = useMutation({
         mutationFn: async (notificationId: string) => {
-            await axios.patch(
-                `${API_BASE_URL}/api/notifications/${notificationId}/read`,
-                {},
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
+            await apiRequest(
+                `/api/notifications/${notificationId}/read`,
+                { method: 'PATCH', body: {} }
             );
         },
         onSuccess: () => {
@@ -119,12 +115,9 @@ export default function Notifications() {
     // Mark all as read mutation
     const markAllAsReadMutation = useMutation({
         mutationFn: async () => {
-            await axios.post(
-                `${API_BASE_URL}/api/notifications/mark-all-read`,
-                { businessId },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
+            await apiRequest(
+                `/api/notifications/mark-all-read`,
+                { method: 'POST', body: { businessId } }
             );
         },
         onSuccess: () => {
