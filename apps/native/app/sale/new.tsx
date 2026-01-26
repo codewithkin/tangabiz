@@ -468,19 +468,21 @@ export default function NewSaleScreen() {
 
                     // If product was manually entered, create it first
                     if (item.productId.startsWith('manual-')) {
-                        try {
-                            const productRes = await productsApi.create({
-                                businessId: currentBusiness.id,
-                                name: item.productName,
-                                price: item.unitPrice,
-                                sku: generateSKU(),
-                                quantity: 0, // Manual products start at 0 stock
-                            });
-                            finalProductId = productRes.data?.product?.id || item.productId;
-                        } catch (productError: any) {
-                            console.error('Failed to create product:', productError);
-                            throw new Error(`Failed to create product "${item.productName}": ${productError.response?.data?.error || productError.message}`);
+                        console.log(`Creating manual product: ${item.productName}`);
+                        const productRes = await productsApi.create({
+                            businessId: currentBusiness.id,
+                            name: item.productName,
+                            price: item.unitPrice,
+                            sku: generateSKU(),
+                            quantity: 0, // Manual products start at 0 stock
+                        });
+                        
+                        if (!productRes.data?.product?.id) {
+                            throw new Error(`Failed to create product "${item.productName}": No product ID returned`);
                         }
+                        
+                        finalProductId = productRes.data.product.id;
+                        console.log(`Created product with ID: ${finalProductId}`);
                     }
 
                     return {
