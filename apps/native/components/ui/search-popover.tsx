@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, FlatList, Pressable, ActivityIndicator, Modal } from 'react-native';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface SearchPopoverItem {
     id: string;
@@ -101,9 +102,33 @@ export const SearchPopover: React.FC<SearchPopoverProps> = ({
             {showPopover && (
                 <View className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-60">
                     {loading && (
-                        <View className="p-4 items-center justify-center">
-                            <ActivityIndicator size="small" color="#22c55e" />
-                            <Text className="text-sm text-gray-500 mt-2">Searching...</Text>
+                        <View className="p-4 gap-3">
+                            {/* Skeleton Loader - Item 1 */}
+                            <View className="flex flex-row items-center gap-3">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <View className="gap-2 flex-1">
+                                    <Skeleton className="h-4 w-[150px]" />
+                                    <Skeleton className="h-3 w-[100px]" />
+                                </View>
+                            </View>
+
+                            {/* Skeleton Loader - Item 2 */}
+                            <View className="flex flex-row items-center gap-3">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <View className="gap-2 flex-1">
+                                    <Skeleton className="h-4 w-[180px]" />
+                                    <Skeleton className="h-3 w-[120px]" />
+                                </View>
+                            </View>
+
+                            {/* Skeleton Loader - Item 3 */}
+                            <View className="flex flex-row items-center gap-3">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <View className="gap-2 flex-1">
+                                    <Skeleton className="h-4 w-[160px]" />
+                                    <Skeleton className="h-3 w-[110px]" />
+                                </View>
+                            </View>
                         </View>
                     )}
 
@@ -149,5 +174,4 @@ export const SearchPopover: React.FC<SearchPopoverProps> = ({
                 </View>
             )}
         </View>
-    );
-};
+    );;
