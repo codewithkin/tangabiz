@@ -23,6 +23,10 @@ import { useRecentSales, useBestPerformingProducts, useRevenueSummary, useNotifi
 import { useAuthStore } from '@/store/auth';
 import { useConnection } from '@/hooks/useConnection';
 import { Input } from "@/components/ui/input";
+import { useQuery } from '@tanstack/react-query';
+import { transactionsApi, productsApi } from '@/lib/api';
+import axios from 'axios';
+import { API_BASE_URL } from '@/config/api';
 
 // Reusable currency formatter
 function formatCurrency(amount: number, decimals = 2, currency = 'USD') {
@@ -128,9 +132,10 @@ function Product({ data }: { data: ProductExtact }) {
 // Main dashboard homepage displaying business metrics: total revenue, recent sales, best performing products, and quick action buttons for common tasks with real-time API data.
 export default function Dashboard() {
   const router = useRouter();
-  const { currentBusiness, user } = useAuthStore();
+  const { currentBusiness, user, token } = useAuthStore();
   const businessId = currentBusiness?.id || null;
   const { isLoading: connectionLoading, isConnected } = useConnection();
+  const [activeTab, setActiveTab] = React.useState<'sales' | 'expenses' | 'products'>('sales');
 
   // Check connection and redirect if offline
   useEffect(() => {
@@ -141,9 +146,36 @@ export default function Dashboard() {
 
   // Fetch data from backend
   const { data: recentSales = [], isLoading: salesLoading } = useRecentSales(businessId);
-  const { data: bestProducts = [], isLoading: productsLoading } = useBestPerformingProducts(businessId);
   const { data: revenue = { totalRevenue: 0, totalTransactions: 0 }, isLoading: revenueLoading } = useRevenueSummary(businessId);
   const { data: notificationCount = 0 } = useNotificationsCount(businessId);
+
+  // Fetch recent expenses
+  const { data: recentExpenses = [], isLoading: expensesLoading } = useQuery({
+    queryKey: ['recentExpenses', businessId],
+    queryFn: async () => {
+      if (!businessId) return [];
+      const response = await axios.get(
+        `${API_BASE_URL}/api/transactions?businessId=${businessId}&type=EXPENSE&limit=5`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data.transactions || [];
+    },
+    enabled: !!businessId && !!token,
+  });
+
+  // Fetch new products (most recently added)
+  const { data: newProducts = [], isLoading: newProductsLoading } = useQuery({
+    queryKey: ['newProducts', businessId],
+    queryFn: async () => {
+      if (!businessId) return [];
+      const response = await axios.get(
+        `${API_BASE_URL}/api/products?businessId=${businessId}&limit=5&sortBy=createdAt&sortOrder=desc`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data.products || [];
+    },
+    enabled: !!businessId && !!token,
+  });
 
   // Log auth store and API data
   React.useEffect(() => {
@@ -154,19 +186,21 @@ export default function Dashboard() {
       businessId,
     });
     console.log('Recent Sales:', recentSales);
-    console.log('Best Products:', bestProducts);
+    console.log('Recent Expenses:', recentExpenses);
+    console.log('New Products:', newProducts);
     console.log('Revenue Summary:', revenue);
     console.log('Notification Count:', notificationCount);
     console.log('Loading States:', {
       salesLoading,
-      productsLoading,
+      expensesLoading,
+      newProductsLoading,
       revenueLoading,
     });
     console.log('============================');
-  }, [user, currentBusiness, businessId, recentSales, bestProducts, revenue, notificationCount, salesLoading, productsLoading, revenueLoading]);
+  }, [user, currentBusiness, businessId, recentSales, recentExpenses, newProducts, revenue, notificationCount, salesLoading, expensesLoading, newProductsLoading, revenueLoading]);
 
   // Show full-page loading indicator while initial data loads
-  const isInitialLoading = salesLoading || productsLoading || revenueLoading;
+  const isInitialLoading = salesLoading || revenueLoading;
 
   if (isInitialLoading) {
     return (
@@ -253,50 +287,158 @@ export default function Dashboard() {
           </View>
         </Animated.View>
 
-        {/* Recent Sales Section */}
-        <Animated.View className="flex flex-col gap-2" entering={SlideInUp.duration(500).delay(300)}>
-          <View className="flex flex-row justify-between items-center">
-            <Text className="text-lg font-semibold">Recent Sales</Text>
+        {/* Recent Activity Section with Tabs */}
+        <Animated.View className="flex flex-col gap-4" entering={SlideInUp.duration(500).delay(300)}>
+          <Text className="text-lg font-semibold mb-4">Recent Activity</Text>
 
-            <Link href="/(drawer)/transactions" className="text-green-500 text-sm font-semibold">See All</Link>
+          {/* Tabs */}
+          <View className="flex flex-row">
+            <Pressable
+              onPress={() => setActiveTab('sales')}
+              className={`flex-1 pb-3 border-b-2 ${
+                activeTab === 'sales'
+                  ? 'border-b-green-500'
+                  : 'border-b-gray-300'
+              }`}
+            >
+              <Text
+                className={`text-center text-sm ${
+                  activeTab === 'sales'
+                    ? 'text-green-500 font-semibold'
+                    : 'text-gray-300'
+                }`}
+              >
+                Recent Sales
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setActiveTab('expenses')}
+              className={`flex-1 pb-3 border-b-2 ${
+                activeTab === 'expenses'
+                  ? 'border-b-green-500'
+                  : 'border-b-gray-300'
+              }`}
+            >
+              <Text
+                className={`text-center text-sm ${
+                  activeTab === 'expenses'
+                    ? 'text-green-500 font-semibold'
+                    : 'text-gray-300'
+                }`}
+              >
+                Recent Expenses
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setActiveTab('products')}
+              className={`flex-1 pb-3 border-b-2 ${
+                activeTab === 'products'
+                  ? 'border-b-green-500'
+                  : 'border-b-gray-300'
+              }`}
+            >
+              <Text
+                className={`text-center text-sm ${
+                  activeTab === 'products'
+                    ? 'text-green-500 font-semibold'
+                    : 'text-gray-300'
+                }`}
+              >
+                New Products
+              </Text>
+            </Pressable>
           </View>
 
-          {/* Sales List */}
-          {salesLoading ? (
-            <ActivityIndicator size="small" color="#3b82f6" />
-          ) : recentSales.length > 0 ? (
-            <View className="flex flex-col gap-4 w-full mt-2">
-              {recentSales.map((sale: SaleExtract, index: number) => (
-                <Sale key={index} data={sale} />
-              ))}
-            </View>
-          ) : (
-            <Text className="text-gray-500 text-sm text-center py-4">No recent sales</Text>
-          )}
-        </Animated.View>
+          {/* Tab Content */}
+          <View className="mt-4">
+            {/* Recent Sales Tab */}
+            {activeTab === 'sales' && (
+              <>
+                {salesLoading ? (
+                  <ActivityIndicator size="small" color="#22c55e" />
+                ) : recentSales.length > 0 ? (
+                  <View className="flex flex-col gap-4 w-full">
+                    {recentSales.map((sale: SaleExtract, index: number) => (
+                      <Sale key={index} data={sale} />
+                    ))}
+                  </View>
+                ) : (
+                  <Text className="text-gray-500 text-sm text-center py-4">No recent sales</Text>
+                )}
+              </>
+            )}
 
-        {/* Best Performing Products Section */}
-        <Animated.View className="flex flex-col gap-2" entering={SlideInUp.duration(500).delay(400)}>
-          <View className="flex flex-row justify-between items-center">
-            <Text className="text-lg font-semibold">Best Performing Products</Text>
+            {/* Recent Expenses Tab */}
+            {activeTab === 'expenses' && (
+              <>
+                {expensesLoading ? (
+                  <ActivityIndicator size="small" color="#22c55e" />
+                ) : recentExpenses.length > 0 ? (
+                  <View className="flex flex-col gap-4 w-full">
+                    {recentExpenses.map((expense: any) => (
+                      <Pressable
+                        key={expense.id}
+                        onPress={() => router.push(`/transactions/${expense.id}`)}
+                        className="flex flex-row justify-between items-center"
+                      >
+                        <View className="flex flex-row gap-2 items-center">
+                          <View className="flex items-center justify-center w-10 h-10 rounded-full bg-red-500">
+                            <FontAwesome6 name="receipt" size={20} color="white" />
+                          </View>
+                          <View className="flex-col">
+                            <Text className="text-sm">{expense.notes?.split(':')[0] || 'Expense'}</Text>
+                            <Text className="text-xs text-gray-400">{format(new Date(expense.createdAt), 'd MMM yyyy')}</Text>
+                          </View>
+                        </View>
+                        <Text className="text-red-600 text-sm">
+                          -{formatCurrency(Number(expense.total))}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : (
+                  <Text className="text-gray-500 text-sm text-center py-4">No recent expenses</Text>
+                )}
+              </>
+            )}
 
-            <Link href="/(drawer)/products" className="text-green-500 text-sm font-semibold">See All</Link>
+            {/* New Products Tab */}
+            {activeTab === 'products' && (
+              <>
+                {newProductsLoading ? (
+                  <ActivityIndicator size="small" color="#22c55e" />
+                ) : newProducts.length > 0 ? (
+                  <View className="flex flex-col gap-4 w-full">
+                    {newProducts.map((product: any) => (
+                      <Pressable
+                        key={product.id}
+                        onPress={() => router.push(`/products/${product.id}`)}
+                        className="flex flex-row gap-3 items-center"
+                      >
+                        {product.image && (
+                          <Image
+                            source={{ uri: product.image }}
+                            style={{ width: 60, height: 60, borderRadius: 8 }}
+                          />
+                        )}
+                        <View className="flex-1">
+                          <Text className="font-semibold text-sm">{product.name}</Text>
+                          <Text className="text-xs text-gray-500">SKU: {product.sku || 'N/A'}</Text>
+                          <Text className="text-xs text-gray-600 mt-1">
+                            {formatCurrency(Number(product.price))} • Stock: {product.quantity}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : (
+                  <Text className="text-gray-500 text-sm text-center py-4">No new products</Text>
+                )}
+              </>
+            )}
           </View>
-
-          {/* Products Grid */}
-          {productsLoading ? (
-            <ActivityIndicator size="small" color="#3b82f6" />
-          ) : bestProducts.length > 0 ? (
-            <View className="flex flex-row flex-wrap -mx-2 mt-2">
-              {bestProducts.map((product: ProductExtact, index: number) => (
-                <View key={index} className="w-1/2 px-2 mb-4">
-                  <Product data={product} />
-                </View>
-              ))}
-            </View>
-          ) : (
-            <Text className="text-gray-500 text-sm text-center py-4">No products yet</Text>
-          )}
         </Animated.View>
       </View>
     </ScrollView>
