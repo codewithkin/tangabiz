@@ -6,8 +6,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Dimensions, Pressable, ScrollView, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/api";
+import { transactionsApi } from "@/lib/api";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -77,38 +76,30 @@ export default function Reports() {
     const { data: salesData, isLoading: salesLoading } = useQuery({
         queryKey: ["salesReport", businessId, selectedPeriod, dateRange],
         queryFn: async () => {
-            const params = new URLSearchParams({
-                businessId: businessId!,
-                type: "SALE",
-                ...dateRange,
+            if (!businessId) return { transactions: [], pagination: { total: 0 } };
+            const response = await transactionsApi.list(businessId, {
+                type: 'SALE',
+                startDate: dateRange.startDate,
+                endDate: dateRange.endDate,
             });
-
-            const response = await axios.get(`${API_BASE_URL}/api/transactions?${params}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            return response.data;
+            return response.data || { transactions: [], pagination: { total: 0 } };
         },
-        enabled: !!businessId && !!token,
+        enabled: !!businessId,
     });
 
     // Fetch expenses report
     const { data: expensesData, isLoading: expensesLoading } = useQuery({
         queryKey: ["expensesReport", businessId, selectedPeriod, dateRange],
         queryFn: async () => {
-            const params = new URLSearchParams({
-                businessId: businessId!,
-                type: "EXPENSE",
-                ...dateRange,
+            if (!businessId) return { transactions: [], pagination: { total: 0 } };
+            const response = await transactionsApi.list(businessId, {
+                type: 'EXPENSE',
+                startDate: dateRange.startDate,
+                endDate: dateRange.endDate,
             });
-
-            const response = await axios.get(`${API_BASE_URL}/api/transactions?${params}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            return response.data;
+            return response.data || { transactions: [], pagination: { total: 0 } };
         },
-        enabled: !!businessId && !!token,
+        enabled: !!businessId,
     });
 
     // Calculate metrics
