@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, ActivityIndicator, TextInput, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Surface } from 'heroui-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { api, productsApi, customersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { Card as CardItem } from '@/components/ui/card';
 import { formatCurrency, parseCurrencyValue } from '@/lib/utils';
 
@@ -550,10 +551,8 @@ export default function NewSaleScreen() {
 
                                     {state.customer.mode === 'search' ? (
                                         <View>
-                                            <TextInput
-                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                            <Input
                                                 placeholder="Search customers..."
-                                                placeholderTextColor="#9ca3af"
                                                 value={state.customer.searchText}
                                                 onChangeText={(text) => dispatch({ type: 'SET_CUSTOMER_SEARCH', payload: text })}
                                             />
@@ -595,26 +594,20 @@ export default function NewSaleScreen() {
                                         </View>
                                     ) : (
                                         <View className="gap-3">
-                                            <TextInput
-                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                            <Input
                                                 placeholder="Customer name *"
-                                                placeholderTextColor="#9ca3af"
                                                 value={state.customer.manualData.name}
                                                 onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'name', value: text } })}
                                             />
-                                            <TextInput
-                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                            <Input
                                                 placeholder="Email (optional)"
-                                                placeholderTextColor="#9ca3af"
                                                 value={state.customer.manualData.email}
                                                 onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'email', value: text } })}
                                                 keyboardType="email-address"
                                                 autoCapitalize="none"
                                             />
-                                            <TextInput
-                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                            <Input
                                                 placeholder="Phone (optional)"
-                                                placeholderTextColor="#9ca3af"
                                                 value={state.customer.manualData.phone}
                                                 onChangeText={(text) => dispatch({ type: 'SET_MANUAL_CUSTOMER', payload: { field: 'phone', value: text } })}
                                                 keyboardType="phone-pad"
@@ -673,10 +666,8 @@ export default function NewSaleScreen() {
                                     <View className="gap-3">
                                         {state.product.mode === 'search' ? (
                                             <View>
-                                                <TextInput
-                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                <Input
                                                     placeholder="Search products..."
-                                                    placeholderTextColor="#9ca3af"
                                                     value={state.product.searchText}
                                                     onChangeText={(text) => dispatch({ type: 'SET_PRODUCT_SEARCH', payload: text })}
                                                 />
@@ -718,17 +709,13 @@ export default function NewSaleScreen() {
                                             </View>
                                         ) : (
                                             <View className="gap-3">
-                                                <TextInput
-                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                <Input
                                                     placeholder="Product name"
-                                                    placeholderTextColor="#9ca3af"
                                                     value={state.product.manualData.name}
                                                     onChangeText={(text) => dispatch({ type: 'SET_MANUAL_PRODUCT', payload: { field: 'name', value: text } })}
                                                 />
-                                                <TextInput
-                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                <Input
                                                     placeholder="Price"
-                                                    placeholderTextColor="#9ca3af"
                                                     value={state.product.manualData.price}
                                                     onChangeText={(text) => dispatch({ type: 'SET_MANUAL_PRODUCT', payload: { field: 'price', value: text } })}
                                                     keyboardType="decimal-pad"
@@ -826,10 +813,8 @@ export default function NewSaleScreen() {
                                     <View className="gap-3">
                                         <View>
                                             <Text className="text-sm font-medium text-gray-700 mb-1">Total Discount</Text>
-                                            <TextInput
-                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                            <Input
                                                 placeholder="0.00"
-                                                placeholderTextColor="#9ca3af"
                                                 value={state.payment.discount}
                                                 onChangeText={(text) => dispatch({ type: 'SET_DISCOUNT', payload: text })}
                                                 keyboardType="decimal-pad"
@@ -884,10 +869,8 @@ export default function NewSaleScreen() {
                                         ) : (
                                             <View>
                                                 <Text className="text-sm font-medium text-gray-700 mb-1">Amount Paid</Text>
-                                                <TextInput
-                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                <Input
                                                     placeholder="0.00"
-                                                    placeholderTextColor="#9ca3af"
                                                     value={state.payment.amountPaid}
                                                     onChangeText={(text) => dispatch({ type: 'SET_AMOUNT_PAID', payload: text })}
                                                     keyboardType="decimal-pad"
@@ -897,10 +880,8 @@ export default function NewSaleScreen() {
 
                                         <View>
                                             <Text className="text-sm font-medium text-gray-700 mb-1">Notes (Optional)</Text>
-                                            <TextInput
-                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                            <Input
                                                 placeholder="Add notes..."
-                                                placeholderTextColor="#9ca3af"
                                                 value={state.payment.memo}
                                                 onChangeText={(text) => dispatch({ type: 'SET_MEMO', payload: text })}
                                                 multiline
