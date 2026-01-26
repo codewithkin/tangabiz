@@ -447,50 +447,110 @@ export default function Dashboard() {
           </View>
         </Animated.View>
 
-        {/* Profit vs Expenses Donut Chart */}
-        <Animated.View className="flex flex-col gap-4" entering={SlideInUp.duration(500).delay(400)}>
-          <Card className="rounded-2xl p-6">
-            <Text className="text-lg font-semibold mb-4">Financial Overview</Text>
-            
-            <View className="items-center">
-              <PieChart
-                data={[
-                  { value: 47, color: '#22c55e', text: '47%' },
-                  { value: 30, color: '#ef4444', text: '30%' },
-                ]}
-                donut
-                showText
-                textColor="black"
-                radius={120}
-                textSize={16}
-                showTextBackground
-                textBackgroundRadius={22}
-                focusOnPress
-                showValuesAsLabels
-              />
-            </View>
+        {/* Profit vs Expenses Donut Chart - Only show if there's revenue or expenses */}
+        {(revenue.totalRevenue > 0 || expensesSummary.totalExpenses > 0) && (
+          <Animated.View className="flex flex-col gap-4" entering={SlideInUp.duration(500).delay(400)}>
+            <Card className="rounded-2xl p-6">
+              <Text className="text-lg font-semibold mb-4">Financial Overview</Text>
+              
+              {expensesSummaryLoading ? (
+                <View className="items-center py-8">
+                  <ActivityIndicator size="large" color="#22c55e" />
+                </View>
+              ) : (
+                <>
+                  <View className="items-center">
+                    {(() => {
+                      const totalRevenue = revenue.totalRevenue || 0;
+                      const totalExpenses = expensesSummary.totalExpenses || 0;
+                      const profit = totalRevenue - totalExpenses;
+                      const total = totalRevenue + totalExpenses;
+                      
+                      // Calculate percentages
+                      const revenuePercentage = total > 0 ? Math.round((totalRevenue / total) * 100) : 0;
+                      const expensesPercentage = total > 0 ? Math.round((totalExpenses / total) * 100) : 0;
 
-            {/* Legend */}
-            <View className="flex flex-row justify-center gap-6 mt-6">
-              <View className="flex flex-row items-center gap-2">
-                <View className="w-4 h-4 rounded bg-green-500" />
-                <Text className="text-sm text-gray-700">Revenue: {formatCurrency(47)}</Text>
-              </View>
-              <View className="flex flex-row items-center gap-2">
-                <View className="w-4 h-4 rounded bg-red-500" />
-                <Text className="text-sm text-gray-700">Expenses: {formatCurrency(30)}</Text>
-              </View>
-            </View>
+                      const pieData = [
+                        { 
+                          value: totalRevenue, 
+                          color: '#22c55e', 
+                          text: `${revenuePercentage}%`,
+                          gradientCenterColor: '#86efac'
+                        },
+                        { 
+                          value: totalExpenses, 
+                          color: '#ef4444', 
+                          text: `${expensesPercentage}%`,
+                          gradientCenterColor: '#fca5a5'
+                        },
+                      ];
 
-            {/* Profit */}
-            <View className="mt-4 pt-4 border-t border-gray-200">
-              <View className="flex flex-row justify-between items-center">
-                <Text className="text-sm font-medium text-gray-700">Net Profit</Text>
-                <Text className="text-lg font-bold text-green-600">{formatCurrency(17)}</Text>
-              </View>
-            </View>
-          </Card>
-        </Animated.View>
+                      return (
+                        <PieChart
+                          data={pieData}
+                          donut
+                          showText
+                          textColor="white"
+                          radius={120}
+                          innerRadius={70}
+                          textSize={14}
+                          showTextBackground
+                          textBackgroundRadius={18}
+                          focusOnPress
+                          showValuesAsLabels
+                          showGradient
+                          innerCircleColor="#ffffff"
+                          centerLabelComponent={() => (
+                            <View className="items-center justify-center">
+                              <Text className="text-2xl font-bold text-gray-900">
+                                {formatCurrency(profit, 0)}
+                              </Text>
+                              <Text className="text-xs text-gray-500 mt-1">
+                                {profit >= 0 ? 'Profit' : 'Loss'}
+                              </Text>
+                            </View>
+                          )}
+                        />
+                      );
+                    })()}
+                  </View>
+
+                  {/* Legend */}
+                  <View className="flex flex-row justify-center gap-6 mt-6">
+                    <View className="flex flex-row items-center gap-2">
+                      <View className="w-4 h-4 rounded bg-green-500" />
+                      <Text className="text-sm text-gray-700">
+                        Revenue: {formatCurrency(revenue.totalRevenue, 0)}
+                      </Text>
+                    </View>
+                    <View className="flex flex-row items-center gap-2">
+                      <View className="w-4 h-4 rounded bg-red-500" />
+                      <Text className="text-sm text-gray-700">
+                        Expenses: {formatCurrency(expensesSummary.totalExpenses, 0)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Net Profit/Loss */}
+                  <View className="mt-4 pt-4 border-t border-gray-200">
+                    <View className="flex flex-row justify-between items-center">
+                      <Text className="text-sm font-medium text-gray-700">
+                        {revenue.totalRevenue - expensesSummary.totalExpenses >= 0 ? 'Net Profit' : 'Net Loss'}
+                      </Text>
+                      <Text className={`text-lg font-bold ${
+                        revenue.totalRevenue - expensesSummary.totalExpenses >= 0 
+                          ? 'text-green-600' 
+                          : 'text-red-600'
+                      }`}>
+                        {formatCurrency(Math.abs(revenue.totalRevenue - expensesSummary.totalExpenses), 0)}
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              )}
+            </Card>
+          </Animated.View>
+        )}
       </View>
     </ScrollView>
   )
