@@ -26,5 +26,7 @@ function Input({
       />
     </View>
   );
+}
+
 export { Input };
 
