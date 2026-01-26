@@ -137,8 +137,8 @@ export default function Reports() {
                                     key={period.id}
                                     onPress={() => setSelectedPeriod(period.id)}
                                     className={`px-4 py-2 rounded-lg border ${selectedPeriod === period.id
-                                            ? "bg-green-500 border-green-500"
-                                            : "bg-white border-gray-300"
+                                        ? "bg-green-500 border-green-500"
+                                        : "bg-white border-gray-300"
                                         }`}
                                 >
                                     <Text className={selectedPeriod === period.id ? "text-white font-medium" : "text-gray-700"}>

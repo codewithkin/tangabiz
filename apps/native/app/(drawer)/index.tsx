@@ -474,14 +474,12 @@ export default function Dashboard() {
                         {
                           value: totalRevenue,
                           color: '#22c55e',
-                          text: `${revenuePercentage}%`,
-                          gradientCenterColor: '#86efac'
+                          text: `${revenuePercentage}%`
                         },
                         {
                           value: totalExpenses,
                           color: '#ef4444',
-                          text: `${expensesPercentage}%`,
-                          gradientCenterColor: '#fca5a5'
+                          text: `${expensesPercentage}%`
                         },
                       ];
 
@@ -498,7 +496,6 @@ export default function Dashboard() {
                           textBackgroundRadius={18}
                           focusOnPress
                           showValuesAsLabels
-                          showGradient
                           innerCircleColor="#ffffff"
                           centerLabelComponent={() => (
                             <View className="items-center justify-center">
