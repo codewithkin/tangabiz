@@ -824,91 +824,91 @@ export default function NewSaleScreen() {
                                         Transaction Details
                                     </Text>
                                     <View className="gap-3">
-                                    <View>
-                                        <Text className="text-sm font-medium text-gray-700 mb-1">Total Discount</Text>
-                                        <TextInput
-                                            className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                            placeholder="0.00"
-                                            placeholderTextColor="#9ca3af"
-                                            value={state.payment.discount}
-                                            onChangeText={(text) => dispatch({ type: 'SET_DISCOUNT', payload: text })}
-                                            keyboardType="decimal-pad"
-                                        />
-                                    </View>
-
-                                    <View className="flex-row items-center justify-between py-2">
-                                        <Text className="text-gray-700 font-medium">
-                                            Track cash change
-                                        </Text>
-                                        <Switch
-                                            checked={state.payment.trackChange}
-                                            onCheckedChange={() => dispatch({ type: 'TOGGLE_TRACK_CHANGE' })}
-                                            nativeID="track-change"
-                                        />
-                                    </View>
-
-                                    {state.payment.trackChange ? (
                                         <View>
-                                            <Text className="text-sm font-medium text-gray-700 mb-2">Note Denominations</Text>
-                                            <View className="flex-row flex-wrap gap-2">
-                                                {NOTE_DENOMINATIONS.map((note) => {
-                                                    const quantity = state.payment.notes.get(note) || 0;
-                                                    return (
-                                                        <View
-                                                            key={note}
-                                                            className="flex-row items-center gap-0 bg-gray-100 rounded-xl overflow-hidden"
-                                                        >
-                                                            <Pressable
-                                                                className="px-2 py-2 active:bg-gray-200"
-                                                                onPress={() => dispatch({ type: 'UPDATE_NOTE_QTY', payload: { note, delta: -1 } })}
-                                                            >
-                                                                <MaterialCommunityIcons name="minus" size={16} color="#374151" />
-                                                            </Pressable>
-                                                            <View className="px-3 py-2 items-center">
-                                                                <Text className="text-xs font-light text-gray-600">${note}</Text>
-                                                                {quantity > 0 && (
-                                                                    <Text className="text-sm font-bold text-gray-900">×{quantity}</Text>
-                                                                )}
-                                                            </View>
-                                                            <Pressable
-                                                                className="px-2 py-2 active:bg-gray-200"
-                                                                onPress={() => dispatch({ type: 'UPDATE_NOTE_QTY', payload: { note, delta: 1 } })}
-                                                            >
-                                                                <MaterialCommunityIcons name="plus" size={16} color="#374151" />
-                                                            </Pressable>
-                                                        </View>
-                                                    );
-                                                })}
-                                            </View>
-                                        </View>
-                                    ) : (
-                                        <View>
-                                            <Text className="text-sm font-medium text-gray-700 mb-1">Amount Paid</Text>
+                                            <Text className="text-sm font-medium text-gray-700 mb-1">Total Discount</Text>
                                             <TextInput
                                                 className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
                                                 placeholder="0.00"
                                                 placeholderTextColor="#9ca3af"
-                                                value={state.payment.amountPaid}
-                                                onChangeText={(text) => dispatch({ type: 'SET_AMOUNT_PAID', payload: text })}
+                                                value={state.payment.discount}
+                                                onChangeText={(text) => dispatch({ type: 'SET_DISCOUNT', payload: text })}
                                                 keyboardType="decimal-pad"
                                             />
                                         </View>
-                                    )}
 
-                                    <View>
-                                        <Text className="text-sm font-medium text-gray-700 mb-1">Notes (Optional)</Text>
-                                        <TextInput
-                                            className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
-                                            placeholder="Add notes..."
-                                            placeholderTextColor="#9ca3af"
-                                            value={state.payment.memo}
-                                            onChangeText={(text) => dispatch({ type: 'SET_MEMO', payload: text })}
-                                            multiline
-                                            numberOfLines={3}
-                                            textAlignVertical="top"
-                                        />
+                                        <View className="flex-row items-center justify-between py-2">
+                                            <Text className="text-gray-700 font-medium">
+                                                Track cash change
+                                            </Text>
+                                            <Switch
+                                                checked={state.payment.trackChange}
+                                                onCheckedChange={() => dispatch({ type: 'TOGGLE_TRACK_CHANGE' })}
+                                                nativeID="track-change"
+                                            />
+                                        </View>
+
+                                        {state.payment.trackChange ? (
+                                            <View>
+                                                <Text className="text-sm font-medium text-gray-700 mb-2">Note Denominations</Text>
+                                                <View className="flex-row flex-wrap gap-2">
+                                                    {NOTE_DENOMINATIONS.map((note) => {
+                                                        const quantity = state.payment.notes.get(note) || 0;
+                                                        return (
+                                                            <View
+                                                                key={note}
+                                                                className="flex-row items-center gap-0 bg-gray-100 rounded-xl overflow-hidden"
+                                                            >
+                                                                <Pressable
+                                                                    className="px-2 py-2 active:bg-gray-200"
+                                                                    onPress={() => dispatch({ type: 'UPDATE_NOTE_QTY', payload: { note, delta: -1 } })}
+                                                                >
+                                                                    <MaterialCommunityIcons name="minus" size={16} color="#374151" />
+                                                                </Pressable>
+                                                                <View className="px-3 py-2 items-center">
+                                                                    <Text className="text-xs font-light text-gray-600">${note}</Text>
+                                                                    {quantity > 0 && (
+                                                                        <Text className="text-sm font-bold text-gray-900">×{quantity}</Text>
+                                                                    )}
+                                                                </View>
+                                                                <Pressable
+                                                                    className="px-2 py-2 active:bg-gray-200"
+                                                                    onPress={() => dispatch({ type: 'UPDATE_NOTE_QTY', payload: { note, delta: 1 } })}
+                                                                >
+                                                                    <MaterialCommunityIcons name="plus" size={16} color="#374151" />
+                                                                </Pressable>
+                                                            </View>
+                                                        );
+                                                    })}
+                                                </View>
+                                            </View>
+                                        ) : (
+                                            <View>
+                                                <Text className="text-sm font-medium text-gray-700 mb-1">Amount Paid</Text>
+                                                <TextInput
+                                                    className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                    placeholder="0.00"
+                                                    placeholderTextColor="#9ca3af"
+                                                    value={state.payment.amountPaid}
+                                                    onChangeText={(text) => dispatch({ type: 'SET_AMOUNT_PAID', payload: text })}
+                                                    keyboardType="decimal-pad"
+                                                />
+                                            </View>
+                                        )}
+
+                                        <View>
+                                            <Text className="text-sm font-medium text-gray-700 mb-1">Notes (Optional)</Text>
+                                            <TextInput
+                                                className="bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium"
+                                                placeholder="Add notes..."
+                                                placeholderTextColor="#9ca3af"
+                                                value={state.payment.memo}
+                                                onChangeText={(text) => dispatch({ type: 'SET_MEMO', payload: text })}
+                                                multiline
+                                                numberOfLines={3}
+                                                textAlignVertical="top"
+                                            />
+                                        </View>
                                     </View>
-                                </View>
                                 </View>
                             </View>
 
