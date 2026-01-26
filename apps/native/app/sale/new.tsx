@@ -12,7 +12,16 @@ import { Input } from '@/components/ui/input';
 import { Card as CardItem } from '@/components/ui/card';
 import { SearchPopover } from '@/components/ui/search-popover';
 import { formatCurrency, parseCurrencyValue } from '@/lib/utils';
-import { nanoid } from 'nanoid';
+
+// Helper function to generate random SKUs (no crypto dependency)
+function generateSKU(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = 'MAN-';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
 
 /**
  * New sale creation screen - Refactored with reducer pattern and custom hooks
@@ -464,7 +473,7 @@ export default function NewSaleScreen() {
                                 businessId: currentBusiness.id,
                                 name: item.productName,
                                 price: item.unitPrice,
-                                sku: `MAN-${nanoid(6).toUpperCase()}`, // Generate SKU for manual products
+                                sku: generateSKU(),
                                 quantity: 0, // Manual products start at 0 stock
                             });
                             finalProductId = productRes.data?.product?.id || item.productId;
@@ -601,10 +610,10 @@ export default function NewSaleScreen() {
                                                     dispatch({ type: 'SELECT_CUSTOMER', payload: selected });
                                                 }}
                                                 onSearch={async (query) => {
-                                                    if (!businessId) return [];
+                                                    if (!currentBusiness?.id) return [];
                                                     try {
                                                         const response = await customersApi.list({
-                                                            businessId,
+                                                            businessId: currentBusiness.id,
                                                             search: query,
                                                             limit: 10,
                                                         });
@@ -976,13 +985,9 @@ export default function NewSaleScreen() {
 
                         {/* Error Message */}
                         {state.ui.errorMsg && (
-                            <View>
-                                <Surface className="p-4 rounded-xl bg-red-50 border border-red-200">
-                                    <View className="flex-row items-center gap-2">
-                                        <MaterialCommunityIcons name="alert-circle" size={20} color="#ef4444" />
-                                        <Text className="flex-1 text-sm font-medium text-red-700">{state.ui.errorMsg}</Text>
-                                    </View>
-                                </Surface>
+                            <View className="w-full bg-red-200 border-2 border-red-500 rounded-xl py-2 px-4 flex-row items-center gap-2">
+                                <MaterialCommunityIcons name="alert-circle" size={20} color="#dc2626" />
+                                <Text className="flex-1 text-sm font-medium text-red-900">{state.ui.errorMsg}</Text>
                             </View>
                         )}
 
