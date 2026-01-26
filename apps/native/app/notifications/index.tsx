@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { ActivityIndicator, Pressable, ScrollView, View, RefreshControl } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/api";
+import { notificationsApi } from "@/lib/api";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -90,21 +90,18 @@ export default function Notifications() {
     const { data: notifications = [], isLoading, refetch, isRefetching } = useQuery({
         queryKey: ["notifications", businessId],
         queryFn: async () => {
-            const response = await apiRequest(
-                `/api/notifications?businessId=${businessId}`
-            );
+            if (!businessId) return [];
+            const response = await notificationsApi.list(businessId);
             return response.data?.notifications || [];
         },
-        enabled: !!businessId && !!token,
+        enabled: !!businessId,
     });
 
     // Mark as read mutation
     const markAsReadMutation = useMutation({
         mutationFn: async (notificationId: string) => {
-            await apiRequest(
-                `/api/notifications/${notificationId}/read`,
-                { method: 'PATCH', body: {} }
-            );
+            const response = await notificationsApi.markAsRead(notificationId);
+            return response;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["notifications", businessId] });
@@ -115,10 +112,9 @@ export default function Notifications() {
     // Mark all as read mutation
     const markAllAsReadMutation = useMutation({
         mutationFn: async () => {
-            await apiRequest(
-                `/api/notifications/mark-all-read`,
-                { method: 'POST', body: { businessId } }
-            );
+            if (!businessId) return;
+            const response = await notificationsApi.markAllAsRead(businessId);
+            return response;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["notifications", businessId] });

@@ -8,7 +8,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/api";
+import { transactionsApi } from "@/lib/api";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -46,10 +46,7 @@ export default function CreateExpense() {
 
     const createExpenseMutation = useMutation({
         mutationFn: async (expenseData: any) => {
-            const response = await apiRequest('/api/transactions', {
-                method: 'POST',
-                body: expenseData,
-            });
+            const response = await transactionsApi.create(expenseData);
             return response.data;
         },
         onSuccess: () => {
