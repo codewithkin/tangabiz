@@ -10,7 +10,7 @@ export const transactionRoutes = new Hono();
 
 // Validation schemas
 const transactionItemSchema = z.object({
-  productId: z.string().optional().nullable(),
+  productId: z.string(),
   quantity: z.number().int().positive(),
   unitPrice: z.number().positive(),
   discount: z.number().min(0).default(0),
@@ -171,11 +171,6 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
     // Validate all products exist and have sufficient quantity
     const productValidations = await Promise.all(
       data.items.map(async (item) => {
-        // Skip validation for manually entered products (null productId)
-        if (!item.productId) {
-          return { valid: true, product: null };
-        }
-
         const product = await db.product.findUnique({
           where: { id: item.productId },
           select: { id: true, name: true, sku: true, quantity: true, businessId: true },
@@ -215,13 +210,13 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
 
     // Calculate totals
     const itemsWithTotals = data.items.map((item, index) => {
-      const product = productValidations[index].product;
+      const product = productValidations[index].product!;
       const itemTotal = item.quantity * item.unitPrice - item.discount;
 
       return {
-        productId: item.productId || null,
-        productName: product?.name || item.productId || 'Manual Entry',
-        productSku: product?.sku || null,
+        productId: item.productId,
+        productName: product.name,
+        productSku: product.sku,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         discount: item.discount,

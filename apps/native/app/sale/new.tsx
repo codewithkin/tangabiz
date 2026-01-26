@@ -3,14 +3,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Surface } from 'heroui-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useReducer, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useReducer, useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { api, productsApi, customersApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Card as CardItem } from '@/components/ui/card';
+import { SearchPopover } from '@/components/ui/search-popover';
 import { formatCurrency, parseCurrencyValue } from '@/lib/utils';
+import { nanoid } from 'nanoid';
 
 /**
  * New sale creation screen - Refactored with reducer pattern and custom hooks
@@ -439,6 +441,7 @@ export default function NewSaleScreen() {
         try {
             let finalCustomerId = state.customer.selectedId;
 
+            // Create customer if in manual mode
             if (state.customer.mode === 'manual' && state.customer.manualData.name.trim()) {
                 const customerRes = await customersApi.create({
                     businessId: currentBusiness.id,
@@ -448,6 +451,37 @@ export default function NewSaleScreen() {
                 });
                 finalCustomerId = customerRes.data?.customer?.id || null;
             }
+
+            // Create/map products - create manual products first, then build items
+            const processedItems = await Promise.all(
+                state.cart.map(async (item) => {
+                    let finalProductId = item.productId;
+
+                    // If product was manually entered, create it first
+                    if (item.productId.startsWith('manual-')) {
+                        try {
+                            const productRes = await productsApi.create({
+                                businessId: currentBusiness.id,
+                                name: item.productName,
+                                price: item.unitPrice,
+                                sku: `MAN-${nanoid(6).toUpperCase()}`, // Generate SKU for manual products
+                                quantity: 0, // Manual products start at 0 stock
+                            });
+                            finalProductId = productRes.data?.product?.id || item.productId;
+                        } catch (productError: any) {
+                            console.error('Failed to create product:', productError);
+                            throw new Error(`Failed to create product "${item.productName}": ${productError.response?.data?.error || productError.message}`);
+                        }
+                    }
+
+                    return {
+                        productId: finalProductId,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice,
+                        discount: item.discount,
+                    };
+                })
+            );
 
             let finalMemo = state.payment.memo.trim();
             if (state.payment.trackChange && state.payment.notes.size > 0 && changeAmount > 0) {
@@ -464,12 +498,7 @@ export default function NewSaleScreen() {
                 customerId: finalCustomerId || null,
                 type: 'SALE' as const,
                 paymentMethod: state.payment.method,
-                items: state.cart.map((item) => ({
-                    productId: item.productId.startsWith('manual-') ? null : item.productId,
-                    quantity: item.quantity,
-                    unitPrice: item.unitPrice,
-                    discount: item.discount,
-                })),
+                items: processedItems,
                 discount: parseCurrencyValue(state.payment.discount),
                 amountPaid: amountPaid,
                 notes: finalMemo || null,
@@ -559,33 +588,37 @@ export default function NewSaleScreen() {
 
                                     {state.customer.mode === 'search' ? (
                                         <View>
-                                            <Input
+                                            <SearchPopover
                                                 placeholder="Search customers..."
                                                 value={state.customer.searchText}
                                                 onChangeText={(text) => dispatch({ type: 'SET_CUSTOMER_SEARCH', payload: text })}
+                                                onSelect={(item) => {
+                                                    const selected: Customer = {
+                                                        id: item.id,
+                                                        name: item.label,
+                                                        email: item.subtitle,
+                                                    };
+                                                    dispatch({ type: 'SELECT_CUSTOMER', payload: selected });
+                                                }}
+                                                onSearch={async (query) => {
+                                                    if (!businessId) return [];
+                                                    try {
+                                                        const response = await customersApi.list({
+                                                            businessId,
+                                                            search: query,
+                                                            limit: 10,
+                                                        });
+                                                        return (response.data?.customers || []).map((customer: any) => ({
+                                                            id: customer.id,
+                                                            label: customer.name,
+                                                            subtitle: customer.email || customer.phone,
+                                                        }));
+                                                    } catch (error) {
+                                                        console.error('Customer search error:', error);
+                                                        return [];
+                                                    }
+                                                }}
                                             />
-                                            {customerSearch.results.length > 0 && (
-                                                <View className="bg-gray-50 rounded-xl mt-2 max-h-40 overflow-hidden">
-                                                    {customerSearch.loading ? (
-                                                        <View className="p-4 items-center">
-                                                            <ActivityIndicator size="small" color="#22c55e" />
-                                                        </View>
-                                                    ) : (
-                                                        customerSearch.results.map((customer) => (
-                                                            <Pressable
-                                                                key={customer.id}
-                                                                className="p-3 border-b border-gray-200 active:bg-gray-100"
-                                                                onPress={() => dispatch({ type: 'SELECT_CUSTOMER', payload: customer })}
-                                                            >
-                                                                <Text className="font-medium text-gray-900">{customer.name}</Text>
-                                                                {customer.email && (
-                                                                    <Text className="text-sm text-gray-500">{customer.email}</Text>
-                                                                )}
-                                                            </Pressable>
-                                                        ))
-                                                    )}
-                                                </View>
-                                            )}
                                             {state.customer.selected && (
                                                 <View className="mt-2 p-3 bg-green-50 rounded-xl flex-row items-center justify-between">
                                                     <View>
