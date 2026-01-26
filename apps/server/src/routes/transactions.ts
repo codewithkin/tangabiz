@@ -127,125 +127,235 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
   const userId = c.get("userId");
   const data = c.req.valid("json");
 
-  // Generate unique reference and invoice ID
-  const reference = `TXN-${nanoid(10).toUpperCase()}`;
-  const invoiceId = generateInvoiceId();
+  console.log(`[Transaction] Creating transaction for user ${userId}`, {
+    businessId: data.businessId,
+    type: data.type,
+    itemCount: data.items.length,
+    customerId: data.customerId,
+  });
 
-  // Calculate totals
-  const itemsWithTotals = await Promise.all(
-    data.items.map(async (item) => {
-      const product = await db.product.findUnique({
-        where: { id: item.productId },
-        select: { name: true, sku: true },
+  try {
+    // Validate business exists and user has access
+    const business = await db.business.findUnique({
+      where: { id: data.businessId },
+      include: { members: { where: { userId } } },
+    });
+
+    if (!business) {
+      console.error(`[Transaction] Business not found: ${data.businessId}`);
+      return c.json({ error: "Business not found" }, 404);
+    }
+
+    if (business.members.length === 0) {
+      console.error(`[Transaction] User ${userId} not authorized for business ${data.businessId}`);
+      return c.json({ error: "Not authorized to create transactions for this business" }, 403);
+    }
+
+    // Validate customer if provided
+    if (data.customerId) {
+      const customer = await db.customer.findUnique({
+        where: { id: data.customerId },
       });
 
+      if (!customer) {
+        console.error(`[Transaction] Customer not found: ${data.customerId}`);
+        return c.json({ error: "Customer not found" }, 404);
+      }
+
+      if (customer.businessId !== data.businessId) {
+        console.error(`[Transaction] Customer ${data.customerId} does not belong to business ${data.businessId}`);
+        return c.json({ error: "Customer does not belong to this business" }, 400);
+      }
+    }
+
+    // Validate all products exist and have sufficient quantity
+    const productValidations = await Promise.all(
+      data.items.map(async (item) => {
+        const product = await db.product.findUnique({
+          where: { id: item.productId },
+          select: { id: true, name: true, sku: true, quantity: true, businessId: true },
+        });
+
+        if (!product) {
+          console.error(`[Transaction] Product not found: ${item.productId}`);
+          return { valid: false, error: `Product not found: ${item.productId}` };
+        }
+
+        if (product.businessId !== data.businessId) {
+          console.error(`[Transaction] Product ${item.productId} does not belong to business ${data.businessId}`);
+          return { valid: false, error: `Product ${product.name} does not belong to this business` };
+        }
+
+        if (data.type === "SALE" && product.quantity < item.quantity) {
+          console.error(`[Transaction] Insufficient stock for product ${product.name}: available ${product.quantity}, requested ${item.quantity}`);
+          return { valid: false, error: `Insufficient stock for ${product.name}. Available: ${product.quantity}, Requested: ${item.quantity}` };
+        }
+
+        return { valid: true, product };
+      })
+    );
+
+    // Check for validation errors
+    const validationError = productValidations.find((v) => !v.valid);
+    if (validationError) {
+      console.error(`[Transaction] Validation failed:`, validationError.error);
+      return c.json({ error: validationError.error }, 400);
+    }
+
+    // Generate unique reference and invoice ID
+    const reference = `TXN-${nanoid(10).toUpperCase()}`;
+    const invoiceId = generateInvoiceId();
+
+    console.log(`[Transaction] Generated reference: ${reference}, invoice: ${invoiceId}`);
+
+    // Calculate totals
+    const itemsWithTotals = data.items.map((item, index) => {
+      const product = productValidations[index].product!;
       const itemTotal = item.quantity * item.unitPrice - item.discount;
 
       return {
         productId: item.productId,
-        productName: product?.name || "Unknown Product",
-        productSku: product?.sku,
+        productName: product.name,
+        productSku: product.sku,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         discount: item.discount,
         total: itemTotal,
       };
-    })
-  );
+    });
 
-  const subtotal = itemsWithTotals.reduce((sum, item) => sum + item.total, 0);
-  const total = subtotal - data.discount;
-  const change = data.amountPaid - total;
+    const subtotal = itemsWithTotals.reduce((sum, item) => sum + item.total, 0);
+    const total = subtotal - data.discount;
+    const change = data.amountPaid - total;
 
-  // Create transaction with items
-  const transaction = await db.transaction.create({
-    data: {
-      invoiceId,
-      reference,
-      businessId: data.businessId,
-      customerId: data.customerId,
-      createdById: userId,
-      type: data.type,
-      paymentMethod: data.paymentMethod,
+    console.log(`[Transaction] Calculated totals:`, {
       subtotal,
       discount: data.discount,
       total,
       amountPaid: data.amountPaid,
-      change: Math.max(0, change),
-      notes: data.notes,
-      status: "COMPLETED",
-      items: {
-        create: itemsWithTotals,
-      },
-    },
-    include: {
-      items: true,
-      customer: {
-        select: { id: true, name: true, email: true },
-      },
-    },
-  });
-
-  // Update product quantities for sales
-  if (data.type === "SALE") {
-    await Promise.all(
-      data.items.map((item) =>
-        db.product.update({
-          where: { id: item.productId },
-          data: {
-            quantity: { decrement: item.quantity },
-          },
-        })
-      )
-    );
-
-    // Trigger new sale notification
-    notifyNewSale({
-      id: transaction.id,
-      reference: transaction.reference,
-      total: Number(transaction.total),
-      businessId: data.businessId,
-      createdById: userId,
-      customerName: transaction.customer?.name,
-    }).catch(console.error);
-
-    // Check for low stock products after sale
-    const updatedProducts = await db.product.findMany({
-      where: { id: { in: data.items.map((i) => i.productId) } },
-      select: { id: true, name: true, quantity: true, minQuantity: true, businessId: true },
+      change,
     });
 
-    // Notify for any products that are now below minimum quantity
-    updatedProducts.forEach((product) => {
-      if (product.quantity <= product.minQuantity) {
-        notifyLowStock(product).catch(console.error);
-      }
+    if (data.amountPaid < total) {
+      console.error(`[Transaction] Insufficient payment: paid ${data.amountPaid}, required ${total}`);
+      return c.json({ error: `Insufficient payment. Required: ${total}, Paid: ${data.amountPaid}` }, 400);
+    }
+
+    // Create transaction with items
+    console.log(`[Transaction] Creating transaction in database...`);
+    const transaction = await db.transaction.create({
+      data: {
+        invoiceId,
+        reference,
+        businessId: data.businessId,
+        customerId: data.customerId,
+        createdById: userId,
+        type: data.type,
+        paymentMethod: data.paymentMethod,
+        subtotal,
+        discount: data.discount,
+        total,
+        amountPaid: data.amountPaid,
+        change: Math.max(0, change),
+        notes: data.notes,
+        status: "COMPLETED",
+        items: {
+          create: itemsWithTotals,
+        },
+      },
+      include: {
+        items: true,
+        customer: {
+          select: { id: true, name: true, email: true },
+        },
+      },
     });
-  }
 
-  // Update product quantities for refunds (add back)
-  if (data.type === "REFUND") {
-    await Promise.all(
-      data.items.map((item) =>
-        db.product.update({
-          where: { id: item.productId },
-          data: {
-            quantity: { increment: item.quantity },
-          },
-        })
-      )
-    );
+    console.log(`[Transaction] Transaction created successfully: ${transaction.id}`);
 
-    // Trigger refund notification
-    notifyRefund({
-      id: transaction.id,
-      reference: transaction.reference,
-      total: Number(transaction.total),
+    // Update product quantities for sales
+    if (data.type === "SALE") {
+      console.log(`[Transaction] Updating product quantities for SALE...`);
+      await Promise.all(
+        data.items.map((item) =>
+          db.product.update({
+            where: { id: item.productId },
+            data: {
+              quantity: { decrement: item.quantity },
+            },
+          })
+        )
+      );
+      console.log(`[Transaction] Product quantities updated`);
+
+      // Trigger new sale notification
+      notifyNewSale({
+        id: transaction.id,
+        reference: transaction.reference,
+        total: Number(transaction.total),
+        businessId: data.businessId,
+        createdById: userId,
+        customerName: transaction.customer?.name,
+      }).catch((err) => console.error(`[Transaction] Failed to send sale notification:`, err));
+
+      // Check for low stock products after sale
+      const updatedProducts = await db.product.findMany({
+        where: { id: { in: data.items.map((i) => i.productId) } },
+        select: { id: true, name: true, quantity: true, minQuantity: true, businessId: true },
+      });
+
+      // Notify for any products that are now below minimum quantity
+      updatedProducts.forEach((product) => {
+        if (product.quantity <= product.minQuantity) {
+          console.log(`[Transaction] Low stock alert for product ${product.name}: ${product.quantity} <= ${product.minQuantity}`);
+          notifyLowStock(product).catch((err) => console.error(`[Transaction] Failed to send low stock notification:`, err));
+        }
+      });
+    }
+
+    // Update product quantities for refunds (add back)
+    if (data.type === "REFUND") {
+      console.log(`[Transaction] Updating product quantities for REFUND...`);
+      await Promise.all(
+        data.items.map((item) =>
+          db.product.update({
+            where: { id: item.productId },
+            data: {
+              quantity: { increment: item.quantity },
+            },
+          })
+        )
+      );
+      console.log(`[Transaction] Product quantities restored`);
+
+      // Trigger refund notification
+      notifyRefund({
+        id: transaction.id,
+        reference: transaction.reference,
+        total: Number(transaction.total),
+        businessId: data.businessId,
+      }).catch((err) => console.error(`[Transaction] Failed to send refund notification:`, err));
+    }
+
+    console.log(`[Transaction] Transaction completed successfully: ${transaction.id}`);
+    return c.json({ transaction }, 201);
+  } catch (error) {
+    console.error(`[Transaction] Error creating transaction:`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      userId,
       businessId: data.businessId,
-    }).catch(console.error);
+      type: data.type,
+    });
+    
+    return c.json(
+      {
+        error: "Failed to create transaction",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      500
+    );
   }
-
-  return c.json({ transaction }, 201);
 });
 
 // Cancel a transaction
