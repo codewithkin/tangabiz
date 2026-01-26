@@ -475,6 +475,10 @@ export default function NewSaleScreen() {
                 notes: finalMemo || null,
             };
 
+            console.log('=== SALE CREATION REQUEST ===');
+            console.log('Payload:', JSON.stringify(saleData, null, 2));
+            console.log('===========================');
+
             const response = await api.post('/api/transactions', saleData);
 
             if (response.data?.transaction?.id) {
@@ -485,7 +489,11 @@ export default function NewSaleScreen() {
                 router.replace(`/sale/${response.data.transaction.id}` as any);
             }
         } catch (err: any) {
-            console.error('Failed to create sale:', err);
+            console.error('=== SALE CREATION ERROR ===');
+            console.error('Status:', err.response?.status);
+            console.error('Error Data:', JSON.stringify(err.response?.data, null, 2));
+            console.error('Full Error:', err.message);
+            console.error('============================');
             dispatch({
                 type: 'SET_ERROR',
                 payload: err.response?.data?.error || 'Failed to create sale. Please try again.',
