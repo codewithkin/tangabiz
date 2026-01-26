@@ -308,14 +308,14 @@ export default function Dashboard() {
             <Pressable
               onPress={() => setActiveTab('sales')}
               className={`flex-1 pb-3 border-b-2 ${activeTab === 'sales'
-                  ? 'border-b-green-500'
-                  : 'border-b-gray-300'
+                ? 'border-b-green-500'
+                : 'border-b-gray-300'
                 }`}
             >
               <Text
                 className={`text-center text-sm ${activeTab === 'sales'
-                    ? 'text-green-500 font-semibold'
-                    : 'text-gray-300'
+                  ? 'text-green-500 font-semibold'
+                  : 'text-gray-300'
                   }`}
               >
                 Recent Sales
@@ -325,14 +325,14 @@ export default function Dashboard() {
             <Pressable
               onPress={() => setActiveTab('expenses')}
               className={`flex-1 pb-3 border-b-2 ${activeTab === 'expenses'
-                  ? 'border-b-green-500'
-                  : 'border-b-gray-300'
+                ? 'border-b-green-500'
+                : 'border-b-gray-300'
                 }`}
             >
               <Text
                 className={`text-center text-sm ${activeTab === 'expenses'
-                    ? 'text-green-500 font-semibold'
-                    : 'text-gray-300'
+                  ? 'text-green-500 font-semibold'
+                  : 'text-gray-300'
                   }`}
               >
                 Recent Expenses
@@ -342,14 +342,14 @@ export default function Dashboard() {
             <Pressable
               onPress={() => setActiveTab('products')}
               className={`flex-1 pb-3 border-b-2 ${activeTab === 'products'
-                  ? 'border-b-green-500'
-                  : 'border-b-gray-300'
+                ? 'border-b-green-500'
+                : 'border-b-gray-300'
                 }`}
             >
               <Text
                 className={`text-center text-sm ${activeTab === 'products'
-                    ? 'text-green-500 font-semibold'
-                    : 'text-gray-300'
+                  ? 'text-green-500 font-semibold'
+                  : 'text-gray-300'
                   }`}
               >
                 New Products
@@ -452,7 +452,7 @@ export default function Dashboard() {
           <Animated.View className="flex flex-col gap-4" entering={SlideInUp.duration(500).delay(400)}>
             <Card className="rounded-2xl p-6">
               <Text className="text-lg font-semibold mb-4">Financial Overview</Text>
-              
+
               {expensesSummaryLoading ? (
                 <View className="items-center py-8">
                   <ActivityIndicator size="large" color="#22c55e" />
@@ -465,21 +465,21 @@ export default function Dashboard() {
                       const totalExpenses = expensesSummary.totalExpenses || 0;
                       const profit = totalRevenue - totalExpenses;
                       const total = totalRevenue + totalExpenses;
-                      
+
                       // Calculate percentages
                       const revenuePercentage = total > 0 ? Math.round((totalRevenue / total) * 100) : 0;
                       const expensesPercentage = total > 0 ? Math.round((totalExpenses / total) * 100) : 0;
 
                       const pieData = [
-                        { 
-                          value: totalRevenue, 
-                          color: '#22c55e', 
+                        {
+                          value: totalRevenue,
+                          color: '#22c55e',
                           text: `${revenuePercentage}%`,
                           gradientCenterColor: '#86efac'
                         },
-                        { 
-                          value: totalExpenses, 
-                          color: '#ef4444', 
+                        {
+                          value: totalExpenses,
+                          color: '#ef4444',
                           text: `${expensesPercentage}%`,
                           gradientCenterColor: '#fca5a5'
                         },
@@ -537,11 +537,10 @@ export default function Dashboard() {
                       <Text className="text-sm font-medium text-gray-700">
                         {revenue.totalRevenue - expensesSummary.totalExpenses >= 0 ? 'Net Profit' : 'Net Loss'}
                       </Text>
-                      <Text className={`text-lg font-bold ${
-                        revenue.totalRevenue - expensesSummary.totalExpenses >= 0 
-                          ? 'text-green-600' 
+                      <Text className={`text-lg font-bold ${revenue.totalRevenue - expensesSummary.totalExpenses >= 0
+                          ? 'text-green-600'
                           : 'text-red-600'
-                      }`}>
+                        }`}>
                         {formatCurrency(Math.abs(revenue.totalRevenue - expensesSummary.totalExpenses), 0)}
                       </Text>
                     </View>
