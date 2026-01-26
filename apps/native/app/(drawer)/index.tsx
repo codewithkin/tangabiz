@@ -233,7 +233,7 @@ export default function Dashboard() {
               <Text className="text-gray-400 text-sm">Welcome back to <Text className="text-yellow-500">Tanga<Text className="text-green-500">Biz</Text></Text></Text>
             </View>
 
-            <Pressable onPress={() => router.push('/notifications')}>
+            <Pressable onPress={() => router.push('/(drawer)/notifications')}>
               <View className="relative">
                 <Button size="icon" variant="outline" className="p-2">
                   <Fontisto name="bell" size={20} color="black" />
@@ -535,8 +535,8 @@ export default function Dashboard() {
                         {revenue.totalRevenue - expensesSummary.totalExpenses >= 0 ? 'Net Profit' : 'Net Loss'}
                       </Text>
                       <Text className={`text-lg font-bold ${revenue.totalRevenue - expensesSummary.totalExpenses >= 0
-                          ? 'text-green-600'
-                          : 'text-red-600'
+                        ? 'text-green-600'
+                        : 'text-red-600'
                         }`}>
                         {formatCurrency(Math.abs(revenue.totalRevenue - expensesSummary.totalExpenses), 0)}
                       </Text>

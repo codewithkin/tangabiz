@@ -143,8 +143,35 @@ function DrawerLayout() {
           ),
         }}
       />
-    </Drawer>
-  );
-}
-
-export default DrawerLayout;
+      <Drawer.Screen
+        name="reports"
+        options={{
+          headerTitle: "Reports",
+          drawerLabel: ({ color, focused }) => (
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: focused ? 'Satoshi-Bold' : 'Satoshi-Regular' }}>Reports</RNText>
+          ),
+          drawerIcon: ({ size, color, focused }) => (
+            <Ionicons
+              name="stats-chart-outline"
+              size={size}
+              color={focused ? color : themeColorForeground}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="notifications"
+        options={{
+          headerTitle: "Notifications",
+          drawerLabel: ({ color, focused }) => (
+            <RNText style={{ color: focused ? color : themeColorForeground, fontFamily: focused ? 'Satoshi-Bold' : 'Satoshi-Regular' }}>Notifications</RNText>
+          ),
+          drawerIcon: ({ size, color, focused }) => (
+            <Ionicons
+              name="notifications-outline"
+              size={size}
+              color={focused ? color : themeColorForeground}
+            />
+          ),
+        }}
+      />
