@@ -23,6 +23,17 @@ function generateSKU(): string {
     return result;
 }
 
+// Helper function to generate slugs from product names
+function generateSlug(name: string): string {
+    return name
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+}
+
 /**
  * New sale creation screen - Refactored with reducer pattern and custom hooks
  */
@@ -472,15 +483,16 @@ export default function NewSaleScreen() {
                         const productRes = await productsApi.create({
                             businessId: currentBusiness.id,
                             name: item.productName,
+                            slug: generateSlug(item.productName),
                             price: item.unitPrice,
                             sku: generateSKU(),
                             quantity: 0, // Manual products start at 0 stock
                         });
-                        
+
                         if (!productRes.data?.product?.id) {
                             throw new Error(`Failed to create product "${item.productName}": No product ID returned`);
                         }
-                        
+
                         finalProductId = productRes.data.product.id;
                         console.log(`Created product with ID: ${finalProductId}`);
                     }
