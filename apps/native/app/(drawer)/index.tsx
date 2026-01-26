@@ -295,18 +295,16 @@ export default function Dashboard() {
           <View className="flex flex-row">
             <Pressable
               onPress={() => setActiveTab('sales')}
-              className={`flex-1 pb-3 border-b-2 ${
-                activeTab === 'sales'
+              className={`flex-1 pb-3 border-b-2 ${activeTab === 'sales'
                   ? 'border-b-green-500'
                   : 'border-b-gray-300'
-              }`}
+                }`}
             >
               <Text
-                className={`text-center text-sm ${
-                  activeTab === 'sales'
+                className={`text-center text-sm ${activeTab === 'sales'
                     ? 'text-green-500 font-semibold'
                     : 'text-gray-300'
-                }`}
+                  }`}
               >
                 Recent Sales
               </Text>
@@ -314,18 +312,16 @@ export default function Dashboard() {
 
             <Pressable
               onPress={() => setActiveTab('expenses')}
-              className={`flex-1 pb-3 border-b-2 ${
-                activeTab === 'expenses'
+              className={`flex-1 pb-3 border-b-2 ${activeTab === 'expenses'
                   ? 'border-b-green-500'
                   : 'border-b-gray-300'
-              }`}
+                }`}
             >
               <Text
-                className={`text-center text-sm ${
-                  activeTab === 'expenses'
+                className={`text-center text-sm ${activeTab === 'expenses'
                     ? 'text-green-500 font-semibold'
                     : 'text-gray-300'
-                }`}
+                  }`}
               >
                 Recent Expenses
               </Text>
@@ -333,18 +329,16 @@ export default function Dashboard() {
 
             <Pressable
               onPress={() => setActiveTab('products')}
-              className={`flex-1 pb-3 border-b-2 ${
-                activeTab === 'products'
+              className={`flex-1 pb-3 border-b-2 ${activeTab === 'products'
                   ? 'border-b-green-500'
                   : 'border-b-gray-300'
-              }`}
+                }`}
             >
               <Text
-                className={`text-center text-sm ${
-                  activeTab === 'products'
+                className={`text-center text-sm ${activeTab === 'products'
                     ? 'text-green-500 font-semibold'
                     : 'text-gray-300'
-                }`}
+                  }`}
               >
                 New Products
               </Text>
