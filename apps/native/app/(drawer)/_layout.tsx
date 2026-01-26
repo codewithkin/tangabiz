@@ -175,3 +175,8 @@ function DrawerLayout() {
           ),
         }}
       />
+    </Drawer>
+  );
+}
+
+export default DrawerLayout;
