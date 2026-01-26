@@ -24,9 +24,8 @@ import { useAuthStore } from '@/store/auth';
 import { useConnection } from '@/hooks/useConnection';
 import { Input } from "@/components/ui/input";
 import { useQuery } from '@tanstack/react-query';
-import { transactionsApi, productsApi } from '@/lib/api';
-import axios from 'axios';
-import { API_BASE_URL } from '@/config/api';
+import { transactionsApi, productsApi, apiRequest } from '@/lib/api';
+import { PieChart } from 'react-native-gifted-charts';
 
 // Reusable currency formatter
 function formatCurrency(amount: number, decimals = 2, currency = 'USD') {
@@ -154,11 +153,10 @@ export default function Dashboard() {
     queryKey: ['recentExpenses', businessId],
     queryFn: async () => {
       if (!businessId) return [];
-      const response = await axios.get(
-        `${API_BASE_URL}/api/transactions?businessId=${businessId}&type=EXPENSE&limit=5`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await apiRequest(
+        `/api/transactions?businessId=${businessId}&type=EXPENSE&limit=5`
       );
-      return response.data.transactions || [];
+      return response.data?.transactions || [];
     },
     enabled: !!businessId && !!token,
   });
@@ -168,11 +166,25 @@ export default function Dashboard() {
     queryKey: ['newProducts', businessId],
     queryFn: async () => {
       if (!businessId) return [];
-      const response = await axios.get(
-        `${API_BASE_URL}/api/products?businessId=${businessId}&limit=5&sortBy=createdAt&sortOrder=desc`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await apiRequest(
+        `/api/products?businessId=${businessId}&limit=5&sortBy=createdAt&sortOrder=desc`
       );
-      return response.data.products || [];
+      return response.data?.products || [];
+    },
+    enabled: !!businessId && !!token,
+  });
+
+  // Fetch total expenses
+  const { data: expensesSummary = { totalExpenses: 0 }, isLoading: expensesSummaryLoading } = useQuery({
+    queryKey: ['expensesSummary', businessId],
+    queryFn: async () => {
+      if (!businessId) return { totalExpenses: 0 };
+      const response = await apiRequest(
+        `/api/transactions?businessId=${businessId}&type=EXPENSE`
+      );
+      const transactions = response.data?.transactions || [];
+      const total = transactions.reduce((sum: number, expense: any) => sum + Number(expense.total || 0), 0);
+      return { totalExpenses: total };
     },
     enabled: !!businessId && !!token,
   });
@@ -433,6 +445,51 @@ export default function Dashboard() {
               </>
             )}
           </View>
+        </Animated.View>
+
+        {/* Profit vs Expenses Donut Chart */}
+        <Animated.View className="flex flex-col gap-4" entering={SlideInUp.duration(500).delay(400)}>
+          <Card className="rounded-2xl p-6">
+            <Text className="text-lg font-semibold mb-4">Financial Overview</Text>
+            
+            <View className="items-center">
+              <PieChart
+                data={[
+                  { value: 47, color: '#22c55e', text: '47%' },
+                  { value: 30, color: '#ef4444', text: '30%' },
+                ]}
+                donut
+                showText
+                textColor="black"
+                radius={120}
+                textSize={16}
+                showTextBackground
+                textBackgroundRadius={22}
+                focusOnPress
+                showValuesAsLabels
+              />
+            </View>
+
+            {/* Legend */}
+            <View className="flex flex-row justify-center gap-6 mt-6">
+              <View className="flex flex-row items-center gap-2">
+                <View className="w-4 h-4 rounded bg-green-500" />
+                <Text className="text-sm text-gray-700">Revenue: {formatCurrency(47)}</Text>
+              </View>
+              <View className="flex flex-row items-center gap-2">
+                <View className="w-4 h-4 rounded bg-red-500" />
+                <Text className="text-sm text-gray-700">Expenses: {formatCurrency(30)}</Text>
+              </View>
+            </View>
+
+            {/* Profit */}
+            <View className="mt-4 pt-4 border-t border-gray-200">
+              <View className="flex flex-row justify-between items-center">
+                <Text className="text-sm font-medium text-gray-700">Net Profit</Text>
+                <Text className="text-lg font-bold text-green-600">{formatCurrency(17)}</Text>
+              </View>
+            </View>
+          </Card>
         </Animated.View>
       </View>
     </ScrollView>
