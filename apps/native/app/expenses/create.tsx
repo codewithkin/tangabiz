@@ -8,8 +8,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/api";
+import { apiRequest } from "@/lib/api";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -47,16 +46,10 @@ export default function CreateExpense() {
 
     const createExpenseMutation = useMutation({
         mutationFn: async (expenseData: any) => {
-            const response = await axios.post(
-                `${API_BASE_URL}/api/transactions`,
-                expenseData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
+            const response = await apiRequest('/api/transactions', {
+                method: 'POST',
+                body: expenseData,
+            });
             return response.data;
         },
         onSuccess: () => {
