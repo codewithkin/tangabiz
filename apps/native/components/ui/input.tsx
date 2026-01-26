@@ -16,7 +16,7 @@ function Input({
     )}>
       <TextInput
         className={cn(
-          'bg-gray-100 px-4 py-3 text-gray-900 font-medium',
+          'bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium',
           className
         )}
         placeholderTextColor="#9ca3af"
