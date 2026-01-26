@@ -27,7 +27,7 @@ export default function NotFoundScreen() {
             </View>
 
             <Button
-              onPress={() => router.push('/(drawer)')}
+              onPress={() => router.push('/(drawer)/index')}
               className="bg-green-500 py-4 px-8 h-auto rounded-full flex-row items-center gap-2"
             >
               <MaterialCommunityIcons name="home" size={20} color="white" />
