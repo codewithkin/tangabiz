@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Surface } from 'heroui-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useReducer, useMemo, useCallback, useEffect, useRef, useState } from 'react';
+import { useReducer, useMemo, useCallback, useEffect } from 'react';
 import { api, customersApi, productsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Card as CardItem } from '@/components/ui/card';
 import { SearchPopover } from '@/components/ui/search-popover';
+import Toast from 'react-native-toast-message';
 import { formatCurrency, parseCurrencyValue } from '@/lib/utils';
 
 // Helper function to generate random SKUs (no crypto dependency)
@@ -259,78 +260,6 @@ function saleReducer(state: SaleState, action: Action): SaleState {
     }
 }
 
-// Custom hook for product search
-function useProductSearch(businessId: string | undefined, query: string, mode: 'search' | 'manual') {
-    const [results, setResults] = useReducer((state: Product[], action: Product[]) => action, []);
-    const [loading, setLoading] = useReducer((state: boolean, action: boolean) => action, false);
-    const abortRef = useRef<AbortController | null>(null);
-
-    useEffect(() => {
-        if (mode !== 'search' || !query || query.length === 0 || !businessId) {
-            setResults([]);
-            setLoading(false);
-            return;
-        }
-
-        if (abortRef.current) abortRef.current.abort();
-        abortRef.current = new AbortController();
-
-        setLoading(true);
-        const timer = setTimeout(() => {
-            productsApi
-                .list(businessId, { search: query, limit: 10 })
-                .then((res) => setResults(res.data?.products || []))
-                .catch((err) => {
-                    if (err.name !== 'AbortError') setResults([]);
-                })
-                .finally(() => setLoading(false));
-        }, 300);
-
-        return () => {
-            clearTimeout(timer);
-            if (abortRef.current) abortRef.current.abort();
-        };
-    }, [query, mode, businessId]);
-
-    return { results, loading };
-}
-
-// Custom hook for customer search
-function useCustomerSearch(businessId: string | undefined, query: string, mode: 'search' | 'manual') {
-    const [results, setResults] = useReducer((state: Customer[], action: Customer[]) => action, []);
-    const [loading, setLoading] = useReducer((state: boolean, action: boolean) => action, false);
-    const abortRef = useRef<AbortController | null>(null);
-
-    useEffect(() => {
-        if (mode !== 'search' || !query || query.length === 0 || !businessId) {
-            setResults([]);
-            setLoading(false);
-            return;
-        }
-
-        if (abortRef.current) abortRef.current.abort();
-        abortRef.current = new AbortController();
-
-        setLoading(true);
-        const timer = setTimeout(() => {
-            customersApi
-                .list(businessId, { search: query, limit: 10 })
-                .then((res) => setResults(res.data?.customers || []))
-                .catch((err) => {
-                    if (err.name !== 'AbortError') setResults([]);
-                })
-                .finally(() => setLoading(false));
-        }, 300);
-
-        return () => {
-            clearTimeout(timer);
-            if (abortRef.current) abortRef.current.abort();
-        };
-    }, [query, mode, businessId]);
-
-    return { results, loading };
-}
-
 // Calculation utilities
 const computeSubtotal = (items: TransactionItem[]): number => {
     return items.reduce((acc, item) => acc + item.total, 0);
@@ -364,16 +293,20 @@ export default function NewSaleScreen() {
 
     const [state, dispatch] = useReducer(saleReducer, initialState);
 
-    const productSearch = useProductSearch(
-        currentBusiness?.id,
-        state.product.searchText,
-        state.product.mode
-    );
-    const customerSearch = useCustomerSearch(
-        currentBusiness?.id,
-        state.customer.searchText,
-        state.customer.mode
-    );
+    // Show toast when error message changes
+    useEffect(() => {
+        if (state.ui.errorMsg) {
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: state.ui.errorMsg,
+                position: 'bottom',
+                visibilityTime: 5000,
+            });
+            // Clear the error after showing toast
+            dispatch({ type: 'SET_ERROR', payload: null });
+        }
+    }, [state.ui.errorMsg]);
 
     // Memoized calculations
     const subtotal = useMemo(() => computeSubtotal(state.cart), [state.cart]);
@@ -727,33 +660,47 @@ export default function NewSaleScreen() {
                                     <View className="gap-3">
                                         {state.product.mode === 'search' ? (
                                             <View>
-                                                <Input
+                                                <SearchPopover
                                                     placeholder="Search products..."
                                                     value={state.product.searchText}
                                                     onChangeText={(text) => dispatch({ type: 'SET_PRODUCT_SEARCH', payload: text })}
+                                                    onSelect={(item) => {
+                                                        // Parse price from subtitle (format: "$XX.XX")
+                                                        const priceMatch = item.subtitle?.match(/[\d.]+/);
+                                                        const price = priceMatch ? parseFloat(priceMatch[0]) : 0;
+                                                        const selected: Product = {
+                                                            id: item.id,
+                                                            name: item.label,
+                                                            price: price,
+                                                        };
+                                                        dispatch({ type: 'SELECT_PRODUCT', payload: selected });
+                                                    }}
+                                                    onSearch={async (query) => {
+                                                        if (!currentBusiness?.id) return [];
+                                                        try {
+                                                            const response = await productsApi.list(currentBusiness.id, {
+                                                                search: query,
+                                                                limit: 10,
+                                                            });
+                                                            return (response.data?.products || []).map((product: any) => ({
+                                                                id: product.id,
+                                                                label: product.name,
+                                                                subtitle: formatCurrency(product.price),
+                                                            }));
+                                                        } catch (error) {
+                                                            console.error('Product search error:', error);
+                                                            return [];
+                                                        }
+                                                    }}
+                                                    renderItem={(item) => (
+                                                        <View className="flex-row items-center justify-between">
+                                                            <Text className="font-medium text-gray-900 flex-1 mr-2" numberOfLines={1}>
+                                                                {item.label}
+                                                            </Text>
+                                                            <Text className="font-bold text-green-600">{item.subtitle}</Text>
+                                                        </View>
+                                                    )}
                                                 />
-                                                {productSearch.results.length > 0 && (
-                                                    <View className="bg-gray-50 rounded-xl mt-2 max-h-40 overflow-hidden">
-                                                        {productSearch.loading ? (
-                                                            <View className="p-4 items-center">
-                                                                <ActivityIndicator size="small" color="#22c55e" />
-                                                            </View>
-                                                        ) : (
-                                                            productSearch.results.map((product) => (
-                                                                <Pressable
-                                                                    key={product.id}
-                                                                    className="p-3 border-b border-gray-200 active:bg-gray-100 flex-row justify-between"
-                                                                    onPress={() => dispatch({ type: 'SELECT_PRODUCT', payload: product })}
-                                                                >
-                                                                    <Text className="font-medium text-gray-900 flex-1 mr-2" numberOfLines={1} ellipsizeMode="tail">
-                                                                        {product.name}
-                                                                    </Text>
-                                                                    <Text className="font-bold text-green-600">{formatCurrency(product.price)}</Text>
-                                                                </Pressable>
-                                                            ))
-                                                        )}
-                                                    </View>
-                                                )}
                                                 {state.product.selected && (
                                                     <View className="mt-2 p-3 bg-green-50 rounded-xl flex-row items-center justify-between">
                                                         <View className="flex-1 mr-2">
@@ -994,14 +941,6 @@ export default function NewSaleScreen() {
                             </View>
                         </View>
 
-                        {/* Error Message */}
-                        {state.ui.errorMsg && (
-                            <View className="w-full bg-red-200 border-2 border-red-500 rounded-xl py-2 px-4 flex-row items-center gap-2">
-                                <MaterialCommunityIcons name="alert-circle" size={20} color="#dc2626" />
-                                <Text className="flex-1 text-sm font-medium text-red-900">{state.ui.errorMsg}</Text>
-                            </View>
-                        )}
-
                         {/* Save Button */}
                         <View className={isTablet ? 'items-end' : ''}>
                             <Pressable
@@ -1025,6 +964,7 @@ export default function NewSaleScreen() {
                     </View>
                 </ScrollView>
             </View>
+            <Toast />
         </SafeAreaView>
     );
 }
