@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, Pressable, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, TextInput, FlatList, Pressable } from 'react-native';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export interface SearchPopoverItem {
     id: string;
@@ -37,15 +38,18 @@ export const SearchPopover: React.FC<SearchPopoverProps> = ({
     itemClassName,
 }) => {
     const [results, setResults] = useState<SearchPopoverItem[]>([]);
-    const [showPopover, setShowPopover] = useState(false);
+    const [open, setOpen] = useState(false);
     const [localLoading, setLocalLoading] = useState(false);
     const [localError, setLocalError] = useState<string>();
-    const inputRef = useRef<TextInput>(null);
+    const requestIdRef = useRef(0);
 
     useEffect(() => {
+        // Increment request ID to track this specific search
+        const currentRequestId = ++requestIdRef.current;
+
         if (!value.trim()) {
             setResults([]);
-            setShowPopover(false);
+            setOpen(false);
             return;
         }
 
@@ -54,53 +58,70 @@ export const SearchPopover: React.FC<SearchPopoverProps> = ({
             setLocalError(undefined);
             try {
                 const items = await onSearch(value);
-                setResults(items);
-                setShowPopover(true);
+                // Only update if this is still the latest request
+                if (currentRequestId === requestIdRef.current) {
+                    setResults(items);
+                    setOpen(true);
+                }
             } catch (err: any) {
-                setLocalError(err.message || 'Search failed');
-                setShowPopover(true);
+                // Only update if this is still the latest request
+                if (currentRequestId === requestIdRef.current) {
+                    setLocalError(err.message || 'Search failed');
+                    setOpen(true);
+                }
             } finally {
-                setLocalLoading(false);
+                // Only clear loading if this is still the latest request
+                if (currentRequestId === requestIdRef.current) {
+                    setLocalLoading(false);
+                }
             }
         };
 
-        const debounceTimer = setTimeout(handleSearch, 300);
+        const debounceTimer = setTimeout(handleSearch, 100);
         return () => clearTimeout(debounceTimer);
     }, [value, onSearch]);
 
     const handleSelectItem = (item: SearchPopoverItem) => {
         onSelect(item);
-        setShowPopover(false);
+        setOpen(false);
         setResults([]);
+        // Clear the search text after selection
+        onChangeText("");
     };
 
     const loading = isLoading || localLoading;
     const displayError = error || localError;
 
     return (
-        <View className={cn('relative w-full', className)}>
-            <View className={cn(
-                'border-2 rounded-xl',
-                showPopover ? 'border-green-500' : 'border-gray-300'
-            )}>
-                <TextInput
-                    ref={inputRef}
-                    placeholder={placeholder}
-                    value={value}
-                    onChangeText={onChangeText}
-                    onFocus={() => value.trim() && setShowPopover(true)}
-                    onBlur={() => setShowPopover(false)}
-                    className={cn(
-                        'bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium',
-                        inputClassName
-                    )}
-                    placeholderTextColor="#9ca3af"
-                />
-            </View>
-
-            {/* Popover */}
-            {showPopover && (
-                <View className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-60">
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <View className={cn('w-full', className)}>
+                    <View className={cn(
+                        'border-2 rounded-xl',
+                        open ? 'border-green-500' : 'border-gray-300'
+                    )}>
+                        <TextInput
+                            placeholder={placeholder}
+                            value={value}
+                            onChangeText={onChangeText}
+                            onFocus={() => {
+                                if (value.trim()) setOpen(true);
+                            }}
+                            className={cn(
+                                'bg-gray-100 px-4 py-3 rounded-xl text-gray-900 font-medium',
+                                inputClassName
+                            )}
+                            placeholderTextColor="#9ca3af"
+                        />
+                    </View>
+                </View>
+            </PopoverTrigger>
+            <PopoverContent
+                side="bottom"
+                align="start"
+                className="w-full bg-white border border-gray-200 rounded-xl shadow-lg p-0 native:w-[90vw]"
+            >
+                <View className="max-h-60">
                     {loading && (
                         <View className="p-4 gap-3">
                             {/* Skeleton Loader - Item 1 */}
@@ -148,7 +169,8 @@ export const SearchPopover: React.FC<SearchPopoverProps> = ({
                         <FlatList
                             data={results}
                             keyExtractor={(item) => item.id}
-                            scrollEnabled={false}
+                            scrollEnabled={true}
+                            nestedScrollEnabled={true}
                             renderItem={({ item }) => (
                                 <Pressable
                                     onPress={() => handleSelectItem(item)}
@@ -172,6 +194,7 @@ export const SearchPopover: React.FC<SearchPopoverProps> = ({
                         />
                     )}
                 </View>
-            )}
-        </View>
-    );;
+            </PopoverContent>
+        </Popover>
+    );
+}
