@@ -7,6 +7,7 @@ export interface SearchPopoverItem {
     id: string;
     label: string;
     subtitle?: string;
+    metadata?: any;
 }
 
 interface SearchPopoverProps {

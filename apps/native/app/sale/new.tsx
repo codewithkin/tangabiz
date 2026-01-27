@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Surface } from 'heroui-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useReducer, useMemo, useCallback, useEffect } from 'react';
+import { useReducer, useMemo, useCallback } from 'react';
 import { api, customersApi, productsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useQueryClient } from '@tanstack/react-query';
@@ -11,7 +11,6 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Card as CardItem } from '@/components/ui/card';
 import { SearchPopover } from '@/components/ui/search-popover';
-import Toast from 'react-native-toast-message';
 import { formatCurrency, parseCurrencyValue } from '@/lib/utils';
 
 // Helper function to generate random SKUs (no crypto dependency)
@@ -55,6 +54,7 @@ type Product = {
     name: string;
     price: number;
     sku?: string;
+    stock?: number;
 };
 
 type Customer = {
@@ -292,21 +292,6 @@ export default function NewSaleScreen() {
     const isLargeScreen = width >= 1024;
 
     const [state, dispatch] = useReducer(saleReducer, initialState);
-
-    // Show toast when error message changes
-    useEffect(() => {
-        if (state.ui.errorMsg) {
-            Toast.show({
-                type: 'error',
-                text1: 'Error',
-                text2: state.ui.errorMsg,
-                position: 'bottom',
-                visibilityTime: 5000,
-            });
-            // Clear the error after showing toast
-            dispatch({ type: 'SET_ERROR', payload: null });
-        }
-    }, [state.ui.errorMsg]);
 
     // Memoized calculations
     const subtotal = useMemo(() => computeSubtotal(state.cart), [state.cart]);
@@ -672,6 +657,7 @@ export default function NewSaleScreen() {
                                                             id: item.id,
                                                             name: item.label,
                                                             price: price,
+                                                            stock: item.metadata?.stock || 0,
                                                         };
                                                         dispatch({ type: 'SELECT_PRODUCT', payload: selected });
                                                     }}
@@ -686,20 +672,39 @@ export default function NewSaleScreen() {
                                                                 id: product.id,
                                                                 label: product.name,
                                                                 subtitle: formatCurrency(product.price),
+                                                                metadata: { stock: product.stock || 0 },
                                                             }));
                                                         } catch (error) {
                                                             console.error('Product search error:', error);
                                                             return [];
                                                         }
                                                     }}
-                                                    renderItem={(item) => (
-                                                        <View className="flex-row items-center justify-between">
-                                                            <Text className="font-medium text-gray-900 flex-1 mr-2" numberOfLines={1}>
-                                                                {item.label}
-                                                            </Text>
-                                                            <Text className="font-bold text-green-600">{item.subtitle}</Text>
-                                                        </View>
-                                                    )}
+                                                    renderItem={(item) => {
+                                                        const stock = item.metadata?.stock || 0;
+                                                        let badgeColor = 'bg-green-500';
+                                                        if (stock === 0 || (stock >= 1 && stock <= 9)) {
+                                                            badgeColor = 'bg-red-500';
+                                                        } else if (stock >= 10 && stock <= 29) {
+                                                            badgeColor = 'bg-yellow-500';
+                                                        }
+
+                                                        return (
+                                                            <View className="flex-row items-start justify-between">
+                                                                <View className="flex-1 mr-2">
+                                                                    <Text className="font-medium text-gray-900" numberOfLines={1}>
+                                                                        {item.label}
+                                                                    </Text>
+                                                                    <Text className="text-sm text-gray-600 mt-0.5">{item.subtitle}</Text>
+                                                                </View>
+                                                                <View className={`${badgeColor} px-2 py-1 rounded-md flex-row items-center gap-1`}>
+                                                                    {stock === 0 && (
+                                                                        <MaterialCommunityIcons name="alert" size={12} color="white" />
+                                                                    )}
+                                                                    <Text className="text-white text-xs font-bold">{stock}</Text>
+                                                                </View>
+                                                            </View>
+                                                        );
+                                                    }}
                                                 />
                                                 {state.product.selected && (
                                                     <View className="mt-2 p-3 bg-green-50 rounded-xl flex-row items-center justify-between">
@@ -760,6 +765,15 @@ export default function NewSaleScreen() {
                                             <MaterialCommunityIcons name="plus" size={20} color="white" />
                                             <Text className="text-white font-bold">Add Item</Text>
                                         </Pressable>
+
+                                        {/* Insufficient Stock Error */}
+                                        {state.product.selected && state.product.selected.stock !== undefined && state.product.quantity > state.product.selected.stock && (
+                                            <View className="border border-red-500 rounded-xl bg-red-100 py-2">
+                                                <Text className="text-red-500 font-medium text-center">
+                                                    Insufficient stock! Only {state.product.selected.stock} available.
+                                                </Text>
+                                            </View>
+                                        )}
                                     </View>
                                 </View>
                             </View>
@@ -941,6 +955,14 @@ export default function NewSaleScreen() {
                             </View>
                         </View>
 
+                        {/* Error Message */}
+                        {state.ui.errorMsg && (
+                            <View className="w-full bg-red-200 border-2 border-red-500 rounded-xl py-2 px-4 flex-row items-center gap-2">
+                                <MaterialCommunityIcons name="alert-circle" size={20} color="#dc2626" />
+                                <Text className="flex-1 text-sm font-medium text-red-900">{state.ui.errorMsg}</Text>
+                            </View>
+                        )}
+
                         {/* Save Button */}
                         <View className={isTablet ? 'items-end' : ''}>
                             <Pressable
@@ -964,7 +986,6 @@ export default function NewSaleScreen() {
                     </View>
                 </ScrollView>
             </View>
-            <Toast />
         </SafeAreaView>
     );
 }
