@@ -463,8 +463,8 @@ export default function NewSaleScreen() {
             const processedItems = state.cart.map((item) => {
                 const baseItem = {
                     quantity: item.quantity,
-                    unitPrice: item.unitPrice,
-                    discount: item.discount,
+                    unitPrice: Number(item.unitPrice),
+                    discount: Number(item.discount),
                 };
 
                 // If product was manually entered, include creation data
@@ -532,8 +532,17 @@ export default function NewSaleScreen() {
         } catch (err: any) {
             console.error('=== SALE CREATION ERROR ===');
             console.error('Status:', err.response?.status);
+            console.error('Status Text:', err.response?.statusText);
             console.error('Error Data:', JSON.stringify(err.response?.data, null, 2));
-            console.error('Full Error:', err.message);
+            console.error('Error Message:', err.message);
+            console.error('Error Config:', {
+                url: err.config?.url,
+                method: err.config?.method,
+                data: err.config?.data,
+            });
+            if (err.response?.data) {
+                console.error('Detailed Error:', err.response.data);
+            }
             console.error('============================');
             dispatch({
                 type: 'SET_ERROR',
