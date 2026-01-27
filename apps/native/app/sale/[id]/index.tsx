@@ -8,6 +8,7 @@ import Animated, { FadeIn, SlideInUp } from 'react-native-reanimated';
 import { transactionsApi } from '@/lib/api';
 import { format } from 'date-fns';
 import { formatCurrency, formatDateTime, formatTime, formatDate } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Sale details screen displaying comprehensive transaction information including items purchased, payment details, customer info, and timestamps. Provides options to print receipt or share transaction details.
@@ -124,9 +125,93 @@ export default function SaleDetailsScreen() {
 
     if (isLoading) {
         return (
-            <SafeAreaView className="flex-1 bg-white items-center justify-center">
-                <ActivityIndicator size="large" color="#22c55e" />
-                <Text className="text-gray-500 mt-4">Loading transaction...</Text>
+            <SafeAreaView className="flex-1 bg-white" edges={['bottom']}>
+                <View className="h-full mt-8">
+                    <ScrollView className="flex-1">
+                        <View className="p-4 gap-6">
+                            {/* Header Skeleton */}
+                            <View className="flex-row items-center gap-3">
+                                <Skeleton className="w-10 h-10 rounded-full" />
+                                <View className="flex-1 gap-2">
+                                    <Skeleton className="h-7 w-32" />
+                                    <Skeleton className="h-4 w-24" />
+                                </View>
+                                <Skeleton className="h-6 w-20 rounded-full" />
+                            </View>
+
+                            {/* Success Banner Skeleton */}
+                            <View className="bg-white rounded-2xl border border-gray-200 p-4">
+                                <View className="flex-row items-center gap-3">
+                                    <Skeleton className="w-12 h-12 rounded-full" />
+                                    <View className="flex-1 gap-2">
+                                        <Skeleton className="h-5 w-32" />
+                                        <Skeleton className="h-4 w-40" />
+                                    </View>
+                                </View>
+                            </View>
+
+                            {/* Summary Skeleton */}
+                            <View className="bg-white rounded-2xl border border-gray-200 p-4">
+                                <View className="flex-row items-center justify-between mb-4">
+                                    <Skeleton className="h-6 w-24" />
+                                    <Skeleton className="h-5 w-28" />
+                                </View>
+                                <View className="gap-3">
+                                    <View className="flex-row justify-between">
+                                        <Skeleton className="h-4 w-20" />
+                                        <Skeleton className="h-4 w-32" />
+                                    </View>
+                                    <View className="flex-row justify-between">
+                                        <Skeleton className="h-4 w-16" />
+                                        <Skeleton className="h-4 w-24" />
+                                    </View>
+                                    <View className="flex-row justify-between pt-2 border-t border-gray-200">
+                                        <Skeleton className="h-6 w-16" />
+                                        <Skeleton className="h-6 w-28" />
+                                    </View>
+                                    <View className="flex-row justify-between">
+                                        <Skeleton className="h-4 w-24" />
+                                        <Skeleton className="h-4 w-24" />
+                                    </View>
+                                </View>
+                            </View>
+
+                            {/* Items Skeleton */}
+                            <View className="bg-white rounded-2xl border border-gray-200 p-4">
+                                <Skeleton className="h-6 w-32 mb-3" />
+                                <View className="gap-3">
+                                    {[1, 2, 3].map((i) => (
+                                        <View key={i} className="flex-row items-center justify-between py-2 border-b border-gray-100">
+                                            <View className="flex-1 gap-2">
+                                                <Skeleton className="h-5 w-40" />
+                                                <Skeleton className="h-4 w-24" />
+                                            </View>
+                                            <Skeleton className="h-5 w-20" />
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+
+                            {/* Customer Skeleton */}
+                            <View className="bg-white rounded-2xl border border-gray-200 p-4">
+                                <Skeleton className="h-6 w-24 mb-3" />
+                                <View className="flex-row items-center gap-3">
+                                    <Skeleton className="w-10 h-10 rounded-full" />
+                                    <View className="flex-1 gap-2">
+                                        <Skeleton className="h-5 w-32" />
+                                        <Skeleton className="h-4 w-40" />
+                                    </View>
+                                </View>
+                            </View>
+
+                            {/* Actions Skeleton */}
+                            <View className="flex-row gap-3">
+                                <Skeleton className="flex-1 h-12 rounded-xl" />
+                                <Skeleton className="flex-1 h-12 rounded-xl" />
+                            </View>
+                        </View>
+                    </ScrollView>
+                </View>
             </SafeAreaView>
         );
     }
@@ -171,7 +256,7 @@ export default function SaleDetailsScreen() {
 
                         {/* Success Banner */}
                         <Animated.View entering={SlideInUp.duration(500).delay(50)}>
-                            <Surface className="p-4 rounded-2xl bg-green-50 border border-green-200">
+                            <View className="p-4 rounded-2xl bg-green-50 border border-green-200">
                                 <View className="flex-row items-center gap-3">
                                     <View className="w-12 h-12 rounded-full bg-green-100 items-center justify-center">
                                         <MaterialCommunityIcons name="check-circle" size={28} color="#22c55e" />
@@ -183,12 +268,12 @@ export default function SaleDetailsScreen() {
                                         </Text>
                                     </View>
                                 </View>
-                            </Surface>
+                            </View>
                         </Animated.View>
 
                         {/* Transaction Summary */}
                         <Animated.View entering={SlideInUp.duration(500).delay(100)}>
-                            <Surface className="p-4 rounded-2xl">
+                            <View className="p-4 rounded-2xl bg-white border border-gray-200">
                                 <View className="flex-row items-center justify-between mb-4">
                                     <Text className="text-lg font-bold text-gray-900">Summary</Text>
                                     <View className="flex-row items-center gap-2">
@@ -233,12 +318,12 @@ export default function SaleDetailsScreen() {
                                         </View>
                                     )}
                                 </View>
-                            </Surface>
+                            </View>
                         </Animated.View>
 
                         {/* Items */}
                         <Animated.View entering={SlideInUp.duration(500).delay(200)}>
-                            <Surface className="p-4 rounded-2xl">
+                            <View className="p-4 rounded-2xl bg-white border border-gray-200">
                                 <Text className="text-lg font-bold text-gray-900 mb-3">
                                     Items ({transaction.items.length})
                                 </Text>
@@ -258,13 +343,13 @@ export default function SaleDetailsScreen() {
                                         </View>
                                     ))}
                                 </View>
-                            </Surface>
+                            </View>
                         </Animated.View>
 
                         {/* Customer Info */}
                         {transaction.customer && (
                             <Animated.View entering={SlideInUp.duration(500).delay(300)}>
-                                <Surface className="p-4 rounded-2xl">
+                                <View className="p-4 rounded-2xl bg-white border border-gray-200">
                                     <Text className="text-lg font-bold text-gray-900 mb-3">Customer</Text>
                                     <View className="flex-row items-center gap-3">
                                         <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center">
@@ -280,17 +365,37 @@ export default function SaleDetailsScreen() {
                                             )}
                                         </View>
                                     </View>
-                                </Surface>
+                                </View>
+                            </Animated.View>
+                        )}
+
+                        {/* Sold By */}
+                        {transaction.createdBy && (
+                            <Animated.View entering={SlideInUp.duration(500).delay(350)}>
+                                <View className="p-4 rounded-2xl bg-white border border-gray-200">
+                                    <Text className="text-lg font-bold text-gray-900 mb-3">Sold By</Text>
+                                    <View className="flex-row items-center gap-3">
+                                        <View className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center">
+                                            <MaterialCommunityIcons name="account-tie" size={24} color="#3b82f6" />
+                                        </View>
+                                        <View className="flex-1">
+                                            <Text className="font-medium text-gray-900">{transaction.createdBy.name}</Text>
+                                            {transaction.createdBy.email && (
+                                                <Text className="text-sm text-gray-500">{transaction.createdBy.email}</Text>
+                                            )}
+                                        </View>
+                                    </View>
+                                </View>
                             </Animated.View>
                         )}
 
                         {/* Notes */}
                         {transaction.notes && (
                             <Animated.View entering={SlideInUp.duration(500).delay(400)}>
-                                <Surface className="p-4 rounded-2xl">
+                                <View className="p-4 rounded-2xl bg-white border border-gray-200">
                                     <Text className="text-lg font-bold text-gray-900 mb-2">Notes</Text>
                                     <Text className="text-gray-600">{transaction.notes}</Text>
-                                </Surface>
+                                </View>
                             </Animated.View>
                         )}
 
