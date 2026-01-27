@@ -10,15 +10,28 @@ export const transactionRoutes = new Hono();
 
 // Validation schemas
 const transactionItemSchema = z.object({
-  productId: z.string(),
+  productId: z.string().optional().nullable(),
+  // Product creation fields (if creating new product)
+  productName: z.string().optional(),
+  productSlug: z.string().optional(),
+  productSku: z.string().optional(),
   quantity: z.number().int().positive(),
   unitPrice: z.number().positive(),
   discount: z.number().min(0).default(0),
 });
 
+// Customer data for creation
+const customerDataSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email().optional().nullable(),
+  phone: z.string().optional().nullable(),
+});
+
 const createTransactionSchema = z.object({
   businessId: z.string(),
   customerId: z.string().optional().nullable(),
+  // Customer creation fields (if creating new customer)
+  customerData: customerDataSchema.optional().nullable(),
   type: z.enum(["SALE", "REFUND", "EXPENSE", "INCOME"]).default("SALE"),
   paymentMethod: z.enum(["CASH", "CARD", "BANK_TRANSFER", "MOBILE_MONEY", "OTHER"]).default("CASH"),
   items: z.array(transactionItemSchema).min(1),
@@ -151,38 +164,72 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
       return c.json({ error: "Not authorized to create transactions for this business" }, 403);
     }
 
-    // Validate customer if provided
-    if (data.customerId) {
+    // Create customer if customer data is provided
+    let customerId = data.customerId;
+    if (data.customerData && !customerId) {
+      console.log(`[Transaction] Creating new customer: ${data.customerData.name}`);
+      const newCustomer = await db.customer.create({
+        data: {
+          name: data.customerData.name,
+          email: data.customerData.email,
+          phoneNumber: data.customerData.phone,
+          businessId: data.businessId,
+        },
+      });
+      customerId = newCustomer.id;
+      console.log(`[Transaction] Customer created: ${newCustomer.id}`);
+    } else if (customerId) {
+      // Validate existing customer if provided
       const customer = await db.customer.findUnique({
-        where: { id: data.customerId },
+        where: { id: customerId },
       });
 
       if (!customer) {
-        console.error(`[Transaction] Customer not found: ${data.customerId}`);
+        console.error(`[Transaction] Customer not found: ${customerId}`);
         return c.json({ error: "Customer not found" }, 404);
       }
 
       if (customer.businessId !== data.businessId) {
-        console.error(`[Transaction] Customer ${data.customerId} does not belong to business ${data.businessId}`);
+        console.error(`[Transaction] Customer ${customerId} does not belong to business ${data.businessId}`);
         return c.json({ error: "Customer does not belong to this business" }, 400);
       }
     }
 
-    // Validate all products exist and have sufficient quantity
-    const productValidations = await Promise.all(
+    // Process items and create products if needed
+    const processedItems = await Promise.all(
       data.items.map(async (item) => {
+        let productId = item.productId;
+
+        // Create product if product details are provided but no productId
+        if (!productId && item.productName) {
+          console.log(`[Transaction] Creating new product: ${item.productName}`);
+          const newProduct = await db.product.create({
+            data: {
+              name: item.productName,
+              slug: item.productSlug || "",
+              sku: item.productSku || `SKU-${Date.now()}`,
+              quantity: item.quantity,
+              businessId: data.businessId,
+              price: item.unitPrice,
+            },
+          });
+          productId = newProduct.id;
+          console.log(`[Transaction] Product created: ${newProduct.id}`);
+        }
+
+        // Validate product exists and belongs to business
         const product = await db.product.findUnique({
-          where: { id: item.productId },
+          where: { id: productId },
           select: { id: true, name: true, sku: true, quantity: true, businessId: true },
         });
 
         if (!product) {
-          console.error(`[Transaction] Product not found: ${item.productId}`);
-          return { valid: false, error: `Product not found: ${item.productId}` };
+          console.error(`[Transaction] Product not found: ${productId}`);
+          return { valid: false, error: `Product not found: ${productId}` };
         }
 
         if (product.businessId !== data.businessId) {
-          console.error(`[Transaction] Product ${item.productId} does not belong to business ${data.businessId}`);
+          console.error(`[Transaction] Product ${productId} does not belong to business ${data.businessId}`);
           return { valid: false, error: `Product ${product.name} does not belong to this business` };
         }
 
@@ -191,12 +238,12 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
           return { valid: false, error: `Insufficient stock for ${product.name}. Available: ${product.quantity}, Requested: ${item.quantity}` };
         }
 
-        return { valid: true, product };
+        return { valid: true, product, productId };
       })
     );
 
     // Check for validation errors
-    const validationError = productValidations.find((v) => !v.valid);
+    const validationError = processedItems.find((v) => !v.valid);
     if (validationError) {
       console.error(`[Transaction] Validation failed:`, validationError.error);
       return c.json({ error: validationError.error }, 400);
@@ -210,11 +257,12 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
 
     // Calculate totals
     const itemsWithTotals = data.items.map((item, index) => {
-      const product = productValidations[index].product!;
+      const processedItem = processedItems[index];
+      const product = processedItem.product!;
       const itemTotal = item.quantity * item.unitPrice - item.discount;
 
       return {
-        productId: item.productId,
+        productId: processedItem.productId,
         productName: product.name,
         productSku: product.sku,
         quantity: item.quantity,
@@ -248,7 +296,7 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
         invoiceId,
         reference,
         businessId: data.businessId,
-        customerId: data.customerId,
+        customerId: customerId || undefined,
         createdById: userId,
         type: data.type,
         paymentMethod: data.paymentMethod,
@@ -277,11 +325,11 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
     if (data.type === "SALE") {
       console.log(`[Transaction] Updating product quantities for SALE...`);
       await Promise.all(
-        data.items.map((item) =>
+        processedItems.map((item) =>
           db.product.update({
-            where: { id: item.productId },
+            where: { id: item.productId! },
             data: {
-              quantity: { decrement: item.quantity },
+              quantity: { decrement: data.items[processedItems.indexOf(item)].quantity },
             },
           })
         )
