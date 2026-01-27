@@ -4,7 +4,7 @@ import { Surface } from 'heroui-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useReducer, useMemo, useCallback, useEffect, useRef, useState } from 'react';
-import { api, productsApi, customersApi } from '@/lib/api';
+import { api, customersApi, productsApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
@@ -355,7 +355,7 @@ const computeChange = (paid: number, total: number): number => {
 
 export default function NewSaleScreen() {
     const router = useRouter();
-    const { currentBusiness } = useAuthStore();
+    const { currentBusiness, user } = useAuthStore();
     const queryClient = useQueryClient();
     const { width } = useWindowDimensions();
 
@@ -459,52 +459,30 @@ export default function NewSaleScreen() {
         dispatch({ type: 'SET_ERROR', payload: null });
 
         try {
-            let finalCustomerId = state.customer.selectedId;
+            // Build items array, including product creation data if needed
+            const processedItems = state.cart.map((item) => {
+                const baseItem = {
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                    discount: item.discount,
+                };
 
-            // Create customer if in manual mode
-            if (state.customer.mode === 'manual' && state.customer.manualData.name.trim()) {
-                const customerRes = await customersApi.create({
-                    businessId: currentBusiness.id,
-                    name: state.customer.manualData.name.trim(),
-                    email: state.customer.manualData.email.trim() || null,
-                    phone: state.customer.manualData.phone.trim() || null,
-                });
-                finalCustomerId = customerRes.data?.customer?.id || null;
-            }
-
-            // Create/map products - create manual products first, then build items
-            const processedItems = await Promise.all(
-                state.cart.map(async (item) => {
-                    let finalProductId = item.productId;
-
-                    // If product was manually entered, create it first
-                    if (item.productId.startsWith('manual-')) {
-                        console.log(`Creating manual product: ${item.productName}`);
-                        const productRes = await productsApi.create({
-                            businessId: currentBusiness.id,
-                            name: item.productName,
-                            slug: generateSlug(item.productName),
-                            price: item.unitPrice,
-                            sku: generateSKU(),
-                            quantity: 0, // Manual products start at 0 stock
-                        });
-
-                        if (!productRes.data?.product?.id) {
-                            throw new Error(`Failed to create product "${item.productName}": No product ID returned`);
-                        }
-
-                        finalProductId = productRes.data.product.id;
-                        console.log(`Created product with ID: ${finalProductId}`);
-                    }
-
+                // If product was manually entered, include creation data
+                if (item.productId.startsWith('manual-')) {
                     return {
-                        productId: finalProductId,
-                        quantity: item.quantity,
-                        unitPrice: item.unitPrice,
-                        discount: item.discount,
+                        ...baseItem,
+                        productName: item.productName,
+                        productSlug: generateSlug(item.productName),
+                        productSku: generateSKU(),
                     };
-                })
-            );
+                }
+
+                // Otherwise just include the productId
+                return {
+                    ...baseItem,
+                    productId: item.productId,
+                };
+            });
 
             let finalMemo = state.payment.memo.trim();
             if (state.payment.trackChange && state.payment.notes.size > 0 && changeAmount > 0) {
@@ -516,9 +494,9 @@ export default function NewSaleScreen() {
                 finalMemo = finalMemo ? `${finalMemo}\n${changeNote}` : changeNote;
             }
 
-            const saleData = {
+            // Build transaction payload
+            const saleData: any = {
                 businessId: currentBusiness.id,
-                customerId: finalCustomerId || null,
                 type: 'SALE' as const,
                 paymentMethod: state.payment.method,
                 items: processedItems,
@@ -526,6 +504,17 @@ export default function NewSaleScreen() {
                 amountPaid: amountPaid,
                 notes: finalMemo || null,
             };
+
+            // Add customer data if in manual mode, otherwise add customer ID
+            if (state.customer.mode === 'manual' && state.customer.manualData.name.trim()) {
+                saleData.customerData = {
+                    name: state.customer.manualData.name.trim(),
+                    email: state.customer.manualData.email.trim() || undefined,
+                    phone: state.customer.manualData.phone.trim() || undefined,
+                };
+            } else if (state.customer.selectedId) {
+                saleData.customerId = state.customer.selectedId;
+            }
 
             console.log('=== SALE CREATION REQUEST ===');
             console.log('Payload:', JSON.stringify(saleData, null, 2));
@@ -626,8 +615,7 @@ export default function NewSaleScreen() {
                                                 onSearch={async (query) => {
                                                     if (!currentBusiness?.id) return [];
                                                     try {
-                                                        const response = await customersApi.list({
-                                                            businessId: currentBusiness.id,
+                                                        const response = await customersApi.list(currentBusiness.id, {
                                                             search: query,
                                                             limit: 10,
                                                         });
