@@ -172,8 +172,9 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
         data: {
           name: data.customerData.name,
           email: data.customerData.email,
-          phoneNumber: data.customerData.phone,
+          phone: data.customerData.phone,
           businessId: data.businessId,
+          createdById: userId,
         },
       });
       customerId = newCustomer.id;
@@ -203,14 +204,19 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
         // Create product if product details are provided but no productId
         if (!productId && item.productName) {
           console.log(`[Transaction] Creating new product: ${item.productName}`);
+          // Generate unique slug by appending timestamp
+          const baseSlug = item.productSlug || "";
+          const uniqueSlug = baseSlug ? `${baseSlug}-${Date.now()}` : `product-${Date.now()}`;
+          
           const newProduct = await db.product.create({
             data: {
               name: item.productName,
-              slug: item.productSlug || "",
+              slug: uniqueSlug,
               sku: item.productSku || `SKU-${Date.now()}`,
-              quantity: item.quantity,
+              quantity: item.quantity, // Set quantity to match the requested amount
               businessId: data.businessId,
               price: item.unitPrice,
+              createdById: userId,
             },
           });
           productId = newProduct.id;
@@ -219,7 +225,7 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
 
         // Validate product exists and belongs to business
         const product = await db.product.findUnique({
-          where: { id: productId },
+          where: { id: productId! },
           select: { id: true, name: true, sku: true, quantity: true, businessId: true },
         });
 
@@ -347,8 +353,12 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
       }).catch((err) => console.error(`[Transaction] Failed to send sale notification:`, err));
 
       // Check for low stock products after sale
+      const productIds = processedItems
+        .map((item) => item.productId)
+        .filter((id): id is string => id !== null && id !== undefined);
+      
       const updatedProducts = await db.product.findMany({
-        where: { id: { in: data.items.map((i) => i.productId) } },
+        where: { id: { in: productIds } },
         select: { id: true, name: true, quantity: true, minQuantity: true, businessId: true },
       });
 
@@ -365,14 +375,16 @@ transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSch
     if (data.type === "REFUND") {
       console.log(`[Transaction] Updating product quantities for REFUND...`);
       await Promise.all(
-        data.items.map((item) =>
-          db.product.update({
-            where: { id: item.productId },
-            data: {
-              quantity: { increment: item.quantity },
-            },
-          })
-        )
+        processedItems
+          .filter((item) => item.productId !== null && item.productId !== undefined)
+          .map((item) =>
+            db.product.update({
+              where: { id: item.productId! },
+              data: {
+                quantity: { increment: data.items[processedItems.indexOf(item)].quantity },
+              },
+            })
+          )
       );
       console.log(`[Transaction] Product quantities restored`);
 
@@ -511,10 +523,10 @@ transactionRoutes.get("/stats/summary", requireAuth, async (c) => {
       total: incomeStats._sum.total || 0,
     },
     netRevenue:
-      (salesStats._sum.total || 0) +
-      (incomeStats._sum.total || 0) -
-      (refundStats._sum.total || 0) -
-      (expenseStats._sum.total || 0),
+      (Number(salesStats._sum.total) || 0) +
+      (Number(incomeStats._sum.total) || 0) -
+      (Number(refundStats._sum.total) || 0) -
+      (Number(expenseStats._sum.total) || 0),
   });
 });
 
