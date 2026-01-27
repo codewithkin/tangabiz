@@ -23,8 +23,14 @@ const transactionItemSchema = z.object({
 // Customer data for creation
 const customerDataSchema = z.object({
   name: z.string().min(1),
-  email: z.string().email().optional().nullable(),
-  phone: z.string().optional().nullable(),
+  email: z.preprocess(
+    (val) => (val === '' || val === undefined ? null : val),
+    z.string().email().nullable().optional()
+  ),
+  phone: z.preprocess(
+    (val) => (val === '' || val === undefined ? null : val),
+    z.string().nullable().optional()
+  ),
 });
 
 const createTransactionSchema = z.object({
@@ -136,16 +142,31 @@ transactionRoutes.get("/:id", requireAuth, async (c) => {
 });
 
 // Create a new transaction (sale, expense, etc.)
-transactionRoutes.post("/", requireAuth, zValidator("json", createTransactionSchema), async (c) => {
-  const userId = c.get("userId");
-  const data = c.req.valid("json");
+transactionRoutes.post(
+  "/",
+  requireAuth,
+  zValidator("json", createTransactionSchema, (result, c) => {
+    if (!result.success) {
+      console.error('[Transaction] Validation Error:', JSON.stringify(result.error.format(), null, 2));
+      return c.json(
+        {
+          error: "Validation failed",
+          details: result.error.format(),
+        },
+        400
+      );
+    }
+  }),
+  async (c) => {
+    const userId = c.get("userId");
+    const data = c.req.valid("json");
 
-  console.log(`[Transaction] Creating transaction for user ${userId}`, {
-    businessId: data.businessId,
-    type: data.type,
-    itemCount: data.items.length,
-    customerId: data.customerId,
-  });
+    console.log(`[Transaction] Creating transaction for user ${userId}`, {
+      businessId: data.businessId,
+      type: data.type,
+      itemCount: data.items.length,
+      customerId: data.customerId,
+    });
 
   try {
     // Validate business exists and user has access
